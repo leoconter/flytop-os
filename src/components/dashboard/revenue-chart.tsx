@@ -217,7 +217,7 @@ export function RevenueChart() {
   };
 
   return (
-    <div className="chart-box relative h-[320px] w-full">
+    <div className="chart-box">
       <Line
         data={data}
         options={options}

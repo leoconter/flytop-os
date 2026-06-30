@@ -28,14 +28,19 @@ No Tailwind: `font-sans` (Inter) e `font-mono` (JetBrains Mono).
 
 | Token                 | Hex       | Tailwind                  |
 | --------------------- | --------- | ------------------------- |
-| `--accent-blue`       | `#007AFF` | `accent-blue`             |
-| `--accent-blue-dark`  | `#0056CC` | `accent-blue-dark`        |
-| `--accent-green`      | `#34C759` | `accent-green`            |
-| `--accent-green-dark` | `#248A3D` | `accent-green-dark`       |
-| `--accent-orange`     | `#FF9500` | `accent-orange`           |
+| `--accent-blue`        | `#007AFF` | `accent-blue`         |
+| `--accent-blue-dark`   | `#0056CC` | `accent-blue-dark`    |
+| `--accent-green`       | `#34C759` | `accent-green`        |
+| `--accent-green-dark`  | `#248A3D` | `accent-green-dark`   |
+| `--accent-orange`      | `#FF9500` | `accent-orange`       |
+| `--accent-orange-dark` | `#C76E00` | `accent-orange-dark`  |
+| `--accent-red`         | `#FF3B30` | `accent-red`          |
+| `--accent-red-dark`    | `#C8281F` | `accent-red-dark`     |
+| `--accent-purple`      | `#5E5CE6` | `accent-purple`       |
 
-Convenção do dashboard: **azul** = realizado/principal · **verde** = meta/positivo
-· **laranja** = necessidade/atenção.
+Convenção: **azul** = realizado/principal · **verde** = meta/positivo ·
+**laranja** = necessidade/atenção · **vermelho** = saídas/negativo ·
+**roxo** = destaque/prévia.
 
 ### Superfície e texto
 
@@ -68,7 +73,11 @@ horizontal que dá o brilho de vidro no topo do card.
 | `--radius-xl`    | `24px`  | `rounded-xl` |
 | `--radius-lg`    | `18px`  | `rounded-lg` |
 | `--radius-md`    | `14px`  | `rounded-md` |
+| `--radius-sm`    | `10px`  | `rounded-sm` (token) |
 | `--radius-pill`  | `999px` | pílulas/botões |
+
+Glass forte: `--glass-strong` `rgba(255,255,255,0.72)` para superfícies que
+precisam de mais opacidade que o `.glass` padrão.
 
 ## Orbs de fundo
 
@@ -97,10 +106,47 @@ HTML original para textura — ainda não portado para o `globals.css`.
   bandas verticais sutis atrás de dias não úteis (plugin `weekendBand`). Pace e
   necessidade avançam apenas em dias úteis (seg–sex, excluindo feriados).
 
+## App shell (Fase 1)
+
+A plataforma usa um shell único com **sidebar fixa + topbar sticky**, e cada
+tela é uma **rota real** do App Router (sidebar persiste via layout). Origem:
+preview da Fase 1.
+
+- **Layout:** `src/app/(app)/layout.tsx` → `Orbs` + `.app` (`Sidebar` + `.main`
+  com `Topbar` + `.content`).
+- **Sidebar** (`.sidebar`): brand, grupos de navegação (`Dashboards`,
+  `Operação`, `Marketing`), `.nav-item` (com `.active` por `usePathname`),
+  `.nav-badge`, `.preview-pill`, `.user-chip`. Config em
+  `src/components/app-shell/nav-config.tsx`.
+- **Topbar** (`.topbar`): breadcrumb (`.crumb`), `.chip`/`.chip.live` e o toggle
+  de privacidade.
+
+### Rotas
+
+| Rota | Tela | Status |
+| --- | --- | --- |
+| `/` | Dashboard Geral | ✅ |
+| `/interno` | Dashboard Interno | ✅ |
+| `/vendedor` `/alertas` `/comunidade` `/jornada` `/monde` `/ads` | demais | placeholder |
+
+### Primitivas adicionadas ao `globals.css`
+
+`.page-head` `.eyebrow` `.page-title` `.pill(.blue)` · `.metrics`/`.metric`
+(tons `.blue/.green/.red`, `.metric-bar(.green)`) · `.section`/`.grid-2(.fixed)`
+· `.chart-card`/`.chart-box(.sm)`/`.chart-legend` · `.list`/`.list-row(.me)`/`.rank(.gold)`
+· `.table-wrap`/`table`/`.badge(.green/.orange/.blue/.gray)`/`.share` ·
+`.stat`/`.progress-line`/`.note-box` · `.foot-note`.
+
+### Gráficos
+
+`react-chartjs-2` + Chart.js, registro central em
+`src/components/charts/register.ts` (helpers `glassTooltip`, `brl`, `moneyTick`).
+Tipos: linha (acumulado/pace), barra (receita por mês), doughnut (consolidadoras).
+
 ## Próximos passos
 
-- [ ] Portar o dashboard de HTML para componentes React (Chart.js via
-  `react-chartjs-2`, já instalado).
-- [ ] Extrair componentes reutilizáveis: `Card` (glass), `Metric`, `ListRow`,
-  `Pill`, `Orbs`, `PrivacyToggle`.
-- [ ] Avaliar portar o overlay de ruído e o suporte a dark mode.
+- [ ] Portar as 6 telas restantes (Vendedor, Alertas, Comunidade, Jornada,
+  Monde/Sync, Ads) — incluindo formulários, preview de WhatsApp, tabela de
+  comunidades e gráficos diverging/bar+line.
+- [ ] Plugar dados reais via Supabase/Monde no lugar dos mocks em `src/lib`.
+- [ ] Avaliar portar o overlay de ruído (`feTurbulence`) e suporte a dark mode.

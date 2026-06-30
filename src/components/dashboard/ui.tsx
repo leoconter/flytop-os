@@ -1,50 +1,123 @@
+import type { ReactNode } from "react";
 import type { ListItem, Metric } from "@/lib/dashboard-data";
 
-/** Cartão de métrica (glass). Valores recebem `.private` para o blur. */
-export function MetricCard({ metric }: { metric: Metric }) {
-  const toneClass =
-    metric.tone === "blue"
-      ? "text-accent-blue"
-      : metric.tone === "green"
-        ? "text-accent-green-dark"
-        : "text-text-1";
+function cx(...parts: (string | false | undefined | null)[]) {
+  return parts.filter(Boolean).join(" ");
+}
 
+/** Cabeçalho de página (eyebrow + título + subtítulo) com slot à direita. */
+export function PageHead({
+  eyebrow,
+  title,
+  sub,
+  right,
+}: {
+  eyebrow: string;
+  title: string;
+  sub?: ReactNode;
+  right?: ReactNode;
+}) {
   return (
-    <div className="glass px-[1.4rem] pb-[1.5rem] pt-[1.35rem]">
-      <p className="mb-[14px] text-[13px] font-medium text-text-2">
-        {metric.label}
-      </p>
+    <div className="page-head">
+      <div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h1 className="page-title">{title}</h1>
+        {sub && <p className="page-sub">{sub}</p>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
+/** Pílula de status. tone "green" (padrão) ou "blue". */
+export function Pill({
+  children,
+  tone = "green",
+}: {
+  children: ReactNode;
+  tone?: "green" | "blue";
+}) {
+  return (
+    <span className={cx("pill", tone === "blue" && "blue")}>
+      <span className="pd" />
+      {children}
+    </span>
+  );
+}
+
+/** Cabeçalho de seção (título + subtítulo). */
+export function SectionHead({
+  title,
+  sub,
+  flush,
+}: {
+  title: string;
+  sub?: string;
+  flush?: boolean;
+}) {
+  return (
+    <div className={cx("section-head", flush && "flush")}>
+      <span className="section-title">{title}</span>
+      {sub && <span className="section-sub">{sub}</span>}
+    </div>
+  );
+}
+
+/** Cartão de métrica (glass). */
+export function MetricCard({ metric }: { metric: Metric }) {
+  return (
+    <div className="glass metric">
+      <p className="metric-label">{metric.label}</p>
       <p
-        className={`private text-[31px] font-semibold leading-[1.05] tracking-[-0.025em] ${toneClass}`}
+        className={cx(
+          "metric-value",
+          metric.tone,
+          metric.small && "sm",
+          metric.privateValue && "private",
+        )}
       >
         {metric.value}
       </p>
 
+      {metric.bar && (
+        <div
+          className={cx(
+            "metric-bar",
+            metric.bar.green && "green",
+            metric.privateValue && "private",
+          )}
+        >
+          <div style={{ width: `${metric.bar.pct}%` }} />
+        </div>
+      )}
+
       {metric.hint && (
         <p
-          className={`private mt-2 text-[13px] ${
-            metric.hintPositive
-              ? "font-semibold text-accent-green-dark"
-              : "text-text-3"
-          }`}
+          className={cx(
+            "metric-hint",
+            metric.hintTone,
+            metric.privateHint && "private",
+          )}
         >
           {metric.hint}
         </p>
-      )}
-
-      {typeof metric.barPct === "number" && (
-        <div className="private relative mt-4 h-[6px] overflow-hidden rounded-[var(--radius-pill)] bg-black/[0.06]">
-          <div
-            className="h-full rounded-[var(--radius-pill)] bg-[linear-gradient(90deg,var(--accent-blue),#5AB4FF)] [box-shadow:0_0_8px_rgba(0,122,255,0.4)]"
-            style={{ width: `${metric.barPct}%` }}
-          />
-        </div>
       )}
     </div>
   );
 }
 
-/** Cartão de lista (Top fornecedores / trechos). */
+/** Grade de métricas. */
+export function Metrics({ metrics }: { metrics: Metric[] }) {
+  return (
+    <section className="metrics">
+      {metrics.map((m) => (
+        <MetricCard key={m.label} metric={m} />
+      ))}
+    </section>
+  );
+}
+
+/** Cartão de lista (Top fornecedores / trechos), com rank automático. */
 export function ListCard({
   title,
   subtitle,
@@ -55,52 +128,37 @@ export function ListCard({
   items: ListItem[];
 }) {
   return (
-    <div className="glass px-[1.6rem] py-[1.5rem]">
-      <div className="mb-4 flex items-baseline justify-between">
-        <span className="text-[17px] font-semibold tracking-[-0.012em] text-text-1">
-          {title}
-        </span>
-        <span className="text-[13px] text-text-2">{subtitle}</span>
-      </div>
-      <div className="flex flex-col gap-[10px]">
+    <div className="glass card">
+      <SectionHead title={title} sub={subtitle} flush />
+      <div className="list" style={{ marginTop: 14 }}>
         {items.map((item, i) => (
-          <ListRow key={item.name} rank={i + 1} item={item} />
+          <div className="list-row" key={item.name}>
+            <span className="rank">{i + 1}</span>
+            <div className="list-main">
+              <div className={cx("list-name", item.mono && "mono")}>
+                {item.name}
+              </div>
+              <div className="list-meta">{item.meta}</div>
+            </div>
+            <div className="list-value private">{item.value}</div>
+          </div>
         ))}
       </div>
     </div>
   );
 }
 
-function ListRow({ rank, item }: { rank: number; item: ListItem }) {
+/** Badge colorida (status em tabelas). */
+export function Badge({
+  children,
+  tone,
+}: {
+  children: ReactNode;
+  tone: "green" | "orange" | "blue" | "gray";
+}) {
   return (
-    <div className="flex items-center gap-[14px] rounded-[var(--radius-md)] border border-white/60 bg-[rgba(255,255,255,0.55)] px-[14px] py-[13px] transition-[background,transform] duration-200 hover:-translate-y-px hover:bg-[rgba(255,255,255,0.75)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(0,0,0,0.03)]">
-      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[rgba(0,122,255,0.25)] bg-[rgba(0,122,255,0.12)] text-[12px] font-semibold text-accent-blue [box-shadow:inset_0_1px_0_rgba(255,255,255,0.7)]">
-        {rank}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p
-          className={`text-text-1 ${
-            item.mono
-              ? "font-mono text-[13px] tracking-[0.02em]"
-              : "text-[14.5px] font-medium"
-          }`}
-        >
-          {item.name}
-        </p>
-        <p className="private mt-[3px] text-[12px] text-text-3">{item.meta}</p>
-      </div>
-      <span className="private whitespace-nowrap text-[14.5px] font-semibold tracking-[-0.01em] text-text-1">
-        {item.value}
-      </span>
-    </div>
-  );
-}
-
-/** Pílula de status (ex.: "Tracking acima da meta"). */
-export function StatusPill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-[9px] rounded-[var(--radius-pill)] border border-[rgba(52,199,89,0.3)] bg-[rgba(52,199,89,0.16)] px-4 py-[9px] text-[13px] font-medium text-accent-green-dark backdrop-blur-[20px] backdrop-saturate-150 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(0,0,0,0.04)]">
-      <span className="h-[6px] w-[6px] rounded-full bg-accent-green [box-shadow:0_0_8px_rgba(52,199,89,0.8)]" />
+    <span className={cx("badge", tone)}>
+      <span className="bd" />
       {children}
     </span>
   );

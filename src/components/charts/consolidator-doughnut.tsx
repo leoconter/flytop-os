@@ -1,0 +1,51 @@
+"use client";
+
+import type { ChartData, ChartOptions, TooltipItem } from "chart.js";
+import { Doughnut } from "react-chartjs-2";
+import { consolidators } from "@/lib/interno-data";
+import { glassTooltip } from "./register";
+
+export function ConsolidatorDoughnut() {
+  const data: ChartData<"doughnut", number[], string> = {
+    labels: consolidators.map((c) => c.label),
+    datasets: [
+      {
+        data: consolidators.map((c) => c.value),
+        backgroundColor: consolidators.map((c) => c.color),
+        borderColor: "rgba(255, 255, 255, 0.6)",
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const options: ChartOptions<"doughnut"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: "62%",
+    plugins: {
+      legend: {
+        position: "right",
+        labels: {
+          boxWidth: 9,
+          boxHeight: 9,
+          usePointStyle: true,
+          pointStyle: "circle",
+          padding: 12,
+          font: { size: 12 },
+        },
+      },
+      tooltip: {
+        ...glassTooltip,
+        callbacks: {
+          label: (c: TooltipItem<"doughnut">) => `${c.label}: ${c.parsed}%`,
+        },
+      },
+    },
+  };
+
+  return (
+    <div className="chart-box sm">
+      <Doughnut data={data} options={options} />
+    </div>
+  );
+}

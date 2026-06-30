@@ -1,0 +1,138 @@
+import type { ReactNode } from "react";
+
+export interface NavItem {
+  key: string;
+  label: string;
+  /** Título exibido no breadcrumb da topbar. */
+  title: string;
+  href: string;
+  group: string;
+  badge?: string;
+  icon: ReactNode;
+}
+
+const sw = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+export const navItems: NavItem[] = [
+  {
+    key: "geral",
+    label: "Dashboard Geral",
+    title: "Dashboard Geral",
+    href: "/",
+    group: "Dashboards",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </svg>
+    ),
+  },
+  {
+    key: "interno",
+    label: "Dashboard Interno",
+    title: "Dashboard Interno",
+    href: "/interno",
+    group: "Dashboards",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <path d="M3 3v18h18" />
+        <path d="M7 14l4-4 3 3 5-6" />
+      </svg>
+    ),
+  },
+  {
+    key: "vendedor",
+    label: "Tela do Vendedor",
+    title: "Tela do Vendedor",
+    href: "/vendedor",
+    group: "Dashboards",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
+      </svg>
+    ),
+  },
+  {
+    key: "alertas",
+    label: "Alertas",
+    title: "Alertas",
+    href: "/alertas",
+    group: "Operação",
+    badge: "4",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+      </svg>
+    ),
+  },
+  {
+    key: "comunidade",
+    label: "Comunidade",
+    title: "Comunidade",
+    href: "/comunidade",
+    group: "Operação",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11" />
+      </svg>
+    ),
+  },
+  {
+    key: "jornada",
+    label: "Jornada de Compra",
+    title: "Jornada de Compra",
+    href: "/jornada",
+    group: "Operação",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3.5 2" />
+      </svg>
+    ),
+  },
+  {
+    key: "monde",
+    label: "Monde & Sincronização",
+    title: "Monde & Sincronização",
+    href: "/monde",
+    group: "Operação",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <ellipse cx="12" cy="5" rx="9" ry="3" />
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+        <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+      </svg>
+    ),
+  },
+  {
+    key: "ads",
+    label: "Métricas de Ads",
+    title: "Métricas de Ads",
+    href: "/ads",
+    group: "Marketing",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <path d="M3 11l16-6v14L3 13z" />
+        <path d="M3 11v2a3 3 0 0 0 3 3l1.5 4.5" />
+      </svg>
+    ),
+  },
+];
+
+/** Ordem dos grupos na sidebar. */
+export const navGroups = ["Dashboards", "Operação", "Marketing"];
+
+export function titleForPath(pathname: string): string {
+  const match = navItems.find((n) => n.href === pathname);
+  return match?.title ?? "Dashboard Geral";
+}

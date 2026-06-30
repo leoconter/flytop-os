@@ -111,29 +111,51 @@ export function buildSeries(): DashboardSeries {
 export interface Metric {
   label: string;
   value: string;
-  tone?: "blue" | "green";
+  tone?: "blue" | "green" | "red";
+  /** Fonte de valor menor (~22px), para textos como "Europa". */
+  small?: boolean;
   hint?: string;
-  hintPositive?: boolean;
-  /** Largura da barra de progresso (%), quando aplicável. */
-  barPct?: number;
+  hintTone?: "positive" | "negative";
+  /** Barra de progresso (0–100). green usa o gradiente verde. */
+  bar?: { pct: number; green?: boolean };
+  /** Borra o valor (e a barra) quando o modo privacidade está ligado. */
+  privateValue?: boolean;
+  /** Borra a dica quando o modo privacidade está ligado. */
+  privateHint?: boolean;
 }
 
 export const metrics: Metric[] = [
-  { label: "Faturamento atual", value: "R$ 1,32M", hint: "R$ 1.322.860 em 11 dias" },
-  { label: "% da meta", value: "37,8%", tone: "blue", barPct: 37.8 },
-  { label: "Ticket médio", value: "R$ 20.670", hint: "por venda" },
+  {
+    label: "Faturamento atual",
+    value: "R$ 1,32M",
+    hint: "R$ 1.322.860 em 11 dias",
+    privateValue: true,
+    privateHint: true,
+  },
+  {
+    label: "% da meta",
+    value: "37,8%",
+    tone: "blue",
+    bar: { pct: 37.8 },
+    privateValue: true,
+  },
+  { label: "Ticket médio", value: "R$ 20.670", hint: "por venda", privateValue: true },
   {
     label: "Média por dia útil",
     value: "R$ 199.904",
     hint: "+14% acima do necessário",
-    hintPositive: true,
+    hintTone: "positive",
+    privateValue: true,
+    privateHint: true,
   },
   {
     label: "Projeção fim de maio",
     value: "R$ 4,12M",
     tone: "green",
     hint: "+17,8% vs meta de R$ 3,5M",
-    hintPositive: true,
+    hintTone: "positive",
+    privateValue: true,
+    privateHint: true,
   },
 ];
 

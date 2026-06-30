@@ -48,7 +48,7 @@ export function PrivacyToggle() {
       onClick={toggle}
       aria-pressed={on}
       aria-label="Alternar visibilidade dos valores"
-      className="inline-flex select-none items-center gap-[7px] rounded-[var(--radius-pill)] border border-[var(--glass-border)] bg-[rgba(255,255,255,0.55)] px-[13px] py-[7px] text-[12px] font-medium text-text-2 backdrop-blur-[20px] backdrop-saturate-150 transition-colors hover:bg-[rgba(255,255,255,0.78)] hover:text-text-1 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(0,0,0,0.04)]"
+      className="blur-toggle"
     >
       {on ? <EyeOffIcon /> : <EyeIcon />}
       {on ? "Mostrar valores" : "Ocultar valores"}

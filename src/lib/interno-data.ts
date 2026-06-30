@@ -1,0 +1,70 @@
+/**
+ * Dados ilustrativos do Dashboard Interno (visão dos sócios).
+ * Portado do preview da Fase 1.
+ */
+import type { Metric } from "./dashboard-data";
+
+export const internoMetrics: Metric[] = [
+  {
+    label: "Receita no mês",
+    value: "R$ 1,32M",
+    hint: "64 vendas emitidas",
+    privateValue: true,
+    privateHint: true,
+  },
+  { label: "Ticket médio", value: "R$ 20.670", hint: "por venda", privateValue: true },
+  {
+    label: "Tempo médio até a compra",
+    value: "42 dias",
+    tone: "blue",
+    hint: "da entrada na comunidade à 1ª compra",
+  },
+  {
+    label: "Vendas / dia útil",
+    value: "8,0",
+    hint: "+12% vs abril",
+    hintTone: "positive",
+  },
+];
+
+export interface MonthlyRevenue {
+  labels: string[];
+  values: number[];
+  /** Índice da barra destacada (mês parcial). */
+  highlightIndex: number;
+}
+
+export const revenueByMonth: MonthlyRevenue = {
+  labels: ["dez", "jan", "fev", "mar", "abr", "mai*"],
+  values: [3_420_000, 2_980_000, 3_510_000, 4_020_000, 3_770_000, 1_322_860],
+  highlightIndex: 5,
+};
+
+export interface ConsolidatorSlice {
+  label: string;
+  value: number; // participação (%)
+  color: string;
+}
+
+export const consolidators: ConsolidatorSlice[] = [
+  { label: "Trend", value: 30, color: "#007AFF" },
+  { label: "Flytour", value: 22, color: "#5E5CE6" },
+  { label: "BWT", value: 18, color: "#34C759" },
+  { label: "Agaxtur", value: 15, color: "#FF9500" },
+  { label: "Direta", value: 15, color: "#32ADE6" },
+];
+
+export interface ConsolidatorRow {
+  name: string;
+  sales: number;
+  revenue: string;
+  share: string;
+}
+
+export const consolidatorRows: ConsolidatorRow[] = [
+  { name: "Trend Operadora", sales: 19, revenue: "R$ 396.858", share: "30,0%" },
+  { name: "Flytour", sales: 14, revenue: "R$ 291.029", share: "22,0%" },
+  { name: "BWT Operadora", sales: 12, revenue: "R$ 238.115", share: "18,0%" },
+  { name: "Agaxtur", sales: 10, revenue: "R$ 198.429", share: "15,0%" },
+  { name: "Emissão direta", sales: 9, revenue: "R$ 198.429", share: "15,0%" },
+];
