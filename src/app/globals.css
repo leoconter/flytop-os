@@ -140,3 +140,28 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .orb { animation: none; }
 }
+
+/* ----------------------------------------------------------------------------
+   Privacidade — `body.blur-on` borra valores sensíveis (.private) e o gráfico
+   (.chart-box). Hover revela. Controlado pelo componente PrivacyToggle.
+   ---------------------------------------------------------------------------- */
+.private,
+.chart-box {
+  transition: filter 0.35s ease;
+}
+body.blur-on .private {
+  filter: blur(9px);
+  user-select: none;
+}
+body.blur-on .private:hover {
+  filter: blur(0);
+  transition: filter 0.15s ease;
+}
+body.blur-on .chart-box {
+  filter: blur(10px);
+  user-select: none;
+}
+body.blur-on .chart-box:hover {
+  filter: blur(0);
+  transition: filter 0.2s ease;
+}

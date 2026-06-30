@@ -32,15 +32,23 @@ export default function Home() {
             <span className="text-[13px] text-text-2">preview estático</span>
           </div>
           <p className="mt-2 text-[14px] text-text-2">
-            HTML standalone original (Chart.js, glass, toggle de privacidade).
-            Ainda não portado para React.
+            Disponível em duas formas: o HTML standalone original e a versão
+            portada para componentes React (Chart.js via react-chartjs-2).
           </p>
-          <a
-            href="/preview/dashboard-maio.html"
-            className="mt-5 inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[rgba(0,122,255,0.25)] bg-[rgba(0,122,255,0.12)] px-4 py-2 text-[13px] font-medium text-accent-blue transition-colors hover:bg-[rgba(0,122,255,0.2)]"
-          >
-            Abrir preview →
-          </a>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <a
+              href="/dashboard"
+              className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[rgba(0,122,255,0.25)] bg-[rgba(0,122,255,0.12)] px-4 py-2 text-[13px] font-medium text-accent-blue transition-colors hover:bg-[rgba(0,122,255,0.2)]"
+            >
+              Abrir dashboard (React) →
+            </a>
+            <a
+              href="/preview/dashboard-maio.html"
+              className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-white/70 bg-[rgba(255,255,255,0.55)] px-4 py-2 text-[13px] font-medium text-text-2 transition-colors hover:text-text-1"
+            >
+              Preview estático (HTML) →
+            </a>
+          </div>
         </div>
 
         {/* Amostra da paleta accent */}
