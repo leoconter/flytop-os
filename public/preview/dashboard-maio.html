@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlyTop · maio 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --text-1: #1d1d1f;
+    --text-2: #6e6e73;
+    --text-3: #86868b;
+    --glass: rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.7);
+    --accent-blue: #007AFF;
+    --accent-blue-dark: #0056CC;
+    --accent-green: #34C759;
+    --accent-green-dark: #248A3D;
+    --accent-orange: #FF9500;
+    --radius-xl: 24px;
+    --radius-lg: 18px;
+    --radius-md: 14px;
+    --radius-pill: 999px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01";
+    font-variant-numeric: tabular-nums;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .orbs {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(110px);
+    will-change: transform;
+  }
+  .orb-1 { background: #5E5CE6; width: 620px; height: 620px; top: -180px; left: -140px; opacity: 0.32; animation: drift1 26s ease-in-out infinite; }
+  .orb-2 { background: #32ADE6; width: 520px; height: 520px; top: 28%; right: -200px; opacity: 0.36; animation: drift2 30s ease-in-out infinite; }
+  .orb-3 { background: #FF2D55; width: 460px; height: 460px; bottom: -180px; left: 22%; opacity: 0.22; animation: drift3 34s ease-in-out infinite; }
+  .orb-4 { background: #34C759; width: 360px; height: 360px; top: 60%; left: 8%; opacity: 0.22; animation: drift4 28s ease-in-out infinite; }
+  .orb-5 { background: #FF9F0A; width: 300px; height: 300px; top: 8%; right: 20%; opacity: 0.24; animation: drift5 32s ease-in-out infinite; }
+
+  @keyframes drift1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(70px, 90px); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-60px, -50px); } }
+  @keyframes drift3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(50px, -70px); } }
+  @keyframes drift4 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-40px, 60px); } }
+  @keyframes drift5 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px, 40px); } }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.025;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .container {
+    position: relative;
+    z-index: 2;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .glass {
+    position: relative;
+    background: var(--glass);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+      inset 0 0 0 0.5px rgba(255, 255, 255, 0.4),
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 8px 32px rgba(0, 0, 0, 0.06),
+      0 24px 48px rgba(0, 0, 0, 0.04);
+    transition: background 0.35s ease, transform 0.35s ease;
+  }
+  .glass::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.25rem;
+  }
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+  }
+  .title {
+    font-size: 40px;
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.05;
+    color: var(--text-1);
+  }
+  .sub {
+    font-size: 15px;
+    color: var(--text-2);
+    margin-top: 10px;
+  }
+  .sub b { color: var(--text-1); font-weight: 600; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px;
+    border-radius: var(--radius-pill);
+    background: rgba(52, 199, 89, 0.16);
+    border: 1px solid rgba(52, 199, 89, 0.3);
+    color: var(--accent-green-dark);
+    font-size: 13px;
+    font-weight: 500;
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 8px rgba(52, 199, 89, 0.8);
+  }
+
+  /* Privacy toggle */
+  .header-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+  .blur-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.25s ease, color 0.25s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+  .blur-toggle:hover {
+    background: rgba(255, 255, 255, 0.78);
+    color: var(--text-1);
+  }
+  .blur-toggle svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .blur-toggle .icon-off,
+  .blur-toggle .label-show { display: none; }
+  body.blur-on .blur-toggle .icon-on,
+  body.blur-on .blur-toggle .label-hide { display: none; }
+  body.blur-on .blur-toggle .icon-off,
+  body.blur-on .blur-toggle .label-show { display: inline-flex; }
+
+  /* Blur-able number elements */
+  .private { transition: filter 0.35s ease; }
+  body.blur-on .private {
+    filter: blur(9px);
+    user-select: none;
+  }
+  body.blur-on .private:hover {
+    filter: blur(0);
+    transition: filter 0.15s ease;
+  }
+
+  /* Chart canvas blurs as a whole */
+  .chart-box { transition: filter 0.35s ease; }
+  body.blur-on .chart-box {
+    filter: blur(10px);
+    user-select: none;
+  }
+  body.blur-on .chart-box:hover {
+    filter: blur(0);
+    transition: filter 0.2s ease;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+  .metric { padding: 1.35rem 1.4rem 1.5rem; }
+  .metric-label {
+    font-size: 13px;
+    color: var(--text-2);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .metric-value {
+    font-size: 31px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    color: var(--text-1);
+  }
+  .metric-value.blue { color: var(--accent-blue); }
+  .metric-value.green { color: var(--accent-green-dark); }
+  .metric-hint {
+    font-size: 13px;
+    color: var(--text-3);
+    margin-top: 8px;
+  }
+  .metric-hint b { color: var(--text-2); font-weight: 600; }
+  .metric-hint.positive { color: var(--accent-green-dark); font-weight: 600; }
+  .metric-bar {
+    margin-top: 16px;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    position: relative;
+  }
+  .metric-bar > div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), #5AB4FF);
+    box-shadow: 0 0 8px rgba(0, 122, 255, 0.4);
+    border-radius: var(--radius-pill);
+  }
+
+  .section { margin-bottom: 1.5rem; }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.9rem;
+    padding: 0 6px;
+  }
+  .section-title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    color: var(--text-1);
+  }
+  .section-sub {
+    font-size: 13px;
+    color: var(--text-2);
+  }
+
+  .chart-card { padding: 1.5rem 1.6rem 1.25rem; }
+  .chart-box { position: relative; width: 100%; height: 320px; }
+  .chart-legend {
+    display: flex;
+    gap: 22px;
+    margin-bottom: 1.1rem;
+    padding: 0 4px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+  .legend-line {
+    display: inline-block;
+    width: 22px;
+    height: 3px;
+    border-radius: 2px;
+  }
+  .legend-line.solid-blue { background: var(--accent-blue); }
+  .legend-line.dashed-blue {
+    height: 2px;
+    background: repeating-linear-gradient(to right, var(--accent-blue) 0, var(--accent-blue) 5px, transparent 5px, transparent 10px);
+    opacity: 0.6;
+    border-radius: 0;
+  }
+  .legend-line.dashed-green {
+    height: 2px;
+    background: repeating-linear-gradient(to right, var(--accent-green) 0, var(--accent-green) 5px, transparent 5px, transparent 10px);
+    border-radius: 0;
+  }
+  .legend-line.dashed-amber {
+    height: 2px;
+    background: repeating-linear-gradient(to right, var(--accent-orange) 0, var(--accent-orange) 5px, transparent 5px, transparent 10px);
+    border-radius: 0;
+  }
+
+  .grid-two {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+  .list-card { padding: 1.5rem 1.6rem; }
+  .list-card .section-head {
+    margin-bottom: 1rem;
+    padding: 0;
+  }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .list-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 14px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius-md);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: background 0.25s ease, transform 0.2s ease;
+  }
+  .list-row:hover {
+    background: rgba(255, 255, 255, 0.75);
+    transform: translateY(-1px);
+  }
+  .rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 122, 255, 0.12);
+    border: 1px solid rgba(0, 122, 255, 0.25);
+    color: var(--accent-blue);
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+  .list-main { flex: 1; min-width: 0; }
+  .list-name {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--text-1);
+  }
+  .list-name.mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+  .list-meta {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 3px;
+  }
+  .list-value {
+    font-size: 14.5px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    color: var(--text-1);
+  }
+
+  .footer {
+    margin-top: 2.25rem;
+    padding: 1.25rem 6px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 1.5rem 1rem 2.5rem; }
+    .title { font-size: 30px; }
+    .metric-value { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+  <div class="orb orb-5"></div>
+</div>
+
+<div class="container">
+
+  <header class="header">
+    <div>
+      <p class="eyebrow">Relatório mensal</p>
+      <h1 class="title">FlyTop · maio 2026</h1>
+      <p class="sub"><b>64 vendas</b> · faturamento até 11/05: <b>R$ 1,32M</b></p>
+    </div>
+    <div class="header-actions">
+      <button class="blur-toggle" id="blurToggle" aria-label="Alternar visibilidade dos valores" type="button">
+        <svg class="icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <svg class="icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+        <span class="label-hide">Ocultar valores</span>
+        <span class="label-show">Mostrar valores</span>
+      </button>
+      <span class="pill">
+        <span class="pill-dot"></span>
+        Tracking acima da meta
+      </span>
+    </div>
+  </header>
+
+  <section class="metrics">
+    <div class="glass metric">
+      <p class="metric-label">Faturamento atual</p>
+      <p class="metric-value">R$ 1,32M</p>
+      <p class="metric-hint">R$ 1.322.860 em 11 dias</p>
+    </div>
+    <div class="glass metric">
+      <p class="metric-label">% da meta</p>
+      <p class="metric-value blue">37,8%</p>
+      <div class="metric-bar"><div style="width: 37.8%;"></div></div>
+    </div>
+    <div class="glass metric">
+      <p class="metric-label">Ticket médio</p>
+      <p class="metric-value">R$ 20.670</p>
+      <p class="metric-hint">por venda</p>
+    </div>
+    <div class="glass metric">
+      <p class="metric-label">Média por dia útil</p>
+      <p class="metric-value">R$ 199.904</p>
+      <p class="metric-hint positive">+14% acima do necessário</p>
+    </div>
+    <div class="glass metric">
+      <p class="metric-label">Projeção fim de maio</p>
+      <p class="metric-value green">R$ 4,12M</p>
+      <p class="metric-hint positive">+17,8% vs meta de R$ 3,5M</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">Faturamento acumulado</span>
+      <span class="section-sub">maio 2026 · pace baseado em dias úteis</span>
+    </div>
+    <div class="glass chart-card">
+      <div class="chart-legend">
+        <span class="legend-item">
+          <span class="legend-line solid-blue"></span>
+          Realizado
+        </span>
+        <span class="legend-item">
+          <span class="legend-line dashed-blue"></span>
+          Projeção (pace)
+        </span>
+        <span class="legend-item">
+          <span class="legend-line dashed-amber"></span>
+          Necessidade
+        </span>
+        <span class="legend-item">
+          <span class="legend-line dashed-green"></span>
+          Meta · R$ 3,5M
+        </span>
+      </div>
+      <div class="chart-box">
+        <canvas id="dailyChart" role="img" aria-label="Faturamento acumulado de maio de 2026 com projeção"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid-two">
+
+    <div class="glass list-card">
+      <div class="section-head">
+        <span class="section-title">Top 3 fornecedores</span>
+        <span class="section-sub">por receita</span>
+      </div>
+      <div class="list">
+        <div class="list-row">
+          <span class="rank">1</span>
+          <div class="list-main">
+            <p class="list-name">LATAM Airlines Brasil</p>
+            <p class="list-meta">19,8% do faturamento</p>
+          </div>
+          <span class="list-value">R$ 261.359</span>
+        </div>
+        <div class="list-row">
+          <span class="rank">2</span>
+          <div class="list-main">
+            <p class="list-name">United Airlines</p>
+            <p class="list-meta">16,2% do faturamento</p>
+          </div>
+          <span class="list-value">R$ 214.142</span>
+        </div>
+        <div class="list-row">
+          <span class="rank">3</span>
+          <div class="list-main">
+            <p class="list-name">Qatar Airways</p>
+            <p class="list-meta">11,6% do faturamento</p>
+          </div>
+          <span class="list-value">R$ 153.718</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass list-card">
+      <div class="section-head">
+        <span class="section-title">Top 5 trechos</span>
+        <span class="section-sub">por receita</span>
+      </div>
+      <div class="list">
+        <div class="list-row">
+          <span class="rank">1</span>
+          <div class="list-main">
+            <p class="list-name mono">GRU-DOH-ATH-DOH-GRU</p>
+            <p class="list-meta">5 vendas</p>
+          </div>
+          <span class="list-value">R$ 153.718</span>
+        </div>
+        <div class="list-row">
+          <span class="rank">2</span>
+          <div class="list-main">
+            <p class="list-name mono">GRU-MIA-GRU</p>
+            <p class="list-meta">7 vendas</p>
+          </div>
+          <span class="list-value">R$ 107.420</span>
+        </div>
+        <div class="list-row">
+          <span class="rank">3</span>
+          <div class="list-main">
+            <p class="list-name mono">GRU-MCO-GRU</p>
+            <p class="list-meta">2 vendas</p>
+          </div>
+          <span class="list-value">R$ 78.788</span>
+        </div>
+        <div class="list-row">
+          <span class="rank">4</span>
+          <div class="list-main">
+            <p class="list-name mono">GRU-PTY-CUN-PTY-GRU</p>
+            <p class="list-meta">1 venda</p>
+          </div>
+          <span class="list-value">R$ 74.800</span>
+        </div>
+        <div class="list-row">
+          <span class="rank">5</span>
+          <div class="list-main">
+            <p class="list-name mono">GRU-FCO-GRU</p>
+            <p class="list-meta">3 vendas</p>
+          </div>
+          <span class="list-value">R$ 74.680</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <footer class="footer">
+    <span>Fonte: FlyTop_Maio.xlsx · dados até 11/05</span>
+    <span>Atualizado em 12/05/2026</span>
+  </footer>
+
+</div>
+
+<script>
+// Privacy toggle: blurs financial values and the chart
+(function(){
+  const SELECTORS = [".sub b", ".metric-value", ".metric-hint", ".metric-bar", ".list-value", ".list-meta"];
+  SELECTORS.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => el.classList.add("private"));
+  });
+
+  if (localStorage.getItem("flytop-blur") === "on") {
+    document.body.classList.add("blur-on");
+  }
+
+  const btn = document.getElementById("blurToggle");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      const isOn = document.body.classList.toggle("blur-on");
+      localStorage.setItem("flytop-blur", isOn ? "on" : "off");
+    });
+  }
+})();
+</script>
+
+<script>
+(function(){
+  // May has 31 days, data goes through day 11
+  const LAST_DAY = 11;
+  const DAYS_IN_MAY = 31;
+  const META = 3500000;
+  const days = Array.from({length: DAYS_IN_MAY}, (_, i) => i + 1);
+
+  // Real daily values for May (after excluding the spreadsheet total row)
+  const daily = {1:53840.00, 2:45717.85, 4:262966.72, 5:140310.52, 6:258033.46, 7:210375.45, 8:183048.47, 9:23880.00, 11:144687.96};
+
+  // Cumulative through LAST_DAY, then nulls for remaining days
+  let running = 0;
+  const cumulative = [];
+  for (let d = 1; d <= DAYS_IN_MAY; d++) {
+    if (d <= LAST_DAY) {
+      running += (daily[d] || 0);
+      cumulative.push(running);
+    } else {
+      cumulative.push(null);
+    }
+  }
+
+  // Daily average from business days only (Mon-Fri, excluding holidays)
+  const HOLIDAYS_MAY_2026 = [1]; // Dia do Trabalho (1º de maio)
+  function isBusinessDay(day) {
+    const dt = new Date(2026, 4, day); // May = month index 4
+    const dow = dt.getDay(); // 0 = Sunday, 6 = Saturday
+    if (dow === 0 || dow === 6) return false;
+    if (HOLIDAYS_MAY_2026.indexOf(day) !== -1) return false;
+    return true;
+  }
+
+  let bizSum = 0, bizCount = 0;
+  for (let d = 1; d <= LAST_DAY; d++) {
+    if (isBusinessDay(d)) {
+      bizSum += (daily[d] || 0);
+      bizCount++;
+    }
+  }
+  const avgPerBusinessDay = bizSum / bizCount;
+
+  // Necessity line: required cumulative per business day to hit META by month end
+  let totalBizDays = 0;
+  for (let d = 1; d <= DAYS_IN_MAY; d++) {
+    if (isBusinessDay(d)) totalBizDays++;
+  }
+  const requiredPerBizDay = META / totalBizDays;
+
+  const necessity = [];
+  let needCum = 0;
+  for (let d = 1; d <= DAYS_IN_MAY; d++) {
+    if (isBusinessDay(d)) needCum += requiredPerBizDay;
+    necessity.push(needCum);
+  }
+
+  // Pace line: staircase that steps up only on business days
+  const pace = [];
+  for (let d = 1; d <= DAYS_IN_MAY; d++) {
+    if (d < LAST_DAY) {
+      pace.push(null);
+    } else if (d === LAST_DAY) {
+      pace.push(cumulative[LAST_DAY - 1]); // anchor where actual ends
+    } else {
+      const prev = pace[pace.length - 1];
+      pace.push(isBusinessDay(d) ? prev + avgPerBusinessDay : prev);
+    }
+  }
+
+  // Flat meta reference line
+  const metaLine = Array(DAYS_IN_MAY).fill(META);
+
+  const canvas = document.getElementById("dailyChart");
+  const ctx = canvas.getContext("2d");
+
+  const fillGrad = ctx.createLinearGradient(0, 0, 0, 320);
+  fillGrad.addColorStop(0, "rgba(0, 122, 255, 0.22)");
+  fillGrad.addColorStop(0.7, "rgba(0, 122, 255, 0.05)");
+  fillGrad.addColorStop(1, "rgba(0, 122, 255, 0)");
+
+  // Plugin: subtle vertical bands behind non-business day columns
+  const weekendBandPlugin = {
+    id: "weekendBand",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      const xScale = scales.x;
+      // For a category scale with N labels (offset:false), the spacing between
+      // adjacent ticks is totalWidth / (N - 1). Each band is one full spacing
+      // wide, centered on its day, so adjacent bands meet exactly at the midpoint.
+      const tickSpacing = (xScale.right - xScale.left) / (DAYS_IN_MAY - 1);
+      const halfSlot = tickSpacing / 2;
+      ctx.save();
+      ctx.fillStyle = "rgba(15, 27, 44, 0.04)";
+      for (let d = 1; d <= DAYS_IN_MAY; d++) {
+        if (!isBusinessDay(d)) {
+          // getPixelForTick uses 0-based index, so day d → tick d-1
+          const centerX = xScale.getPixelForTick(d - 1);
+          ctx.fillRect(centerX - halfSlot, chartArea.top, tickSpacing, chartArea.bottom - chartArea.top);
+        }
+      }
+      ctx.restore();
+    }
+  };
+
+  new Chart(canvas, {
+    type: "line",
+    plugins: [weekendBandPlugin],
+    data: {
+      labels: days,
+      datasets: [
+        {
+          label: "Realizado",
+          data: cumulative,
+          borderColor: "#007AFF",
+          borderWidth: 2.5,
+          backgroundColor: fillGrad,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: "#007AFF",
+          pointBorderColor: "#FFFFFF",
+          pointBorderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointHoverBorderWidth: 3,
+          pointHoverBackgroundColor: "#007AFF",
+          pointHoverBorderColor: "#FFFFFF",
+          spanGaps: false,
+          order: 4
+        },
+        {
+          label: "Projeção (pace)",
+          data: pace,
+          borderColor: "rgba(0, 122, 255, 0.55)",
+          borderWidth: 2,
+          borderDash: [6, 6],
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBorderWidth: 2,
+          pointHoverBackgroundColor: "rgba(0, 122, 255, 0.7)",
+          pointHoverBorderColor: "#FFFFFF",
+          spanGaps: false,
+          order: 3
+        },
+        {
+          label: "Meta",
+          data: metaLine,
+          borderColor: "rgba(52, 199, 89, 0.8)",
+          borderWidth: 2,
+          borderDash: [6, 6],
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          order: 1
+        },
+        {
+          label: "Necessidade",
+          data: necessity,
+          borderColor: "rgba(255, 149, 0, 0.85)",
+          borderWidth: 2,
+          borderDash: [6, 6],
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBorderWidth: 2,
+          pointHoverBackgroundColor: "rgba(255, 149, 0, 1)",
+          pointHoverBorderColor: "#FFFFFF",
+          order: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          titleColor: "rgba(110, 110, 115, 1)",
+          bodyColor: "#1d1d1f",
+          footerColor: "rgba(36, 138, 61, 0.95)",
+          borderColor: "rgba(0, 0, 0, 0.08)",
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 12,
+          displayColors: false,
+          titleFont: { size: 12, weight: "500", family: "Inter" },
+          bodyFont: { size: 14, weight: "600", family: "Inter" },
+          footerFont: { size: 12, weight: "600", family: "Inter" },
+          filter: (item) => item.datasetIndex !== 2, // hide flat meta line from tooltip
+          callbacks: {
+            title: (items) => "Dia " + items[0].label + " de maio",
+            label: (c) => {
+              let prefix;
+              if (c.datasetIndex === 0) prefix = "Realizado: ";
+              else if (c.datasetIndex === 1) prefix = "Projeção: ";
+              else if (c.datasetIndex === 3) prefix = "Necessidade: ";
+              else return null;
+              return prefix + "R$ " + Math.round(c.parsed.y).toLocaleString("pt-BR");
+            },
+            footer: (items) => {
+              const v = items[0].parsed.y;
+              return Math.round(v / META * 100) + "% da meta";
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            autoSkip: false,
+            font: { size: 10, family: "Inter" },
+            color: (ctx) => {
+              const day = parseInt(ctx.tick.label, 10);
+              return !isNaN(day) && isBusinessDay(day) ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.22)";
+            }
+          },
+          grid: { display: false },
+          border: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          suggestedMax: META * 1.2,
+          ticks: {
+            callback: (v) => v === 0 ? "0" : v >= 1000000 ? "R$ " + (v/1000000).toFixed(1) + "M" : "R$ " + (v/1000).toFixed(0) + "k",
+            font: { size: 10, family: "Inter" },
+            color: "rgba(0,0,0,0.45)",
+            padding: 8
+          },
+          grid: { color: "rgba(0,0,0,0.06)", drawTicks: false },
+          border: { display: false }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

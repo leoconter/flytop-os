@@ -1,5 +1,5 @@
 {
-  "name": "flytop-os-scaffold",
+  "name": "flytop-os",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,8 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.0",
+    "chart.js": "^4.5.1",
     "next": "16.2.9",
     "react": "19.2.4",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
