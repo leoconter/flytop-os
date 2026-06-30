@@ -179,3 +179,32 @@ export const routes: ListItem[] = [
   { name: "GRU-PTY-CUN-PTY-GRU", meta: "1 venda", value: "R$ 74.800", mono: true },
   { name: "GRU-FCO-GRU", meta: "3 vendas", value: "R$ 74.680", mono: true },
 ];
+
+/* --------------------------- Tela de TV (Geral) ----------------------------
+   Cards extras usados só na visão de TV do escritório. Dados ilustrativos. */
+
+/** KPIs grandes da TV: Faturamento, % da meta, Ticket médio, Projeção. */
+export const geralKpis: Metric[] = [metrics[0], metrics[1], metrics[2], metrics[4]];
+
+export interface TeamSales {
+  name: string;
+  meta: string;
+  value: string;
+}
+export const teams: TeamSales[] = [
+  { name: "Equipe Antônio", meta: "34 vendas", value: "R$ 706.040" },
+  { name: "Equipe Matheus", meta: "30 vendas", value: "R$ 616.820" },
+];
+
+/** Classes mais vendidas, da mais para a menos vendida. */
+export const salesClasses: ListItem[] = [
+  { name: "Executiva", meta: "41 vendas", value: "64%" },
+  { name: "First", meta: "14 vendas", value: "22%" },
+  { name: "Premium Economy", meta: "9 vendas", value: "14%" },
+];
+
+/** Alertas enviados às comunidades no mês, por região. */
+export const alertsByRegion = { sp: 79, rj: 8, total: 87 };
+
+/** Total de membros nas comunidades. */
+export const communityMembers = { total: "77.769", hint: "em 45 comunidades" };

@@ -400,6 +400,79 @@ td .mono, .mono-cell { font-family: var(--font-mono); font-size: 12.5px; letter-
 .foot-note { margin-top: 24px; padding: 14px 6px 0; border-top: 1px solid rgba(0, 0, 0, 0.06); font-size: 12px; color: var(--text-3); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 
 /* ============================================================================
+   Tela de TV / kiosk (Dashboard Geral) — dobra única, sem scroll
+   ============================================================================ */
+/* O .content normal limita largura e rola; na TV usamos altura cheia e nada de scroll. */
+.content:has(.tv-screen) { max-width: none; height: 100%; padding: 14px 22px 16px; }
+.main:has(.tv-screen) { overflow: hidden; }
+.main:has(.tv-screen) .content { flex: 1; min-height: 0; }
+
+/* Modo TV: esconde a sidebar. */
+body.tv-mode .sidebar { display: none; }
+
+.tv-screen { height: 100%; display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 12px; }
+
+.tv-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.tv-head .page-title { font-size: 26px; }
+.tv-head .tv-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+.tv-head .tv-sub b { color: var(--text-1); font-weight: 600; }
+.tv-head-actions { display: flex; align-items: center; gap: 10px; }
+
+.tv-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tv-screen .metric { padding: 12px 16px 14px; }
+.tv-screen .metric-label { margin-bottom: 8px; font-size: 12.5px; }
+.tv-screen .metric-value { font-size: 27px; }
+.tv-screen .metric-bar { margin-top: 10px; }
+
+.tv-main { display: grid; grid-template-columns: 1fr 1.55fr 1fr; gap: 12px; min-height: 0; }
+.tv-col { display: grid; gap: 12px; min-height: 0; }
+.tv-col.left { grid-template-rows: 1fr 1fr; }
+.tv-col.center { grid-template-rows: minmax(0, 1fr) auto; }
+
+.tv-screen .card,
+.tv-screen .chart-card { padding: 13px 15px; min-height: 0; display: flex; flex-direction: column; }
+.tv-screen .section-head { margin-bottom: 8px; }
+.tv-screen .section-title { font-size: 14.5px; }
+.tv-screen .section-sub { font-size: 12px; }
+.tv-screen .list { gap: 6px; margin-top: 0 !important; flex: 1; }
+.tv-screen .list-row { padding: 8px 11px; }
+.tv-screen .list-name { font-size: 13px; }
+.tv-screen .list-name.mono { font-size: 12px; }
+.tv-screen .list-meta { font-size: 11px; margin-top: 1px; }
+.tv-screen .list-value { font-size: 13px; }
+.tv-screen .rank { width: 24px; height: 24px; font-size: 11px; }
+
+/* gráfico central preenche a altura disponível */
+.tv-chart { flex: 1; min-height: 0; }
+.tv-chart .chart-box { height: 100%; }
+.tv-screen .chart-legend { margin-bottom: 8px; gap: 16px; }
+
+/* faixa de stat cards (equipe / alertas / membros) */
+.tv-stats { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; }
+.tv-stat { padding: 11px 14px; }
+.tv-stat .tl { font-size: 12px; color: var(--text-2); margin-bottom: 8px; font-weight: 500; }
+.tv-stat .tv-rows { display: flex; flex-direction: column; gap: 5px; }
+.tv-stat .tv-line { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tv-stat .tv-line .k { font-size: 12.5px; color: var(--text-2); }
+.tv-stat .tv-line .v { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.tv-stat .big { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
+.tv-stat .big.blue { color: var(--accent-blue); }
+.tv-stat .big.green { color: var(--accent-green-dark); }
+.tv-stat .sub { font-size: 11.5px; color: var(--text-3); margin-top: 6px; }
+
+@media (max-width: 1100px) {
+  /* fora de uma TV grande, libera o scroll para não cortar conteúdo */
+  .main:has(.tv-screen) { overflow-y: auto; }
+  .content:has(.tv-screen) { height: auto; }
+  .main:has(.tv-screen) .content { flex: initial; }
+  .tv-screen { height: auto; }
+  .tv-kpis { grid-template-columns: repeat(2, 1fr); }
+  .tv-main { grid-template-columns: 1fr; }
+  .tv-col.left, .tv-col.center { grid-template-rows: none; }
+  .tv-chart .chart-box { height: 240px; }
+}
+
+/* ============================================================================
    Responsivo
    ============================================================================ */
 @media (max-width: 900px) {
