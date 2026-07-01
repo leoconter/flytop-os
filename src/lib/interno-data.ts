@@ -2,20 +2,29 @@
  * Dados ilustrativos do Dashboard Interno (visão dos sócios).
  * Portado do preview da Fase 1.
  */
-import type { ListItem, Metric } from "./dashboard-data";
+import type { Metric } from "./dashboard-data";
 
-// KPIs do Interno: reaproveitados do Geral, sem meta/projeção (essas dependem
-// do mês fechado; aqui filtramos por data), + número de vendas.
 export const internoMetrics: Metric[] = [
   {
-    label: "Faturamento",
+    label: "Receita no mês",
     value: "R$ 1,32M",
-    hint: "R$ 1.322.860 no período",
+    hint: "64 vendas emitidas",
     privateValue: true,
     privateHint: true,
   },
   { label: "Ticket médio", value: "R$ 20.670", hint: "por venda", privateValue: true },
-  { label: "Número de vendas", value: "64", hint: "emitidas no período" },
+  {
+    label: "Tempo médio até a compra",
+    value: "42 dias",
+    tone: "blue",
+    hint: "da entrada na comunidade à 1ª compra",
+  },
+  {
+    label: "Vendas / dia útil",
+    value: "8,0",
+    hint: "+12% vs abril",
+    hintTone: "positive",
+  },
 ];
 
 export interface MonthlyRevenue {
@@ -51,29 +60,6 @@ export interface ConsolidatorRow {
   revenue: string;
   share: string;
 }
-
-/** Lista completa de companhias por receita (Interno). */
-export const companiesList: ListItem[] = [
-  { name: "LATAM Airlines Brasil", meta: "19,8% do faturamento", value: "R$ 261.359" },
-  { name: "United Airlines", meta: "16,2% do faturamento", value: "R$ 214.142" },
-  { name: "Qatar Airways", meta: "11,6% do faturamento", value: "R$ 153.718" },
-  { name: "TAP Air Portugal", meta: "9,4% do faturamento", value: "R$ 124.349" },
-  { name: "American Airlines", meta: "8,1% do faturamento", value: "R$ 107.152" },
-  { name: "Air France", meta: "6,7% do faturamento", value: "R$ 88.632" },
-  { name: "ITA Airways", meta: "5,2% do faturamento", value: "R$ 68.789" },
-];
-
-/** Lista completa de destinos/trechos por receita (Interno). */
-export const routesList: ListItem[] = [
-  { name: "GRU-DOH-ATH-DOH-GRU", meta: "5 vendas", value: "R$ 153.718", mono: true },
-  { name: "GRU-MIA-GRU", meta: "7 vendas", value: "R$ 107.420", mono: true },
-  { name: "GRU-MCO-GRU", meta: "2 vendas", value: "R$ 78.788", mono: true },
-  { name: "GRU-PTY-CUN-PTY-GRU", meta: "1 venda", value: "R$ 74.800", mono: true },
-  { name: "GRU-FCO-GRU", meta: "3 vendas", value: "R$ 74.680", mono: true },
-  { name: "GRU-LIS-GRU", meta: "4 vendas", value: "R$ 68.200", mono: true },
-  { name: "GRU-CDG-GRU", meta: "3 vendas", value: "R$ 61.540", mono: true },
-  { name: "GRU-JFK-GRU", meta: "2 vendas", value: "R$ 52.900", mono: true },
-];
 
 export const consolidatorRows: ConsolidatorRow[] = [
   { name: "Trend Operadora", sales: 19, revenue: "R$ 396.858", share: "30,0%" },

@@ -26,12 +26,6 @@ const daily: Record<number, number> = {
   11: 144687.96,
 };
 
-/** Faturamento por dia (1..LAST_DAY), com 0 nos dias sem venda. */
-export const dailyRevenue: { day: number; value: number }[] = Array.from(
-  { length: LAST_DAY },
-  (_, i) => ({ day: i + 1, value: daily[i + 1] ?? 0 }),
-);
-
 export function isBusinessDay(day: number): boolean {
   const dow = new Date(2026, MONTH_INDEX, day).getDay(); // 0 = dom, 6 = sáb
   if (dow === 0 || dow === 6) return false;
