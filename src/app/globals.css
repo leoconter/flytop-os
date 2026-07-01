@@ -502,6 +502,30 @@ button.chip { cursor: pointer; font-family: inherit; }
 /* ============================================================================
    Calendário multi-seleção (Alertas)
    ============================================================================ */
+/* Campo que abre o calendário em popover só ao clicar */
+.cal-field { position: relative; }
+.cal-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 11px 13px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  font-family: inherit; font-size: 14px; color: var(--text-1); cursor: pointer; text-align: left;
+}
+.cal-trigger:hover { background: rgba(255, 255, 255, 0.85); }
+.cal-trigger.open { border-color: rgba(0, 122, 255, 0.4); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03), 0 0 0 3px rgba(0, 122, 255, 0.12); }
+.cal-trigger .placeholder { color: var(--text-3); }
+.cal-trigger .lead { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.cal-trigger .lead svg { width: 15px; height: 15px; color: var(--text-3); flex-shrink: 0; }
+.cal-trigger .chev { width: 14px; height: 14px; color: var(--text-3); flex-shrink: 0; transition: transform 0.2s; }
+.cal-trigger.open .chev { transform: rotate(180deg); }
+.cal-pop {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0;
+  background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(0, 0, 0, 0.08); border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14); padding: 12px;
+}
+.cal-pop .cal { border: none; padding: 0; background: transparent; }
+
 .cal { border: 1px solid rgba(0, 0, 0, 0.07); border-radius: var(--radius-md); padding: 12px; background: rgba(255, 255, 255, 0.4); }
 .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .cal-title { font-size: 13px; font-weight: 600; text-transform: capitalize; }

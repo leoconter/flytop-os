@@ -4,8 +4,8 @@ import { useState } from "react";
 import { SectionHead } from "@/components/dashboard/ui";
 import { buildMessage, percentOff } from "@/lib/alert-message";
 import { cabines, companhias, defaultAlert } from "@/lib/alertas-data";
+import { CalendarField } from "./calendar-field";
 import { DisparoCard } from "./disparo-card";
-import { MultiDateCalendar } from "./multi-date-calendar";
 import { WhatsAppPreview } from "./whatsapp-preview";
 
 export function AlertBuilder() {
@@ -90,21 +90,23 @@ export function AlertBuilder() {
             <input id="al-juros" className="input" inputMode="numeric" value={xjuros} onChange={(e) => setXjuros(e.target.value)} />
           </div>
 
-          <div className="field full">
+          <div className="field">
             <label>Datas de ida</label>
-            <MultiDateCalendar
+            <CalendarField
               value={idaDates}
               onChange={setIdaDates}
               fallback={{ y: 2026, m: 6 }}
+              placeholder="Selecionar datas de ida"
             />
           </div>
-          <div className="field full">
+          <div className="field">
             <label>Datas de volta</label>
-            <MultiDateCalendar
+            <CalendarField
               value={voltaDates}
               onChange={setVoltaDates}
               fallback={{ y: 2026, m: 7 }}
               accent="green"
+              placeholder="Selecionar datas de volta"
             />
           </div>
 
