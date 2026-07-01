@@ -19,7 +19,7 @@ export default function InternoPage() {
 
       <Metrics metrics={internoMetrics} />
 
-      <div className="grid-2 fixed">
+      <div className="grid-2 split">
         <div className="glass chart-card">
           <SectionHead title="Receita por mês" sub="últimos 6 meses" />
           <RevenueByMonthChart />
