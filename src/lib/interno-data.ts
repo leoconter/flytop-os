@@ -4,27 +4,18 @@
  */
 import type { Metric } from "./dashboard-data";
 
+// KPIs do Interno: reaproveitados do Geral, sem meta/projeção (essas dependem
+// do mês fechado; aqui filtramos por data), + número de vendas.
 export const internoMetrics: Metric[] = [
   {
-    label: "Receita no mês",
+    label: "Faturamento",
     value: "R$ 1,32M",
-    hint: "64 vendas emitidas",
+    hint: "R$ 1.322.860 no período",
     privateValue: true,
     privateHint: true,
   },
   { label: "Ticket médio", value: "R$ 20.670", hint: "por venda", privateValue: true },
-  {
-    label: "Tempo médio até a compra",
-    value: "42 dias",
-    tone: "blue",
-    hint: "da entrada na comunidade à 1ª compra",
-  },
-  {
-    label: "Vendas / dia útil",
-    value: "8,0",
-    hint: "+12% vs abril",
-    hintTone: "positive",
-  },
+  { label: "Número de vendas", value: "64", hint: "emitidas no período" },
 ];
 
 export interface MonthlyRevenue {
