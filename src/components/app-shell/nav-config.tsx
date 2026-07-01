@@ -127,12 +127,32 @@ export const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    key: "social",
+    label: "Social Media",
+    title: "Social Media",
+    href: "/social",
+    group: "Marketing",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
+      </svg>
+    ),
+  },
 ];
 
 /** Ordem dos grupos na sidebar. */
 export const navGroups = ["Dashboards", "Operação", "Marketing"];
 
 export function titleForPath(pathname: string): string {
-  const match = navItems.find((n) => n.href === pathname);
-  return match?.title ?? "Dashboard Geral";
+  const exact = navItems.find((n) => n.href === pathname);
+  if (exact) return exact.title;
+  // sub-rota (ex.: /alertas/dados) → herda o título do item pai
+  const parent = navItems
+    .filter((n) => n.href !== "/" && pathname.startsWith(n.href + "/"))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  return parent?.title ?? "Dashboard Geral";
 }

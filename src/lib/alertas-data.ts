@@ -1,6 +1,7 @@
 /**
  * Dados ilustrativos da tela de Alertas. Portado do preview da Fase 1.
  */
+import type { AlertFields } from "./alert-message";
 import type { Metric } from "./dashboard-data";
 
 export const alertMetrics: Metric[] = [
@@ -73,3 +74,80 @@ export const defaultAlert = {
     "2026-09-01", "2026-09-08", "2026-09-09",
   ],
 };
+
+/* --------------------------- Dados de alertas ------------------------------ */
+
+export interface CountItem {
+  name: string;
+  value: string;
+}
+
+export const alertsTotalMonth = "87";
+export const alertsToday = "4";
+
+export const alertsByCompany: CountItem[] = [
+  { name: "LATAM", value: "23 alertas" },
+  { name: "Air France", value: "14 alertas" },
+  { name: "Qatar Airways", value: "11 alertas" },
+  { name: "TAP Air Portugal", value: "9 alertas" },
+  { name: "ITA Airways", value: "8 alertas" },
+  { name: "American Airlines", value: "7 alertas" },
+  { name: "United Airlines", value: "6 alertas" },
+];
+
+export const alertsByDestino: CountItem[] = [
+  { name: "Lisboa", value: "12 alertas" },
+  { name: "Paris", value: "10 alertas" },
+  { name: "Roma", value: "9 alertas" },
+  { name: "Tóquio", value: "7 alertas" },
+  { name: "Miami", value: "7 alertas" },
+  { name: "Nova York", value: "6 alertas" },
+  { name: "Madri", value: "5 alertas" },
+];
+
+export const alertsByContinent: CountItem[] = [
+  { name: "Europa", value: "41%" },
+  { name: "Ásia", value: "23%" },
+  { name: "América do Norte", value: "22%" },
+  { name: "América do Sul", value: "14%" },
+];
+
+/* ---------------------- Alertas salvos para enviar depois ------------------ */
+
+export interface SavedAlert {
+  id: string;
+  fields: AlertFields;
+}
+
+export const savedSeed: SavedAlert[] = [
+  {
+    id: "seed-lis",
+    fields: {
+      titulo: "✈️ ALERTA! LISBOA NA EXECUTIVA DA TAP COM 38% OFF!",
+      origem: "São Paulo",
+      destino: "Lisboa 🇵🇹",
+      cabine: "Executiva",
+      companhia: "TAP Air Portugal",
+      de: "7900",
+      por: "4890",
+      xjuros: "6",
+      idaDates: ["2026-08-12", "2026-08-14", "2026-08-18"],
+      voltaDates: ["2026-08-22", "2026-08-25"],
+    },
+  },
+  {
+    id: "seed-mia",
+    fields: {
+      titulo: "✈️ BAIXOU! MIAMI NA EXECUTIVA COM 30% OFF!",
+      origem: "São Paulo",
+      destino: "Miami 🇺🇸",
+      cabine: "Executiva",
+      companhia: "American Airlines",
+      de: "8900",
+      por: "6230",
+      xjuros: "10",
+      idaDates: ["2026-09-05", "2026-09-08"],
+      voltaDates: ["2026-09-18", "2026-09-20"],
+    },
+  },
+];

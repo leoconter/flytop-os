@@ -1,6 +1,7 @@
-import { AlertBuilder } from "@/components/alertas/alert-builder";
-import { Badge, Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
-import { alertBank, alertMetrics } from "@/lib/alertas-data";
+import Link from "next/link";
+import { AlertsManager } from "@/components/alertas/alerts-manager";
+import { Metrics, PageHead, Pill } from "@/components/dashboard/ui";
+import { alertMetrics } from "@/lib/alertas-data";
 
 export const metadata = {
   title: "FlyTop OS · Alertas",
@@ -13,51 +14,23 @@ export default function AlertasPage() {
         eyebrow="Comunidade · operação"
         title="Controle de Alertas"
         sub="Cadastre, pré-visualize e dispare ofertas nos grupos"
-        right={<Pill>4 alertas hoje</Pill>}
+        right={
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Link href="/alertas/dados" className="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
+                <path d="M3 3v18h18" />
+                <path d="M7 14l4-4 3 3 5-6" />
+              </svg>
+              Dados de alertas
+            </Link>
+            <Pill>4 alertas hoje</Pill>
+          </div>
+        }
       />
 
       <Metrics metrics={alertMetrics} />
 
-      <AlertBuilder />
-
-      {/* Banco de alertas */}
-      <div className="section">
-        <div className="glass card">
-          <SectionHead title="Banco de alertas" sub="histórico recente" flush />
-          <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Trecho</th>
-                  <th>Companhia</th>
-                  <th>Cabine</th>
-                  <th className="r">Preço</th>
-                  <th className="r">Grupos</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alertBank.map((row) => (
-                  <tr key={`${row.when}-${row.route}`}>
-                    <td className="muted">{row.when}</td>
-                    <td className="mono-cell">{row.route}</td>
-                    <td>{row.company}</td>
-                    <td>{row.cabin}</td>
-                    <td className="r">{row.price}</td>
-                    <td className="r">{row.groups}</td>
-                    <td>
-                      <Badge tone={row.status === "Enviado" ? "green" : "orange"}>
-                        {row.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <AlertsManager />
 
       <div className="foot-note">
         <span>FlyTop OS · Prévia da Fase 1 · dados ilustrativos</span>

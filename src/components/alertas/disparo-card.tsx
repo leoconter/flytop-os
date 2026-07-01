@@ -10,7 +10,7 @@ const CheckIcon = () => (
 );
 
 /** Seleção de comunidades para disparo; o botão mostra o total de grupos. */
-export function DisparoCard() {
+export function DisparoCard({ onSalvar }: { onSalvar?: () => void }) {
   const [selected, setSelected] = useState<Record<string, boolean>>(
     Object.fromEntries(disparoOptions.map((o) => [o.key, o.on])),
   );
@@ -48,6 +48,21 @@ export function DisparoCard() {
         </svg>
         Disparar para {total} {total === 1 ? "grupo" : "grupos"}
       </button>
+
+      {onSalvar && (
+        <button
+          type="button"
+          className="btn btn-ghost btn-block"
+          style={{ marginTop: 8 }}
+          onClick={onSalvar}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <path d="M17 21v-8H7v8M7 3v5h8" />
+          </svg>
+          Salvar alerta para enviar depois
+        </button>
+      )}
     </div>
   );
 }

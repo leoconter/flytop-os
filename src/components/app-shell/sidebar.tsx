@@ -33,7 +33,9 @@ export function Sidebar() {
           {navItems
             .filter((item) => item.group === group)
             .map((item) => {
-              const active = pathname === item.href;
+              const active =
+                pathname === item.href ||
+                (item.href !== "/" && pathname.startsWith(item.href + "/"));
               return (
                 <Link
                   key={item.key}
