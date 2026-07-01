@@ -117,15 +117,21 @@ export function Metrics({ metrics }: { metrics: Metric[] }) {
   );
 }
 
-/** Cartão de lista (Top fornecedores / trechos), com rank automático. */
+/**
+ * Cartão de lista (Top fornecedores / trechos), com rank automático.
+ * `privateValue` (padrão true) borra o valor no modo privacidade — desligue
+ * para valores não financeiros (ex.: contagem de vendas).
+ */
 export function ListCard({
   title,
   subtitle,
   items,
+  privateValue = true,
 }: {
   title: string;
   subtitle: string;
   items: ListItem[];
+  privateValue?: boolean;
 }) {
   return (
     <div className="glass card">
@@ -140,7 +146,9 @@ export function ListCard({
               </div>
               <div className="list-meta">{item.meta}</div>
             </div>
-            <div className="list-value private">{item.value}</div>
+            <div className={cx("list-value", privateValue && "private")}>
+              {item.value}
+            </div>
           </div>
         ))}
       </div>

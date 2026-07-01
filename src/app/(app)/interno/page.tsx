@@ -1,7 +1,19 @@
 import { ConsolidatorDoughnut } from "@/components/charts/consolidator-doughnut";
 import { RevenueByMonthChart } from "@/components/charts/revenue-by-month";
-import { Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
-import { consolidatorRows, internoMetrics } from "@/lib/interno-data";
+import {
+  ListCard,
+  Metrics,
+  PageHead,
+  Pill,
+  SectionHead,
+} from "@/components/dashboard/ui";
+import {
+  consolidatorRows,
+  internoMetrics,
+  salesByClass,
+  salesByCompany,
+  salesByRoute,
+} from "@/lib/interno-data";
 
 export const metadata = {
   title: "FlyTop OS · Dashboard Interno",
@@ -59,6 +71,28 @@ export default function InternoPage() {
             </table>
           </div>
         </div>
+      </div>
+
+      {/* Vendas por companhias / destinos / classes */}
+      <div className="grid-2">
+        <ListCard
+          title="Vendas por companhia"
+          subtitle="nº de vendas"
+          items={salesByCompany}
+          privateValue={false}
+        />
+        <ListCard
+          title="Vendas por destino"
+          subtitle="nº de vendas"
+          items={salesByRoute}
+          privateValue={false}
+        />
+        <ListCard
+          title="Vendas por classe"
+          subtitle="nº de vendas"
+          items={salesByClass}
+          privateValue={false}
+        />
       </div>
     </>
   );
