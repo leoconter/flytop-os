@@ -16,8 +16,8 @@ export function JourneyDistributionChart() {
         data: values,
         backgroundColor: values.map((_, i) =>
           i === timeBucketHighlight
-            ? "rgba(0,122,255,0.85)"
-            : "rgba(0,122,255,0.25)",
+            ? "rgba(30,86,184,0.85)"
+            : "rgba(30,86,184,0.25)",
         ),
         borderRadius: 8,
         borderSkipped: false,
@@ -45,7 +45,7 @@ export function JourneyDistributionChart() {
         title: {
           display: true,
           text: "dias até comprar",
-          color: "rgba(110,110,115,1)",
+          color: "rgba(94,100,112,1)",
           font: { size: 12, family: "Inter" },
           padding: { top: 6 },
         },

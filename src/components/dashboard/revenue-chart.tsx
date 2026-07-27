@@ -64,11 +64,11 @@ const weekendBandPlugin: Plugin<"line"> = {
 function makeFillGradient(ctx: ScriptableContext<"line">) {
   const { chart } = ctx;
   const { ctx: c, chartArea } = chart;
-  if (!chartArea) return "rgba(0,122,255,0)";
+  if (!chartArea) return "rgba(30,86,184,0)";
   const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-  g.addColorStop(0, "rgba(0, 122, 255, 0.22)");
-  g.addColorStop(0.7, "rgba(0, 122, 255, 0.05)");
-  g.addColorStop(1, "rgba(0, 122, 255, 0)");
+  g.addColorStop(0, "rgba(30, 86, 184, 0.22)");
+  g.addColorStop(0.7, "rgba(30, 86, 184, 0.05)");
+  g.addColorStop(1, "rgba(30, 86, 184, 0)");
   return g;
 }
 
@@ -79,18 +79,18 @@ export function RevenueChart() {
       {
         label: "Realizado",
         data: series.cumulative,
-        borderColor: "#007AFF",
+        borderColor: "#1E56B8",
         borderWidth: 2.5,
         backgroundColor: makeFillGradient,
         fill: true,
         tension: 0.35,
-        pointBackgroundColor: "#007AFF",
+        pointBackgroundColor: "#1E56B8",
         pointBorderColor: "#FFFFFF",
         pointBorderWidth: 2,
         pointRadius: 3,
         pointHoverRadius: 6,
         pointHoverBorderWidth: 3,
-        pointHoverBackgroundColor: "#007AFF",
+        pointHoverBackgroundColor: "#1E56B8",
         pointHoverBorderColor: "#FFFFFF",
         spanGaps: false,
         order: 4,
@@ -98,7 +98,7 @@ export function RevenueChart() {
       {
         label: "Projeção (pace)",
         data: series.pace,
-        borderColor: "rgba(0, 122, 255, 0.55)",
+        borderColor: "rgba(30, 86, 184, 0.55)",
         borderWidth: 2,
         borderDash: [6, 6],
         fill: false,
@@ -106,7 +106,7 @@ export function RevenueChart() {
         pointRadius: 0,
         pointHoverRadius: 5,
         pointHoverBorderWidth: 2,
-        pointHoverBackgroundColor: "rgba(0, 122, 255, 0.7)",
+        pointHoverBackgroundColor: "rgba(30, 86, 184, 0.7)",
         pointHoverBorderColor: "#FFFFFF",
         spanGaps: false,
         order: 3,
@@ -114,7 +114,7 @@ export function RevenueChart() {
       {
         label: "Meta",
         data: series.metaLine,
-        borderColor: "rgba(52, 199, 89, 0.8)",
+        borderColor: "rgba(30, 122, 70, 0.8)",
         borderWidth: 2,
         borderDash: [6, 6],
         fill: false,
@@ -126,7 +126,7 @@ export function RevenueChart() {
       {
         label: "Necessidade",
         data: series.necessity,
-        borderColor: "rgba(255, 149, 0, 0.85)",
+        borderColor: "rgba(176, 118, 30, 0.85)",
         borderWidth: 2,
         borderDash: [6, 6],
         fill: false,
@@ -134,7 +134,7 @@ export function RevenueChart() {
         pointRadius: 0,
         pointHoverRadius: 5,
         pointHoverBorderWidth: 2,
-        pointHoverBackgroundColor: "rgba(255, 149, 0, 1)",
+        pointHoverBackgroundColor: "rgba(176, 118, 30, 1)",
         pointHoverBorderColor: "#FFFFFF",
         order: 2,
       },
@@ -149,9 +149,9 @@ export function RevenueChart() {
       legend: { display: false },
       tooltip: {
         backgroundColor: "rgba(255, 255, 255, 0.95)",
-        titleColor: "rgba(110, 110, 115, 1)",
-        bodyColor: "#1d1d1f",
-        footerColor: "rgba(36, 138, 61, 0.95)",
+        titleColor: "rgba(94, 100, 112, 1)",
+        bodyColor: "#171b22",
+        footerColor: "rgba(23, 94, 55, 0.95)",
         borderColor: "rgba(0, 0, 0, 0.08)",
         borderWidth: 1,
         padding: 12,

@@ -13,10 +13,10 @@ import { glassTooltip } from "./register";
 function fillGradient(ctx: ScriptableContext<"line">) {
   const { chart } = ctx;
   const { ctx: c, chartArea } = chart;
-  if (!chartArea) return "rgba(0,122,255,0)";
+  if (!chartArea) return "rgba(30,86,184,0)";
   const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-  g.addColorStop(0, "rgba(0, 122, 255, 0.22)");
-  g.addColorStop(1, "rgba(0, 122, 255, 0)");
+  g.addColorStop(0, "rgba(30, 86, 184, 0.22)");
+  g.addColorStop(1, "rgba(30, 86, 184, 0)");
   return g;
 }
 
@@ -30,14 +30,14 @@ export function JourneyMonthlyChart() {
       {
         label: "Tempo médio",
         data: monthlyAvgDays.values,
-        borderColor: "#007AFF",
+        borderColor: "#1E56B8",
         borderWidth: 2.5,
         backgroundColor: fillGradient,
         fill: true,
         tension: 0.35,
         pointRadius: 3,
         pointHoverRadius: 5,
-        pointBackgroundColor: "#007AFF",
+        pointBackgroundColor: "#1E56B8",
       },
     ],
   };

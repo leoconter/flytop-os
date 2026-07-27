@@ -14,7 +14,7 @@ export function RevenueByMonthChart() {
       {
         data: values,
         backgroundColor: values.map((_, i) =>
-          i === highlightIndex ? "rgba(0,122,255,0.85)" : "rgba(0,122,255,0.25)",
+          i === highlightIndex ? "rgba(30,86,184,0.85)" : "rgba(30,86,184,0.25)",
         ),
         borderRadius: 8,
         borderSkipped: false,

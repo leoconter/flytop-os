@@ -39,8 +39,8 @@ ChartJS.register(
 /** Tooltip glass branco, padrão da plataforma. */
 export const glassTooltip = {
   backgroundColor: "rgba(255, 255, 255, 0.95)",
-  titleColor: "rgba(110, 110, 115, 1)",
-  bodyColor: "#1d1d1f",
+  titleColor: "rgba(94, 100, 112, 1)",
+  bodyColor: "#171b22",
   borderColor: "rgba(0, 0, 0, 0.08)",
   borderWidth: 1,
   padding: 12,

@@ -1,8 +1,11 @@
 # FlyTop OS — Design System
 
-Identidade visual da plataforma. **Origem:** extraída do `:root` e do CSS do
-dashboard de vendas validado (`public/preview/dashboard-maio.html`). Esse HTML é
-a referência canônica; os tokens abaixo são a tradução dele para o projeto.
+Identidade visual da plataforma — direção **"Flight Deck"**: painel de
+instrumentos de uma agência de viagens premium. Sidebar em azul-marinho
+profundo com micro-acento de latão, conteúdo claro e neutro com cartões brancos
+de borda fina, paleta dessaturada. Substituiu a fase de preview (glass/orbs
+estilo iOS, extraída de `public/preview/dashboard-maio.html`), considerada
+informal demais para a plataforma.
 
 **Onde os tokens vivem:** [`src/app/globals.css`](../src/app/globals.css) —
 CSS vars no `:root` (fonte da verdade) + bloco `@theme inline` que as expõe como
@@ -28,74 +31,76 @@ No Tailwind: `font-sans` (Inter) e `font-mono` (JetBrains Mono).
 
 | Token                 | Hex       | Tailwind                  |
 | --------------------- | --------- | ------------------------- |
-| `--accent-blue`        | `#007AFF` | `accent-blue`         |
-| `--accent-blue-dark`   | `#0056CC` | `accent-blue-dark`    |
-| `--accent-green`       | `#34C759` | `accent-green`        |
-| `--accent-green-dark`  | `#248A3D` | `accent-green-dark`   |
-| `--accent-orange`      | `#FF9500` | `accent-orange`       |
-| `--accent-orange-dark` | `#C76E00` | `accent-orange-dark`  |
-| `--accent-red`         | `#FF3B30` | `accent-red`          |
-| `--accent-red-dark`    | `#C8281F` | `accent-red-dark`     |
-| `--accent-purple`      | `#5E5CE6` | `accent-purple`       |
+| `--accent-blue`        | `#1E56B8` | `accent-blue` (cobalto)   |
+| `--accent-blue-dark`   | `#16418C` | `accent-blue-dark`    |
+| `--accent-green`       | `#1E7A46` | `accent-green` (floresta) |
+| `--accent-green-dark`  | `#175E37` | `accent-green-dark`   |
+| `--accent-orange`      | `#B0761E` | `accent-orange` (âmbar queimado) |
+| `--accent-orange-dark` | `#8A5C14` | `accent-orange-dark`  |
+| `--accent-red`         | `#B3362C` | `accent-red`          |
+| `--accent-red-dark`    | `#8F2921` | `accent-red-dark`     |
+| `--accent-purple`      | `#50549F` | `accent-purple` (índigo-ardósia) |
 
 Convenção: **azul** = realizado/principal · **verde** = meta/positivo ·
 **laranja** = necessidade/atenção · **vermelho** = saídas/negativo ·
-**roxo** = destaque/prévia.
+**roxo** = destaque/prévia. Cor extra de consolidadora "Direta": `#4A7FB5`
+(azul-aço, só em dados).
+
+### Navy e latão (marca / sidebar)
+
+| Token          | Hex       | Uso                                        |
+| -------------- | --------- | ------------------------------------------ |
+| `--navy`       | `#0E2038` | sidebar (base do gradiente), ícone da marca |
+| `--navy-raise` | `#10243D` | topo do gradiente da sidebar               |
+| `--navy-deep`  | `#0B1A2C` | base do gradiente da sidebar               |
+| `--brass`      | `#CFA95D` | acento de latão: "OS" do logo, barra da nav ativa, dots |
+| `--brass-dark` | `#8C6D2F` | latão sobre fundo claro (ex.: `.rank.gold`) |
+
+O latão é o único acento "quente" da identidade — usar com muita parcimônia
+(logo, item ativo da nav, badge da sidebar). Nunca em botões ou gráficos.
 
 ### Superfície e texto
 
 | Token       | Valor     | Uso                          |
 | ----------- | --------- | ---------------------------- |
-| `--bg`      | `#f5f5f7` | fundo da página              |
-| `--text-1`  | `#1d1d1f` | texto primário / títulos     |
-| `--text-2`  | `#6e6e73` | texto secundário             |
-| `--text-3`  | `#86868b` | texto terciário / labels     |
+| `--bg`      | `#f2f3f6` | fundo da página (neutro frio) |
+| `--text-1`  | `#171b22` | texto primário / títulos     |
+| `--text-2`  | `#4e5563` | texto secundário             |
+| `--text-3`  | `#7b8291` | texto terciário / labels     |
 
-## Glass
+## Cartões (`.glass`)
 
-Cartão translúcido padrão da plataforma. Classe global `.glass`.
+A classe continua se chamando `.glass` (usada em todo o app), mas o estilo é
+de cartão sólido profissional:
 
 ```
-background:        rgba(255,255,255,0.55)   /* --glass */
-border:            1px solid rgba(255,255,255,0.7)  /* --glass-border */
-backdrop-filter:   blur(40px) saturate(180%)
-border-radius:     24px (--radius-xl)
-box-shadow:        --shadow-glass (inset highlights + 3 camadas de sombra)
+background:        rgba(255,255,255,0.82)   /* --glass */
+border:            1px solid rgba(16,24,40,0.08)  /* --glass-border */
+backdrop-filter:   blur(14px) saturate(140%)
+border-radius:     16px (--radius-xl)
+box-shadow:        0 1px 2px rgba(16,24,40,0.04), 0 8px 24px rgba(16,24,40,0.05)
 ```
 
-Inclui um realce superior de 1px (`.glass::before`) — gradiente branco
-horizontal que dá o brilho de vidro no topo do card.
+Sem brilho de vidro no topo (o antigo `.glass::before` foi removido).
+Superfícies internas (linhas de lista, inputs, chips) são brancas sólidas com
+borda hairline `rgba(16,24,40,0.07–0.12)`.
 
 ## Raios
 
 | Token            | Valor   | Tailwind     |
 | ---------------- | ------- | ------------ |
-| `--radius-xl`    | `24px`  | `rounded-xl` |
-| `--radius-lg`    | `18px`  | `rounded-lg` |
-| `--radius-md`    | `14px`  | `rounded-md` |
-| `--radius-sm`    | `10px`  | `rounded-sm` (token) |
-| `--radius-pill`  | `999px` | pílulas/botões |
+| `--radius-xl`    | `16px`  | `rounded-xl` |
+| `--radius-lg`    | `12px`  | `rounded-lg` |
+| `--radius-md`    | `10px`  | `rounded-md` |
+| `--radius-sm`    | `8px`   | `rounded-sm` (token) |
+| `--radius-pill`  | `999px` | pílulas/chips |
 
-Glass forte: `--glass-strong` `rgba(255,255,255,0.72)` para superfícies que
-precisam de mais opacidade que o `.glass` padrão.
+## Fundo (`.orbs`)
 
-## Orbs de fundo
-
-5 esferas coloridas com `filter: blur(110px)`, em `position: fixed` atrás do
-conteúdo (`z-index: 0`; conteúdo em `z-index: 2`). Cada uma tem uma animação
-`drift` própria (26–34s, ease-in-out, infinita). Classe global `.orbs` > `.orb`.
-
-| Orb   | Cor       | Aproximado            |
-| ----- | --------- | --------------------- |
-| orb-1 | `#5E5CE6` | índigo, topo-esquerda |
-| orb-2 | `#32ADE6` | azul, meio-direita    |
-| orb-3 | `#FF2D55` | rosa, base            |
-| orb-4 | `#34C759` | verde                 |
-| orb-5 | `#FF9F0A` | âmbar, topo-direita   |
-
-Respeita `prefers-reduced-motion: reduce` (animação desligada).
-Há também um overlay de ruído sutil (`feTurbulence` em SVG, opacity ~0.025) no
-HTML original para textura — ainda não portado para o `globals.css`.
+Os orbs coloridos animados da fase de preview foram substituídos por uma
+atmosfera estática: dois brilhos radiais quase imperceptíveis no topo da
+página (cobalto ~6% à esquerda, latão ~5% à direita), sem animação. Os divs
+`.orb` continuam no markup, mas com `display: none`.
 
 ## Padrões de interação (do dashboard)
 

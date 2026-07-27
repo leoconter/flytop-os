@@ -70,11 +70,11 @@ export interface ConsolidatorSlice {
 }
 
 export const consolidators: ConsolidatorSlice[] = [
-  { label: "Trend", value: 30, color: "#007AFF" },
-  { label: "Flytour", value: 22, color: "#5E5CE6" },
-  { label: "BWT", value: 18, color: "#34C759" },
-  { label: "Agaxtur", value: 15, color: "#FF9500" },
-  { label: "Direta", value: 15, color: "#32ADE6" },
+  { label: "Trend", value: 30, color: "#1E56B8" },
+  { label: "Flytour", value: 22, color: "#50549F" },
+  { label: "BWT", value: 18, color: "#1E7A46" },
+  { label: "Agaxtur", value: 15, color: "#B0761E" },
+  { label: "Direta", value: 15, color: "#4A7FB5" },
 ];
 
 export interface ConsolidatorRow {

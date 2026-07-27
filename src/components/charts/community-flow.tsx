@@ -14,14 +14,14 @@ export function CommunityFlowChart() {
       {
         label: "Entradas",
         data: entradas,
-        backgroundColor: "rgba(52,199,89,0.8)",
+        backgroundColor: "rgba(30,122,70,0.8)",
         borderRadius: 5,
         borderSkipped: false,
       },
       {
         label: "Saídas",
         data: saidas.map((v) => -v),
-        backgroundColor: "rgba(255,59,48,0.75)",
+        backgroundColor: "rgba(179,54,44,0.75)",
         borderRadius: 5,
         borderSkipped: false,
       },
