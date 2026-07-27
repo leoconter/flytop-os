@@ -10,61 +10,51 @@ import type { Metric } from "./dashboard-data";
 export const jornadaMetrics: Metric[] = [
   {
     label: "Tempo médio até a compra",
-    value: "18 dias",
+    value: "42 dias",
+    tone: "blue",
     hint: "da entrada na comunidade à 1ª compra",
   },
   {
-    label: "Conversão comunidade → venda",
-    value: "6,2%",
-    tone: "blue",
-    bar: { pct: 62 },
-    hint: "84 de 1.350 novos membros",
-    hintTone: "positive",
+    label: "Tempo mediano",
+    value: "31 dias",
+    hint: "metade compra antes disso",
   },
   {
-    label: "Membros que compraram",
-    value: "84",
-    hint: "+11 vs abril",
-    hintTone: "positive",
+    label: "Compradores da comunidade",
+    value: "90,6%",
+    tone: "green",
+    hint: "58 de 64 vendas no mês",
   },
   {
-    label: "Mediana até a compra",
-    value: "12 dias",
-    hint: "compra mais rápida: 2 dias",
+    label: "Janela mais comum",
+    value: "31–60 dias",
+    hint: "33% das compras",
   },
-];
-
-/** Etapas do funil comunidade → venda, com contagem absoluta. */
-export interface FunnelStage {
-  label: string;
-  count: number;
-  /** Percentual em relação ao topo do funil (0–100). */
-  pct: number;
-  /** Conversão para a etapa seguinte, quando aplicável. */
-  step?: string;
-}
-
-export const funnelStages: FunnelStage[] = [
-  { label: "Entraram na comunidade", count: 1_350, pct: 100, step: "53% engajaram" },
-  { label: "Engajaram (mensagem ou reação)", count: 720, pct: 53, step: "29% pediram cotação" },
-  { label: "Pediram cotação", count: 210, pct: 16, step: "40% fecharam" },
-  { label: "Compraram", count: 84, pct: 6 },
 ];
 
 /** Distribuição do tempo entre entrar na comunidade e comprar. */
 export interface TimeBucket {
   label: string;
   count: number;
-  /** Percentual do total de compradores (0–100). */
-  pct: number;
 }
 
 export const timeBuckets: TimeBucket[] = [
-  { label: "0–7 dias", count: 22, pct: 26 },
-  { label: "8–15 dias", count: 31, pct: 37 },
-  { label: "16–30 dias", count: 19, pct: 23 },
-  { label: "31+ dias", count: 12, pct: 14 },
+  { label: "0–7", count: 4 },
+  { label: "8–15", count: 7 },
+  { label: "16–30", count: 14 },
+  { label: "31–60", count: 19 },
+  { label: "61–90", count: 9 },
+  { label: "90+", count: 5 },
 ];
+
+/** Índice da faixa em destaque (janela mais comum). */
+export const timeBucketHighlight = 3;
+
+/** Tempo médio (em dias) até a compra, por mês — últimos 6 meses. */
+export const monthlyAvgDays: { labels: string[]; values: number[] } = {
+  labels: ["dez", "jan", "fev", "mar", "abr", "mai"],
+  values: [38, 45, 41, 44, 39, 42],
+};
 
 /** Conversões recentes com o tempo de jornada de cada membro. */
 export interface ConversionRow {
@@ -76,12 +66,12 @@ export interface ConversionRow {
 }
 
 export const recentConversions: ConversionRow[] = [
-  { member: "J. S.", joined: "22/04", purchased: "09/05", days: 17, value: "R$ 15.346" },
+  { member: "J. S.", joined: "22/03", purchased: "09/05", days: 48, value: "R$ 15.346" },
   { member: "A. L.", joined: "03/05", purchased: "09/05", days: 6, value: "R$ 24.893" },
-  { member: "M. R.", joined: "18/04", purchased: "07/05", days: 19, value: "R$ 30.744" },
+  { member: "M. R.", joined: "18/03", purchased: "07/05", days: 50, value: "R$ 30.744" },
   { member: "P. C.", joined: "04/05", purchased: "06/05", days: 2, value: "R$ 39.394" },
-  { member: "R. T.", joined: "12/04", purchased: "05/05", days: 23, value: "R$ 18.200" },
-  { member: "C. M.", joined: "01/05", purchased: "11/05", days: 10, value: "R$ 21.870" },
+  { member: "R. T.", joined: "02/04", purchased: "05/05", days: 33, value: "R$ 18.200" },
+  { member: "C. M.", joined: "10/04", purchased: "11/05", days: 31, value: "R$ 21.870" },
 ];
 
 /** Faixa de dias considerada "rápida" para o badge de destaque na tabela. */

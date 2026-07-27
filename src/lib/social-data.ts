@@ -45,20 +45,32 @@ export const followersTrend: FollowersTrendSeries = {
   values: [1_450, 1_620, 1_780, 1_690, 1_940, 2_180],
 };
 
-/* ------------------------------ Recorte por rede ---------------------------- */
+/* ------------------------------ Posts no período ---------------------------- */
 
-export interface SocialNetworkRow {
-  network: string;
-  followers: string;
-  newFollowers: string;
-  posts: string;
-  engagement: string;
+export type PostType = "Image" | "Video" | "Carousel Album";
+
+export interface PostRow {
+  /** Data e hora da publicação (ex.: "29/06/2026 às 12:36"). */
+  datetime: string;
+  type: PostType;
+  likes: number;
+  comments: number;
 }
 
-/** Por rede social — maio 2026. Fecha com a base total (48.320) e novos (2.180). */
-export const socialByNetwork: SocialNetworkRow[] = [
-  { network: "Instagram", followers: "31.400", newFollowers: "+1.420", posts: "24", engagement: "7,1%" },
-  { network: "TikTok", followers: "9.860", newFollowers: "+520", posts: "10", engagement: "8,3%" },
-  { network: "YouTube", followers: "4.210", newFollowers: "+160", posts: "4", engagement: "4,2%" },
-  { network: "Facebook", followers: "2.850", newFollowers: "+80", posts: "4", engagement: "2,4%" },
+/** Posts publicados no período — junho 2026. */
+export const postsInPeriod: PostRow[] = [
+  { datetime: "29/06/2026 às 12:36", type: "Image", likes: 20, comments: 0 },
+  { datetime: "22/06/2026 às 12:00", type: "Image", likes: 26, comments: 1 },
+  { datetime: "17/06/2026 às 12:06", type: "Carousel Album", likes: 9, comments: 0 },
+  { datetime: "15/06/2026 às 12:07", type: "Video", likes: 69, comments: 10 },
+  { datetime: "10/06/2026 às 11:59", type: "Carousel Album", likes: 19, comments: 0 },
+  { datetime: "08/06/2026 às 12:03", type: "Video", likes: 46, comments: 1 },
+  { datetime: "01/06/2026 às 12:51", type: "Image", likes: 32, comments: 0 },
 ];
+
+/** Totais agregados do período (contagem, curtidas e comentários). */
+export const postsTotals = {
+  count: postsInPeriod.length,
+  likes: postsInPeriod.reduce((sum, p) => sum + p.likes, 0),
+  comments: postsInPeriod.reduce((sum, p) => sum + p.comments, 0),
+};

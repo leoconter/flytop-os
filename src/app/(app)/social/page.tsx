@@ -1,6 +1,7 @@
 import { FollowersTrendChart } from "@/components/charts/followers-trend";
+import { PostsInPeriod } from "@/components/social/posts-in-period";
 import { Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
-import { socialByNetwork, socialMetrics } from "@/lib/social-data";
+import { socialMetrics } from "@/lib/social-data";
 
 export const metadata = { title: "FlyTop OS · Social Media" };
 
@@ -29,35 +30,7 @@ export default function SocialPage() {
         </div>
       </div>
 
-      <div className="section">
-        <div className="glass card">
-          <SectionHead title="Por rede social" sub="maio 2026" flush />
-          <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Rede</th>
-                  <th className="r">Seguidores</th>
-                  <th className="r">Novos</th>
-                  <th className="r">Posts</th>
-                  <th className="r">Engajamento</th>
-                </tr>
-              </thead>
-              <tbody>
-                {socialByNetwork.map((row) => (
-                  <tr key={row.network}>
-                    <td>{row.network}</td>
-                    <td className="r">{row.followers}</td>
-                    <td className="r">{row.newFollowers}</td>
-                    <td className="r">{row.posts}</td>
-                    <td className="r">{row.engagement}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <PostsInPeriod />
 
       <div className="note-box blue">
         <svg

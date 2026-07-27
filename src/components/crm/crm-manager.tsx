@@ -2,7 +2,14 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Badge, SectionHead } from "@/components/dashboard/ui";
-import { type Lead, leadsSeed, matchAlerta, waLink } from "@/lib/crm-data";
+import {
+  type Lead,
+  leadsSeed,
+  matchAlerta,
+  mesLabel,
+  waLink,
+} from "@/lib/crm-data";
+import { MonthField } from "./month-field";
 
 export function CrmManager() {
   const [leads, setLeads] = useState<Lead[]>(leadsSeed);
@@ -10,10 +17,17 @@ export function CrmManager() {
   const [telefone, setTelefone] = useState("");
   const [origem, setOrigem] = useState("");
   const [destino, setDestino] = useState("");
+  const [meses, setMeses] = useState<string[]>([]);
+  const [filtroDestino, setFiltroDestino] = useState("");
+  const [filtroMes, setFiltroMes] = useState("");
   const idRef = useRef(0);
 
   const podeRegistrar =
-    nome.trim() && telefone.trim() && origem.trim() && destino.trim();
+    nome.trim() &&
+    telefone.trim() &&
+    origem.trim() &&
+    destino.trim() &&
+    meses.length > 0;
 
   /** Leads com um alerta correspondente já enviado — prontos para chamar. */
   const prontos = useMemo(
@@ -21,9 +35,32 @@ export function CrmManager() {
     [leads],
   );
 
+  /** Destinos distintos presentes nos leads (para o filtro). */
+  const destinosFiltro = useMemo(
+    () => [...new Set(leads.map((l) => l.destino))].sort((a, b) => a.localeCompare(b)),
+    [leads],
+  );
+
+  /** Meses distintos presentes nos leads (para o filtro). */
+  const mesesFiltro = useMemo(
+    () => [...new Set(leads.flatMap((l) => l.meses))].sort(),
+    [leads],
+  );
+
+  const leadsFiltrados = useMemo(
+    () =>
+      leads.filter(
+        (l) =>
+          (!filtroDestino || l.destino === filtroDestino) &&
+          (!filtroMes || l.meses.includes(filtroMes)),
+      ),
+    [leads, filtroDestino, filtroMes],
+  );
+
   function registrar() {
     if (!podeRegistrar) return;
     idRef.current += 1;
+    const mesesOrdenados = [...meses].sort();
     setLeads((ls) => [
       {
         id: `ld-new-${idRef.current}`,
@@ -31,6 +68,7 @@ export function CrmManager() {
         telefone: telefone.trim(),
         origem: origem.trim(),
         destino: destino.trim(),
+        meses: mesesOrdenados,
         criadoEm: "agora",
       },
       ...ls,
@@ -39,6 +77,7 @@ export function CrmManager() {
     setTelefone("");
     setOrigem("");
     setDestino("");
+    setMeses([]);
   }
 
   function excluir(id: string) {
@@ -97,6 +136,11 @@ export function CrmManager() {
                 value={destino}
                 onChange={(e) => setDestino(e.target.value)}
               />
+            </div>
+
+            <div className="field full">
+              <label>Meses de interesse <span className="muted">(selecione um ou mais)</span></label>
+              <MonthField value={meses} onChange={setMeses} fallbackYear={2026} />
             </div>
 
             <div className="field full">
@@ -178,7 +222,54 @@ export function CrmManager() {
             sub="todos os leads e o status do alerta"
             flush
           />
-          <div className="table-wrap" style={{ marginTop: 8 }}>
+
+          {/* Filtros */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 12 }}>
+            <div className="field" style={{ minWidth: 180 }}>
+              <label htmlFor="crm-f-destino">Destino</label>
+              <select
+                id="crm-f-destino"
+                className="select"
+                value={filtroDestino}
+                onChange={(e) => setFiltroDestino(e.target.value)}
+              >
+                <option value="">Todos os destinos</option>
+                {destinosFiltro.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field" style={{ minWidth: 180 }}>
+              <label htmlFor="crm-f-mes">Mês de interesse</label>
+              <select
+                id="crm-f-mes"
+                className="select"
+                value={filtroMes}
+                onChange={(e) => setFiltroMes(e.target.value)}
+              >
+                <option value="">Todos os meses</option>
+                {mesesFiltro.map((m) => (
+                  <option key={m} value={m}>{mesLabel(m)}</option>
+                ))}
+              </select>
+            </div>
+            {(filtroDestino || filtroMes) && (
+              <div className="field" style={{ justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => {
+                    setFiltroDestino("");
+                    setFiltroMes("");
+                  }}
+                >
+                  Limpar filtros
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="table-wrap" style={{ marginTop: 12 }}>
             <table>
               <thead>
                 <tr>
@@ -186,53 +277,69 @@ export function CrmManager() {
                   <th>Lead</th>
                   <th>Telefone</th>
                   <th>Trecho</th>
+                  <th>Meses</th>
                   <th>Status</th>
                   <th className="r">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => {
-                  const alerta = matchAlerta(lead);
-                  return (
-                    <tr key={lead.id}>
-                      <td className="muted">{lead.criadoEm}</td>
-                      <td>{lead.nome}</td>
-                      <td className="mono-cell">{lead.telefone}</td>
-                      <td>
-                        {lead.origem} → {lead.destino}
-                      </td>
-                      <td>
-                        {alerta ? (
-                          <Badge tone="green">Alerta enviado</Badge>
-                        ) : (
-                          <Badge tone="gray">Aguardando alerta</Badge>
-                        )}
-                      </td>
-                      <td className="r">
-                        <div className="row-actions">
-                          <a
-                            className="btn btn-ghost btn-sm"
-                            href={waLink(lead.telefone)}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            WhatsApp
-                          </a>
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            aria-label="Excluir interesse"
-                            onClick={() => excluir(lead.id)}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {leadsFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="muted" style={{ textAlign: "center", padding: "24px 10px" }}>
+                      Nenhum interesse para esse filtro.
+                    </td>
+                  </tr>
+                ) : (
+                  leadsFiltrados.map((lead) => {
+                    const alerta = matchAlerta(lead);
+                    return (
+                      <tr key={lead.id}>
+                        <td className="muted">{lead.criadoEm}</td>
+                        <td>{lead.nome}</td>
+                        <td className="mono-cell">{lead.telefone}</td>
+                        <td>
+                          {lead.origem} → {lead.destino}
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {lead.meses.map((m) => (
+                              <Badge key={m} tone="blue">{mesLabel(m)}</Badge>
+                            ))}
+                          </div>
+                        </td>
+                        <td>
+                          {alerta ? (
+                            <Badge tone="green">Alerta enviado</Badge>
+                          ) : (
+                            <Badge tone="gray">Aguardando alerta</Badge>
+                          )}
+                        </td>
+                        <td className="r">
+                          <div className="row-actions">
+                            <a
+                              className="btn btn-ghost btn-sm"
+                              href={waLink(lead.telefone)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              WhatsApp
+                            </a>
+                            <button
+                              type="button"
+                              className="icon-btn"
+                              aria-label="Excluir interesse"
+                              onClick={() => excluir(lead.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

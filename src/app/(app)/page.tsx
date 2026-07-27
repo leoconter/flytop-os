@@ -47,31 +47,7 @@ export default function GeralPage() {
 
       {/* Área principal */}
       <div className="tv-main">
-        {/* Esquerda: companhias + classes */}
-        <div className="tv-col left">
-          <ListCard
-            title="Top 3 companhias"
-            subtitle="por receita"
-            items={suppliers}
-          />
-          <div className="glass card">
-            <SectionHead title="Classes mais vendidas" sub="por nº de vendas" flush />
-            <div className="list">
-              {salesClasses.map((c, i) => (
-                <div className="list-row" key={c.name}>
-                  <span className="rank">{i + 1}</span>
-                  <div className="list-main">
-                    <div className="list-name">{c.name}</div>
-                    <div className="list-meta">{c.meta}</div>
-                  </div>
-                  <div className="list-value">{c.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Centro: gráfico + faixa de stats */}
+        {/* Esquerda: gráfico + faixa de stats */}
         <div className="tv-col center">
           <div className="glass chart-card">
             <div className="chart-legend">
@@ -133,13 +109,33 @@ export default function GeralPage() {
           </div>
         </div>
 
-        {/* Direita: destinos */}
+        {/* Direita: destinos + companhias + classes */}
         <div className="tv-col right">
           <ListCard
-            title="Top 5 destinos"
+            title="Top 3 destinos"
             subtitle="por receita"
-            items={routes}
+            items={routes.slice(0, 3)}
           />
+          <ListCard
+            title="Top 3 companhias"
+            subtitle="por receita"
+            items={suppliers}
+          />
+          <div className="glass card">
+            <SectionHead title="Classes mais vendidas" sub="por nº de vendas" flush />
+            <div className="list">
+              {salesClasses.map((c, i) => (
+                <div className="list-row" key={c.name}>
+                  <span className="rank">{i + 1}</span>
+                  <div className="list-main">
+                    <div className="list-name">{c.name}</div>
+                    <div className="list-meta">{c.meta}</div>
+                  </div>
+                  <div className="list-value">{c.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

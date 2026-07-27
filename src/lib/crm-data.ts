@@ -33,6 +33,40 @@ export const alertasEnviados: AlertaEnviado[] = [
   { origem: "São Paulo", destino: "Madri", companhia: "Iberia", preco: "R$ 3.560", quando: "27/06 · 10:30" },
 ];
 
+/** Mês de interesse de viagem (ex.: "2026-07" → "Jul/26"). */
+export interface MesOption {
+  key: string;
+  label: string;
+}
+
+/** 12 meses a partir de julho/2026 (referência da Fase 1). */
+export const mesesOptions: MesOption[] = [
+  { key: "2026-07", label: "Jul/26" },
+  { key: "2026-08", label: "Ago/26" },
+  { key: "2026-09", label: "Set/26" },
+  { key: "2026-10", label: "Out/26" },
+  { key: "2026-11", label: "Nov/26" },
+  { key: "2026-12", label: "Dez/26" },
+  { key: "2027-01", label: "Jan/27" },
+  { key: "2027-02", label: "Fev/27" },
+  { key: "2027-03", label: "Mar/27" },
+  { key: "2027-04", label: "Abr/27" },
+  { key: "2027-05", label: "Mai/27" },
+  { key: "2027-06", label: "Jun/27" },
+];
+
+const MES_ABREV = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+/** Rótulo curto de um mês a partir da chave "AAAA-MM" (ex.: "Jul/26"). */
+export function mesLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  if (!y || !m || m < 1 || m > 12) return key;
+  return `${MES_ABREV[m - 1]}/${String(y).slice(2)}`;
+}
+
 /** Lead com interesse registrado por um vendedor. */
 export interface Lead {
   id: string;
@@ -40,16 +74,18 @@ export interface Lead {
   telefone: string;
   origem: string;
   destino: string;
+  /** Um ou mais meses de interesse de viagem (chaves "AAAA-MM"). */
+  meses: string[];
   criadoEm: string;
 }
 
 export const leadsSeed: Lead[] = [
-  { id: "ld-1", nome: "Ana Souza", telefone: "+55 11 98765-4321", origem: "São Paulo", destino: "Orlando", criadoEm: "hoje · 10:22" },
-  { id: "ld-2", nome: "Carlos Lima", telefone: "+55 11 99123-4567", origem: "São Paulo", destino: "Lisboa", criadoEm: "hoje · 09:05" },
-  { id: "ld-3", nome: "Marina Alves", telefone: "+55 21 98811-2200", origem: "Rio de Janeiro", destino: "Paris", criadoEm: "ontem · 18:40" },
-  { id: "ld-4", nome: "Pedro Rocha", telefone: "+55 11 97400-1188", origem: "São Paulo", destino: "Tóquio", criadoEm: "ontem · 16:12" },
-  { id: "ld-5", nome: "Juliana Dias", telefone: "+55 11 96555-7788", origem: "São Paulo", destino: "Cancún", criadoEm: "28/06 · 14:03" },
-  { id: "ld-6", nome: "Rafael Nunes", telefone: "+55 21 99677-3421", origem: "Rio de Janeiro", destino: "Buenos Aires", criadoEm: "28/06 · 11:47" },
+  { id: "ld-1", nome: "Ana Souza", telefone: "+55 11 98765-4321", origem: "São Paulo", destino: "Orlando", meses: ["2026-12", "2027-01"], criadoEm: "hoje · 10:22" },
+  { id: "ld-2", nome: "Carlos Lima", telefone: "+55 11 99123-4567", origem: "São Paulo", destino: "Lisboa", meses: ["2026-09"], criadoEm: "hoje · 09:05" },
+  { id: "ld-3", nome: "Marina Alves", telefone: "+55 21 98811-2200", origem: "Rio de Janeiro", destino: "Paris", meses: ["2026-10", "2026-11"], criadoEm: "ontem · 18:40" },
+  { id: "ld-4", nome: "Pedro Rocha", telefone: "+55 11 97400-1188", origem: "São Paulo", destino: "Tóquio", meses: ["2027-03"], criadoEm: "ontem · 16:12" },
+  { id: "ld-5", nome: "Juliana Dias", telefone: "+55 11 96555-7788", origem: "São Paulo", destino: "Cancún", meses: ["2026-07"], criadoEm: "28/06 · 14:03" },
+  { id: "ld-6", nome: "Rafael Nunes", telefone: "+55 21 99677-3421", origem: "Rio de Janeiro", destino: "Buenos Aires", meses: ["2026-08", "2026-09"], criadoEm: "28/06 · 11:47" },
 ];
 
 /** Retorna o alerta enviado que casa com origem + destino do lead, se houver. */

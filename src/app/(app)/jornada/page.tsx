@@ -1,15 +1,13 @@
+import { JourneyDistributionChart } from "@/components/charts/journey-distribution";
+import { JourneyMonthlyChart } from "@/components/charts/journey-monthly";
 import { Badge, Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
 import {
   FAST_JOURNEY_DAYS,
-  funnelStages,
   jornadaMetrics,
   recentConversions,
-  timeBuckets,
 } from "@/lib/jornada-data";
 
 export const metadata = { title: "FlyTop OS · Jornada de Compra" };
-
-const nf = new Intl.NumberFormat("pt-BR");
 
 export default function JornadaPage() {
   return (
@@ -28,55 +26,19 @@ export default function JornadaPage() {
       <Metrics metrics={jornadaMetrics} />
 
       <div className="grid-2 split">
-        {/* Funil comunidade → venda */}
-        <div className="glass card">
-          <SectionHead title="Funil da jornada" sub="do ingresso à compra" flush />
-          <div className="list" style={{ marginTop: 16, gap: 18 }}>
-            {funnelStages.map((stage) => (
-              <div key={stage.label} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span className="list-name">{stage.label}</span>
-                  <span className="list-value">{nf.format(stage.count)}</span>
-                </div>
-                <div className="progress-line">
-                  <div className="pb">
-                    <div style={{ width: `${stage.pct}%` }} />
-                  </div>
-                  <span className="pv">{stage.pct}%</span>
-                </div>
-                {stage.step && <div className="list-meta">{stage.step}</div>}
-              </div>
-            ))}
-          </div>
+        {/* Distribuição do tempo até a compra */}
+        <div className="glass chart-card">
+          <SectionHead
+            title="Distribuição do tempo até a compra"
+            sub="compradores do mês"
+          />
+          <JourneyDistributionChart />
         </div>
 
-        {/* Distribuição do tempo até a compra */}
-        <div className="glass card">
-          <SectionHead
-            title="Tempo até a compra"
-            sub="distribuição dos compradores"
-            flush
-          />
-          <div className="list" style={{ marginTop: 16, gap: 18 }}>
-            {timeBuckets.map((bucket) => (
-              <div key={bucket.label} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span className="list-name">{bucket.label}</span>
-                  <span className="list-value">{bucket.count} membros</span>
-                </div>
-                <div className="progress-line">
-                  <div className="pb">
-                    <div style={{ width: `${bucket.pct}%` }} />
-                  </div>
-                  <span className="pv">{bucket.pct}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="metric-hint" style={{ marginTop: 20 }}>
-            <b>63%</b> dos membros compram em até <b>15 dias</b> após entrar na
-            comunidade.
-          </p>
+        {/* Tempo médio por mês */}
+        <div className="glass chart-card">
+          <SectionHead title="Tempo médio por mês" sub="últimos 6 meses" />
+          <JourneyMonthlyChart />
         </div>
       </div>
 
