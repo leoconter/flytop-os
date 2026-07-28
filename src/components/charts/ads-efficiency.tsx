@@ -5,11 +5,22 @@ import { Chart } from "react-chartjs-2";
 import { adsEfficiency } from "@/lib/ads-data";
 import { brl, glassTooltip, moneyTick } from "./register";
 
-/** Investimento (barra, eixo esq.) × CPA final por membro (linha, eixo dir.). */
-export function AdsEfficiencyChart() {
-  const { labels, investment, cpa } = adsEfficiency;
-
-  const data: ChartData<"bar" | "line", number[], string> = {
+/**
+ * Investimento (barra, eixo esq.) × CPA (linha, eixo dir.).
+ * Sem props usa os dados ilustrativos; com props plota a série da API.
+ */
+export function AdsEfficiencyChart({
+  labels = adsEfficiency.labels,
+  investment = adsEfficiency.investment,
+  cpa = adsEfficiency.cpa,
+  cpaLabel = "CPA final",
+}: {
+  labels?: string[];
+  investment?: number[];
+  cpa?: (number | null)[];
+  cpaLabel?: string;
+} = {}) {
+  const data: ChartData<"bar" | "line", (number | null)[], string> = {
     labels,
     datasets: [
       {
@@ -24,8 +35,9 @@ export function AdsEfficiencyChart() {
       },
       {
         type: "line",
-        label: "CPA final",
+        label: cpaLabel,
         data: cpa,
+        spanGaps: true,
         borderColor: "#B0761E",
         borderWidth: 2.5,
         tension: 0.35,
@@ -52,12 +64,17 @@ export function AdsEfficiencyChart() {
           label: (c: TooltipItem<"bar" | "line">) =>
             c.dataset.label === "Investimento"
               ? "Investimento: " + brl(c.parsed.y ?? 0)
-              : "CPA final: R$ " + (c.parsed.y ?? 0).toFixed(2).replace(".", ","),
+              : `${c.dataset.label}: R$ ` +
+                (c.parsed.y ?? 0).toFixed(2).replace(".", ","),
         },
       },
     },
     scales: {
-      x: { grid: { display: false }, border: { display: false } },
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { autoSkip: true, maxTicksLimit: 14 },
+      },
       y: {
         beginAtZero: true,
         position: "left",

@@ -140,11 +140,16 @@ persistente. Usa `useSearchParams`, então precisa ficar dentro de `<Suspense>`
 
 ### Rotas
 
-| Rota | Tela | Status |
+| Rota | Tela | Dados |
 | --- | --- | --- |
-| `/` | Dashboard Geral | ✅ |
-| `/interno` | Dashboard Interno | ✅ |
-| `/vendedor` `/alertas` `/comunidade` `/jornada` `/monde` `/ads` | demais | placeholder |
+| `/social` | Social Media | **real** — Graph API (`src/lib/meta/instagram.ts`) |
+| `/ads` | Métricas de Ads | **real** — Marketing API (`src/lib/meta/ads.ts`) |
+| `/` `/interno` `/vendedor` `/alertas` `/comunidade` `/jornada` `/crm` `/monde` | demais | ilustrativos (`src/lib/*-data.ts`) |
+
+As telas com dados reais são Server Components `async` com `revalidate = 3600`,
+leem o período do seletor do cabeçalho e caem nos dados ilustrativos quando as
+credenciais faltam ou a API falha — o estado fica visível na tela (pílula
+"Aguardando conexão" e subtítulo "dados ilustrativos").
 
 ### Primitivas adicionadas ao `globals.css`
 

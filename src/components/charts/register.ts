@@ -54,11 +54,18 @@ export const glassTooltip = {
 export const brl = (v: number) =>
   "R$ " + Math.round(v).toLocaleString("pt-BR");
 
-/** Eixo Y monetário (R$ Xk / R$ X.XM). */
+/**
+ * Eixo Y monetário (R$ Xk / R$ X,XM). Abaixo de 10k mantém uma casa decimal
+ * — em escala diária, arredondar para "k" repetiria o mesmo rótulo em vários
+ * traços (R$ 1k, R$ 1k, R$ 1k…).
+ */
 export function moneyTick(v: number | string) {
   const n = typeof v === "number" ? v : parseFloat(v);
   if (n === 0) return "0";
-  return n >= 1_000_000
-    ? "R$ " + (n / 1_000_000).toFixed(1) + "M"
-    : "R$ " + (n / 1000).toFixed(0) + "k";
+  if (n >= 1_000_000)
+    return "R$ " + (n / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "M";
+  if (n >= 10_000) return "R$ " + Math.round(n / 1000) + "k";
+  if (n >= 1_000)
+    return "R$ " + (n / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "k";
+  return "R$ " + Math.round(n).toLocaleString("pt-BR");
 }

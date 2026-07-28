@@ -1,12 +1,11 @@
 /**
- * Descobre o ID da conta profissional do Instagram a partir do token da Meta.
+ * Descobre os IDs que a plataforma precisa a partir do token da Meta:
+ * a conta profissional do Instagram (META_IG_USER_ID) e as contas de
+ * anúncios (META_AD_ACCOUNT_ID).
  *
  * Uso:
  *   1. Coloque META_ACCESS_TOKEN no .env.local (ou exporte no shell)
  *   2. node scripts/meta-discover.mjs
- *
- * Lista as Páginas acessíveis pelo token e, para cada uma, a conta do
- * Instagram vinculada — o campo `id` dessa conta é o META_IG_USER_ID.
  */
 import { readFileSync } from "node:fs";
 
@@ -64,4 +63,19 @@ for (const page of pages.data) {
   } else {
     console.log("  (sem conta do Instagram vinculada)\n");
   }
+}
+
+const accounts = await get("me/adaccounts", {
+  fields: "name,account_id,account_status,currency",
+  limit: "50",
+}).catch((e) => {
+  console.log(`Contas de anúncios: ${e.message}`);
+  console.log("(o token precisa da permissão ads_read)\n");
+  return null;
+});
+
+for (const acc of accounts?.data ?? []) {
+  const status = acc.account_status === 1 ? "ativa" : `status ${acc.account_status}`;
+  console.log(`Conta de anúncios: ${acc.name} · ${acc.currency} · ${status}`);
+  console.log(`  META_AD_ACCOUNT_ID=act_${acc.account_id}\n`);
 }
