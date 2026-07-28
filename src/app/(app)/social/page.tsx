@@ -34,11 +34,18 @@ export default async function SocialPage({
           hint:
             live.newFollowers === null
               ? "a API só informa os últimos 30 dias"
-              : live.trendLimited
-                ? "últimos 30 dias do período"
-                : "no período",
+              : live.vsPreviousPct !== null
+                ? `${live.vsPreviousPct >= 0 ? "+" : ""}${pct(live.vsPreviousPct)} vs ritmo do período anterior`
+                : live.trendLimited
+                  ? "últimos 30 dias do período"
+                  : "no período",
+          hintTone:
+            live.vsPreviousPct === null
+              ? undefined
+              : live.vsPreviousPct >= 0
+                ? "positive"
+                : "negative",
         },
-        { label: "Posts", value: fmtInt(live.postsTotals.count), hint: "no período" },
         {
           label: "Alcance",
           value: live.reach !== null ? fmtCompact(live.reach) : "—",
@@ -126,11 +133,30 @@ export default async function SocialPage({
                   ? "Novos seguidores por dia"
                   : "Novos seguidores por mês"}
               </span>
+              {live?.forecast && (
+                <span className="legend-item">
+                  <span className="legend-line ll-dash-blue" />
+                  Projeção · próximos {live.forecast.days} dias
+                </span>
+              )}
             </div>
             <FollowersTrendChart
               labels={live?.followerTrend?.labels}
               values={live?.followerTrend?.values}
+              forecast={live?.forecast ?? undefined}
             />
+            {live?.forecast && (
+              <p className="metric-hint">
+                Mantido o ritmo de <b>{fmtInt(Math.round(live.forecast.perDay))}</b>{" "}
+                seguidores/dia{" "}
+                {live.forecast.basis === "anterior"
+                  ? "do período anterior"
+                  : "deste período (a API não cobre o período anterior)"}
+                , a base chega a <b>{fmtInt(live.forecast.followersAtEnd)}</b> em{" "}
+                {live.forecast.untilLabel} — <b>+{fmtInt(live.forecast.total)}</b> em{" "}
+                {live.forecast.days} dias.
+              </p>
+            )}
           </div>
         </div>
       )}

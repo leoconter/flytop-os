@@ -123,8 +123,20 @@ preview da Fase 1.
   `Operação`, `Marketing`), `.nav-item` (com `.active` por `usePathname`),
   `.nav-badge`, `.preview-pill`, `.user-chip`. Config em
   `src/components/app-shell/nav-config.tsx`.
-- **Topbar** (`.topbar`): breadcrumb (`.crumb`), `.chip`/`.chip.live` e o toggle
-  de privacidade.
+- **Topbar** (`.topbar`): breadcrumb (`.crumb`), o seletor de período,
+  `.chip`/`.chip.live` e o toggle de privacidade.
+
+### Seletor de período (`.rp-*`)
+
+`src/components/app-shell/date-range-picker.tsx` — chip do cabeçalho que abre
+um painel com coluna de presets (`.rp-presets`) + calendário de dois meses
+(`.rp-months`) e rodapé de ações (`.rp-foot`). A seleção vira faixa: pontas em
+`.rp-edge` (cobalto sólido) e miolo em `.rp-in` (cobalto 9%).
+
+O intervalo é gravado na URL (`?de=YYYY-MM-DD&ate=YYYY-MM-DD`) e lido pelas
+telas com `resolveRange()` de `src/lib/date-range.ts` — período linkável e
+persistente. Usa `useSearchParams`, então precisa ficar dentro de `<Suspense>`
+(feito na `Topbar`) para as rotas estáticas continuarem prerenderizando.
 
 ### Rotas
 

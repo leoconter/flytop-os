@@ -25,6 +25,7 @@ const GRAPH = `https://graph.facebook.com/${GRAPH_VERSION}`;
 const REVALIDATE_SECONDS = 3600;
 const MAX_WINDOWS = 12; // ~1 ano de insights da conta
 const MAX_MEDIA_PAGES = 6; // até 300 posts
+const MAX_FORECAST_DAYS = 90; // teto do horizonte projetado
 
 /** Intervalo de análise em datas ISO (YYYY-MM-DD), fuso America/Sao_Paulo. */
 export interface SocialRange {
@@ -33,6 +34,28 @@ export interface SocialRange {
 }
 
 export interface IgDailySeries {
+  labels: string[];
+  values: number[];
+}
+
+/**
+ * Projeção de novos seguidores. O ritmo diário sai do período anterior
+ * (mesma duração, imediatamente antes) — é a base padrão. Quando a API não
+ * cobre o período anterior (só expõe 30 dias de follower_count), cai para o
+ * ritmo do próprio período selecionado, e `basis` registra qual foi usada.
+ */
+export interface IgForecast {
+  /** Horizonte projetado, em dias (igual à duração do período). */
+  days: number;
+  basis: "anterior" | "atual";
+  /** Média de novos seguidores por dia usada na projeção. */
+  perDay: number;
+  /** Novos seguidores projetados no horizonte. */
+  total: number;
+  /** Base de seguidores ao fim do horizonte. */
+  followersAtEnd: number;
+  /** Última data do horizonte, formatada (dd/MM). */
+  untilLabel: string;
   labels: string[];
   values: number[];
 }
@@ -49,6 +72,16 @@ export interface IgSocialLive {
   followerTrend: IgDailySeries | null;
   /** true quando a série cobre menos que o período pedido (limite de 30 dias). */
   trendLimited: boolean;
+  /** Novos seguidores no período anterior (null se fora da janela da API). */
+  previousNewFollowers: number | null;
+  /**
+   * Variação % do ritmo diário contra o período anterior. Compara médias por
+   * dia, não totais: o período atual costuma ter 1–2 dias a menos (a Meta
+   * ainda não consolidou), o que faria o total parecer uma queda.
+   */
+  vsPreviousPct: number | null;
+  /** Projeção para os próximos dias (null se não há base de cálculo). */
+  forecast: IgForecast | null;
   /** Posts publicados no período. */
   posts: PostRow[];
   postsTotals: {
@@ -200,6 +233,53 @@ const dayLabelFmt = new Intl.DateTimeFormat("pt-BR", {
   month: "2-digit",
 });
 
+/** Soma dias a uma data ISO (meio-dia UTC evita virada de fuso). */
+function plusDaysISO(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** "2026-08-27" → "27/08" */
+const shortLabel = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+/**
+ * Série diária de novos seguidores de uma janela. `trimTail` descarta os
+ * últimos dias zerados — a Meta consolida follower_count com 1–2 dias de
+ * atraso, o que criaria uma queda falsa no fim do gráfico. Só se aplica a
+ * janelas que chegam ao presente; no passado, zero é dado real.
+ */
+async function fetchFollowerSeries(
+  ig: string,
+  since: number,
+  until: number,
+  trimTail: boolean,
+): Promise<IgDailySeries | null> {
+  const res = await graphGet<InsightTimeSeries>(`${ig}/insights`, {
+    metric: "follower_count",
+    period: "day",
+    since: String(since),
+    until: String(until),
+  }).catch(() => null);
+
+  const values = res?.data.find((d) => d.name === "follower_count")?.values.slice();
+  if (!values?.length) return null;
+
+  if (trimTail) {
+    let trimmed = 0;
+    while (values.length && values[values.length - 1].value === 0 && trimmed < 2) {
+      values.pop();
+      trimmed++;
+    }
+  }
+  if (!values.length) return null;
+
+  return {
+    labels: values.map((v) => dayLabelFmt.format(new Date(v.end_time))),
+    values: values.map((v) => v.value),
+  };
+}
+
 /** Thumbnail exibível do post (vídeos usam thumbnail_url; álbuns, o 1º item). */
 function thumbOf(m: IgMediaItem): string | null {
   if (m.media_type === "VIDEO") return m.thumbnail_url ?? null;
@@ -305,34 +385,30 @@ export async function getInstagramSocial(
     // Série de novos seguidores: a API só cobre os últimos 30 dias corridos.
     const trendSince = Math.max(sinceUnix, untilUnix - 30 * DAY);
     const trendLimited = trendSince > sinceUnix;
-    const followerSeries = await graphGet<InsightTimeSeries>(`${ig}/insights`, {
-      metric: "follower_count",
-      period: "day",
-      since: String(trendSince),
-      until: String(untilUnix),
-    }).catch(() => null);
-
-    const media = await fetchMedia(ig, sinceUnix);
-
-    const daily = followerSeries?.data
-      .find((d) => d.name === "follower_count")
-      ?.values.slice();
-    // A Meta consolida follower_count com ~1–2 dias de atraso; os últimos
-    // pontos chegam como 0 e criariam uma queda falsa no gráfico.
-    let trimmed = 0;
-    while (daily?.length && daily[daily.length - 1].value === 0 && trimmed < 2) {
-      daily.pop();
-      trimmed++;
-    }
-    const followerTrend: IgDailySeries | null = daily?.length
-      ? {
-          labels: daily.map((v) => dayLabelFmt.format(new Date(v.end_time))),
-          values: daily.map((v) => v.value),
-        }
-      : null;
+    const touchesToday = untilUnix >= Math.floor(Date.now() / 1000) - DAY;
+    const followerTrend = await fetchFollowerSeries(
+      ig,
+      trendSince,
+      untilUnix,
+      touchesToday,
+    );
     const newFollowers = followerTrend
       ? followerTrend.values.reduce((sum, v) => sum + v, 0)
       : null;
+
+    // Período anterior (mesma duração, imediatamente antes) — base padrão da
+    // projeção e comparativo do card de novos seguidores.
+    const prevSeries = await fetchFollowerSeries(
+      ig,
+      sinceUnix - days * DAY,
+      sinceUnix - 1,
+      false,
+    );
+    const previousNewFollowers = prevSeries
+      ? prevSeries.values.reduce((sum, v) => sum + v, 0)
+      : null;
+
+    const media = await fetchMedia(ig, sinceUnix);
 
     const inPeriod = media.filter((m) => {
       const t = Math.floor(Date.parse(m.timestamp) / 1000);
@@ -373,6 +449,45 @@ export async function getInstagramSocial(
       };
     }
 
+    // Projeção: ritmo diário do período anterior; se a API não cobre esse
+    // período, usa o ritmo do próprio período selecionado.
+    let forecast: IgForecast | null = null;
+    let basis: IgForecast["basis"] = "anterior";
+    const currentPerDay =
+      newFollowers !== null && followerTrend
+        ? newFollowers / followerTrend.values.length
+        : null;
+    const prevPerDay =
+      previousNewFollowers !== null && prevSeries
+        ? previousNewFollowers / prevSeries.values.length
+        : null;
+
+    let perDay: number | null = prevPerDay;
+    if (perDay === null && currentPerDay !== null) {
+      perDay = currentPerDay;
+      basis = "atual";
+    }
+    if (perDay !== null) {
+      const horizon = Math.min(days, MAX_FORECAST_DAYS);
+      const labels: string[] = [];
+      const values: number[] = [];
+      for (let i = 1; i <= horizon; i++) {
+        labels.push(shortLabel(plusDaysISO(range.until, i)));
+        values.push(Math.round(perDay));
+      }
+      const total = Math.round(perDay * horizon);
+      forecast = {
+        days: horizon,
+        basis,
+        perDay,
+        total,
+        followersAtEnd: profile.followers_count + total,
+        untilLabel: shortLabel(plusDaysISO(range.until, horizon)),
+        labels,
+        values,
+      };
+    }
+
     return {
       username: profile.username,
       range,
@@ -381,6 +496,12 @@ export async function getInstagramSocial(
       newFollowers,
       followerTrend,
       trendLimited,
+      previousNewFollowers,
+      vsPreviousPct:
+        currentPerDay !== null && prevPerDay
+          ? ((currentPerDay - prevPerDay) / prevPerDay) * 100
+          : null,
+      forecast,
       posts,
       postsTotals: {
         count: posts.length,

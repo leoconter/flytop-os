@@ -26,7 +26,6 @@ export const socialMetrics: Metric[] = [
     hint: "+12% vs abril",
     hintTone: "positive",
   },
-  { label: "Posts", value: "42", hint: "publicados no mês" },
   { label: "Alcance", value: "890K", hint: "pessoas únicas" },
   { label: "Impressões", value: "2,1M", hint: "exibições" },
   { label: "Engajamento", value: "6,4%", tone: "green", hint: "taxa média" },

@@ -22,21 +22,37 @@ function fillGradient(ctx: ScriptableContext<"line">) {
 
 /**
  * Tendência de novos seguidores. Sem props usa os dados ilustrativos
- * (mensal); com props plota a série vinda da API (diária, últimos 30 dias).
+ * (mensal); com props plota a série vinda da API (diária). `forecast`
+ * acrescenta o trecho projetado como linha tracejada, emendada no último
+ * ponto realizado.
  */
 export function FollowersTrendChart({
   labels = followersTrend.labels,
   values = followersTrend.values,
+  forecast,
 }: {
   labels?: string[];
   values?: number[];
+  forecast?: { labels: string[]; values: number[] };
 }) {
-  const data: ChartData<"line", number[], string> = {
-    labels,
+  const ahead = forecast?.values.length ?? 0;
+  const allLabels = [...labels, ...(forecast?.labels ?? [])];
+  const realized = [...values, ...Array<number | null>(ahead).fill(null)];
+  // A projeção começa no último ponto realizado para as linhas se emendarem.
+  const projected = forecast
+    ? [
+        ...Array<number | null>(Math.max(0, values.length - 1)).fill(null),
+        values[values.length - 1] ?? null,
+        ...forecast.values,
+      ]
+    : null;
+
+  const data: ChartData<"line", (number | null)[], string> = {
+    labels: allLabels,
     datasets: [
       {
         label: "Novos seguidores",
-        data: values,
+        data: realized,
         borderColor: "#1E56B8",
         borderWidth: 2.5,
         backgroundColor: fillGradient,
@@ -48,6 +64,23 @@ export function FollowersTrendChart({
         pointBorderWidth: 2,
         pointHoverRadius: 5,
       },
+      ...(projected
+        ? [
+            {
+              label: "Projeção",
+              data: projected,
+              borderColor: "rgba(30, 86, 184, 0.55)",
+              borderWidth: 2,
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              pointBackgroundColor: "rgba(30, 86, 184, 0.7)",
+              pointBorderColor: "#fff",
+            },
+          ]
+        : []),
     ],
   };
 
@@ -60,13 +93,20 @@ export function FollowersTrendChart({
       tooltip: {
         ...glassTooltip,
         callbacks: {
-          label: (c: TooltipItem<"line">) =>
-            "+" + (c.parsed.y ?? 0).toLocaleString("pt-BR") + " seguidores",
+          label: (c: TooltipItem<"line">) => {
+            if (c.parsed.y === null) return "";
+            const n = "+" + (c.parsed.y ?? 0).toLocaleString("pt-BR") + " seguidores";
+            return c.datasetIndex === 1 ? `${n} (projeção)` : n;
+          },
         },
       },
     },
     scales: {
-      x: { grid: { display: false }, border: { display: false } },
+      x: {
+        grid: { display: false },
+        border: { display: false },
+        ticks: { autoSkip: true, maxTicksLimit: 14 },
+      },
       y: {
         beginAtZero: true,
         ticks: {
