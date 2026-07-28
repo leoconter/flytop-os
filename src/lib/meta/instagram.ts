@@ -167,7 +167,16 @@ export async function getInstagramSocial(): Promise<IgSocialLive | null> {
     const interactions = totalOf(reach, "total_interactions");
     const viewsTotal = totalOf(views, "views");
 
-    const daily = followerSeries?.data.find((d) => d.name === "follower_count")?.values;
+    const daily = followerSeries?.data
+      .find((d) => d.name === "follower_count")
+      ?.values.slice();
+    // A Meta consolida follower_count com ~1–2 dias de atraso; os últimos
+    // pontos chegam como 0 e criariam uma queda falsa no gráfico.
+    let trimmed = 0;
+    while (daily?.length && daily[daily.length - 1].value === 0 && trimmed < 2) {
+      daily.pop();
+      trimmed++;
+    }
     const followerTrend: IgDailySeries | null = daily?.length
       ? {
           labels: daily.map((v) => dayLabelFmt.format(new Date(v.end_time))),
