@@ -10,14 +10,17 @@
  *
  * Sem credenciais (ou em caso de erro na API) as funções retornam null e a
  * tela cai nos dados ilustrativos de social-data.ts. Todas as chamadas usam
- * ISR de 1h (`next.revalidate`) — módulo só para uso em Server Components.
+ * cache de 1h (`next.revalidate`) — módulo só para uso em Server Components.
  */
 import type { PostRow, PostType } from "@/lib/social-data";
 
 const GRAPH_VERSION = process.env.META_GRAPH_VERSION || "v23.0";
 const GRAPH = `https://graph.facebook.com/${GRAPH_VERSION}`;
 const REVALIDATE_SECONDS = 3600;
-const PERIOD_DAYS = 30;
+
+/** Períodos de análise suportados (a série de seguidores só cobre 30 dias). */
+export const SOCIAL_PERIODS = [7, 14, 30] as const;
+export type SocialPeriod = (typeof SOCIAL_PERIODS)[number];
 
 export interface IgDailySeries {
   labels: string[];
@@ -26,18 +29,36 @@ export interface IgDailySeries {
 
 export interface IgSocialLive {
   username: string;
+  periodDays: SocialPeriod;
   followers: number;
-  /** Soma de novos seguidores nos últimos 30 dias (null se indisponível). */
+  /** Soma de novos seguidores no período (null se indisponível). */
   newFollowers: number | null;
-  /** Novos seguidores por dia, últimos 30 dias (null se indisponível). */
+  /** Novos seguidores por dia no período (null se indisponível). */
   followerTrend: IgDailySeries | null;
-  /** Posts publicados nos últimos 30 dias. */
+  /** Posts publicados no período. */
   posts: PostRow[];
-  postsTotals: { count: number; likes: number; comments: number };
+  postsTotals: {
+    count: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    saves: number;
+  };
+  /** Métricas da conta no período — incluem orgânico + pago. */
   reach: number | null;
   views: number | null;
   /** Interações totais ÷ alcance, em % (null se alcance indisponível). */
   engagementPct: number | null;
+  /**
+   * Recorte orgânico: agregado dos insights dos posts do período (soma por
+   * post — o alcance pode contar a mesma pessoa mais de uma vez).
+   */
+  organic: {
+    reach: number;
+    views: number;
+    interactions: number;
+    engagementPct: number | null;
+  } | null;
 }
 
 export function metaConfigured(): boolean {
@@ -78,14 +99,27 @@ interface InsightTimeSeries {
   }[];
 }
 
+interface IgMediaChild {
+  media_type: string;
+  media_url?: string;
+  thumbnail_url?: string;
+}
+
+interface IgMediaItem {
+  id: string;
+  timestamp: string;
+  media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
+  like_count?: number;
+  comments_count?: number;
+  permalink?: string;
+  media_url?: string;
+  thumbnail_url?: string;
+  children?: { data: IgMediaChild[] };
+  insights?: { data: { name: string; values?: { value: number }[] }[] };
+}
+
 interface IgMediaList {
-  data: {
-    id: string;
-    timestamp: string;
-    media_type: "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM";
-    like_count?: number;
-    comments_count?: number;
-  }[];
+  data: IgMediaItem[];
 }
 
 /* -------------------------------- coleta ---------------------------------- */
@@ -95,6 +129,10 @@ const MEDIA_TYPE_LABEL: Record<string, PostType> = {
   VIDEO: "Video",
   CAROUSEL_ALBUM: "Carousel Album",
 };
+
+const MEDIA_FIELDS_BASE =
+  "id,timestamp,media_type,like_count,comments_count,permalink," +
+  "media_url,thumbnail_url,children{media_type,media_url,thumbnail_url}";
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -113,16 +151,35 @@ const dayLabelFmt = new Intl.DateTimeFormat("pt-BR", {
   month: "2-digit",
 });
 
+/** Thumbnail exibível do post (vídeos usam thumbnail_url; álbuns, o 1º item). */
+function thumbOf(m: IgMediaItem): string | null {
+  if (m.media_type === "VIDEO") return m.thumbnail_url ?? null;
+  if (m.media_type === "CAROUSEL_ALBUM") {
+    const first = m.children?.data?.[0];
+    if (!first) return m.media_url ?? null;
+    return (first.media_type === "VIDEO" ? first.thumbnail_url : first.media_url) ?? null;
+  }
+  return m.media_url ?? null;
+}
+
+function mediaMetric(m: IgMediaItem, name: string): number | null {
+  return m.insights?.data.find((d) => d.name === name)?.values?.[0]?.value ?? null;
+}
+
 /**
- * Busca tudo que a tela Social precisa. Retorna null quando o app Meta não
- * está configurado ou a API falha — a tela usa os dados ilustrativos.
+ * Busca tudo que a tela Social precisa para o período dado. Retorna null
+ * quando o app Meta não está configurado ou a API falha — a tela usa os
+ * dados ilustrativos.
  */
-export async function getInstagramSocial(): Promise<IgSocialLive | null> {
+export async function getInstagramSocial(
+  days: SocialPeriod = 30,
+): Promise<IgSocialLive | null> {
   if (!metaConfigured()) return null;
 
   const ig = process.env.META_IG_USER_ID!;
-  const until = Math.floor(Date.now() / 1000);
-  const since = until - PERIOD_DAYS * 24 * 60 * 60;
+  // Âncora na hora cheia: URLs estáveis por 1h → cache de dados aproveitado.
+  const until = Math.floor(Date.now() / 3_600_000) * 3600;
+  const since = until - days * 24 * 60 * 60;
   const range = { since: String(since), until: String(until) };
 
   try {
@@ -130,9 +187,9 @@ export async function getInstagramSocial(): Promise<IgSocialLive | null> {
       fields: "username,followers_count,media_count",
     });
 
-    // Alcance + interações do período (agregado). "views" substituiu
-    // "impressions" na v22+; pedimos separado para tolerar contas/versões
-    // em que uma métrica específica falhe.
+    // Alcance + interações do período (agregado da conta; inclui pago).
+    // "views" substituiu "impressions" na v22+; pedimos separado para
+    // tolerar contas/versões em que uma métrica específica falhe.
     const reach = await graphGet<InsightTotalValue>(`${ig}/insights`, {
       metric: "reach,total_interactions",
       period: "day",
@@ -155,10 +212,17 @@ export async function getInstagramSocial(): Promise<IgSocialLive | null> {
       ...range,
     }).catch(() => null);
 
+    // Mídia com insights por post (orgânico). Se a expansão de insights
+    // falhar (contas/mídias sem suporte), refaz sem ela.
     const media = await graphGet<IgMediaList>(`${ig}/media`, {
-      fields: "id,timestamp,media_type,like_count,comments_count",
+      fields: `${MEDIA_FIELDS_BASE},insights.metric(reach,views,saved,shares)`,
       limit: "50",
-    });
+    }).catch(() =>
+      graphGet<IgMediaList>(`${ig}/media`, {
+        fields: MEDIA_FIELDS_BASE,
+        limit: "50",
+      }),
+    );
 
     const totalOf = (res: InsightTotalValue | null, name: string) =>
       res?.data.find((d) => d.name === name)?.total_value?.value ?? null;
@@ -188,20 +252,45 @@ export async function getInstagramSocial(): Promise<IgSocialLive | null> {
       : null;
 
     const cutoff = new Date(since * 1000);
-    const posts: PostRow[] = media.data
-      .filter((m) => new Date(m.timestamp) >= cutoff)
-      .map((m) => {
-        const d = new Date(m.timestamp);
-        return {
-          datetime: `${dateFmt.format(d)} às ${timeFmt.format(d)}`,
-          type: MEDIA_TYPE_LABEL[m.media_type] ?? "Image",
-          likes: m.like_count ?? 0,
-          comments: m.comments_count ?? 0,
-        };
-      });
+    const inPeriod = media.data.filter((m) => new Date(m.timestamp) >= cutoff);
+
+    const posts: PostRow[] = inPeriod.map((m) => {
+      const d = new Date(m.timestamp);
+      return {
+        datetime: `${dateFmt.format(d)} às ${timeFmt.format(d)}`,
+        type: MEDIA_TYPE_LABEL[m.media_type] ?? "Image",
+        likes: m.like_count ?? 0,
+        comments: m.comments_count ?? 0,
+        shares: mediaMetric(m, "shares") ?? undefined,
+        saves: mediaMetric(m, "saved") ?? undefined,
+        thumb: thumbOf(m),
+        permalink: m.permalink,
+      };
+    });
+
+    // Recorte orgânico: soma dos insights por post do período.
+    const organicPosts = inPeriod.filter((m) => m.insights);
+    const sumMetric = (name: string) =>
+      organicPosts.reduce((sum, m) => sum + (mediaMetric(m, name) ?? 0), 0);
+    let organic: IgSocialLive["organic"] = null;
+    if (organicPosts.length) {
+      const organicReach = sumMetric("reach");
+      const organicInteractions =
+        posts.reduce((s, p) => s + p.likes + p.comments, 0) +
+        sumMetric("shares") +
+        sumMetric("saved");
+      organic = {
+        reach: organicReach,
+        views: sumMetric("views"),
+        interactions: organicInteractions,
+        engagementPct:
+          organicReach > 0 ? (organicInteractions / organicReach) * 100 : null,
+      };
+    }
 
     return {
       username: profile.username,
+      periodDays: days,
       followers: profile.followers_count,
       newFollowers,
       followerTrend,
@@ -210,6 +299,8 @@ export async function getInstagramSocial(): Promise<IgSocialLive | null> {
         count: posts.length,
         likes: posts.reduce((sum, p) => sum + p.likes, 0),
         comments: posts.reduce((sum, p) => sum + p.comments, 0),
+        shares: posts.reduce((sum, p) => sum + (p.shares ?? 0), 0),
+        saves: posts.reduce((sum, p) => sum + (p.saves ?? 0), 0),
       },
       reach: reachTotal,
       views: viewsTotal,
@@ -217,6 +308,7 @@ export async function getInstagramSocial(): Promise<IgSocialLive | null> {
         reachTotal && interactions !== null
           ? (interactions / reachTotal) * 100
           : null,
+      organic,
     };
   } catch (err) {
     console.error("[meta/instagram] falha ao buscar métricas:", err);
