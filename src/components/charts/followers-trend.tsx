@@ -20,14 +20,23 @@ function fillGradient(ctx: ScriptableContext<"line">) {
   return g;
 }
 
-/** Tendência de novos seguidores por mês (últimos 6 meses). */
-export function FollowersTrendChart() {
+/**
+ * Tendência de novos seguidores. Sem props usa os dados ilustrativos
+ * (mensal); com props plota a série vinda da API (diária, últimos 30 dias).
+ */
+export function FollowersTrendChart({
+  labels = followersTrend.labels,
+  values = followersTrend.values,
+}: {
+  labels?: string[];
+  values?: number[];
+}) {
   const data: ChartData<"line", number[], string> = {
-    labels: followersTrend.labels,
+    labels,
     datasets: [
       {
         label: "Novos seguidores",
-        data: followersTrend.values,
+        data: values,
         borderColor: "#1E56B8",
         borderWidth: 2.5,
         backgroundColor: fillGradient,

@@ -1,5 +1,10 @@
 import type { CSSProperties } from "react";
-import { type PostType, postsInPeriod, postsTotals } from "@/lib/social-data";
+import {
+  type PostRow,
+  type PostType,
+  postsInPeriod,
+  postsTotals,
+} from "@/lib/social-data";
 
 const sw = {
   fill: "none",
@@ -99,8 +104,17 @@ function EngagementStats({
   );
 }
 
-/** Lista de posts do período, no estilo do painel de social media. */
-export function PostsInPeriod() {
+/**
+ * Lista de posts do período, no estilo do painel de social media.
+ * Sem props usa os dados ilustrativos.
+ */
+export function PostsInPeriod({
+  posts = postsInPeriod,
+  totals = postsTotals,
+}: {
+  posts?: PostRow[];
+  totals?: { count: number; likes: number; comments: number };
+}) {
   return (
     <div className="section">
       <div className="glass card">
@@ -108,18 +122,14 @@ export function PostsInPeriod() {
           <span className="section-title">
             Posts no período{" "}
             <span className="muted" style={{ fontWeight: 500 }}>
-              ({postsTotals.count})
+              ({totals.count})
             </span>
           </span>
-          <EngagementStats
-            likes={postsTotals.likes}
-            comments={postsTotals.comments}
-            bold
-          />
+          <EngagementStats likes={totals.likes} comments={totals.comments} bold />
         </div>
 
         <div className="list" style={{ marginTop: 14 }}>
-          {postsInPeriod.map((post) => (
+          {posts.map((post) => (
             <div className="list-row" key={post.datetime}>
               <span style={iconBox}>
                 <MediaIcon type={post.type} />
