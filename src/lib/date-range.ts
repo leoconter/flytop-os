@@ -1,0 +1,83 @@
+/**
+ * Intervalo de análise compartilhado pela plataforma. O seletor do cabeçalho
+ * grava as datas na URL (`?de=YYYY-MM-DD&ate=YYYY-MM-DD`) e as telas leem
+ * daqui — assim o período é linkável e sobrevive a recarregar a página.
+ */
+import type { SocialRange } from "@/lib/meta/instagram";
+
+export const PARAM_FROM = "de";
+export const PARAM_TO = "ate";
+
+/** Padrão quando a URL não traz datas. */
+export const DEFAULT_DAYS = 30;
+/** Teto de segurança para intervalos vindos da URL. */
+const MAX_DAYS = 366;
+
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+const isoFmt = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Hoje em São Paulo, como YYYY-MM-DD. */
+export function todaySP(): string {
+  return isoFmt.format(new Date());
+}
+
+/** Soma dias a uma data ISO (aritmética em UTC, sem efeito de fuso). */
+export function addDaysISO(iso: string, delta: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+function valid(iso: string | undefined): iso is string {
+  return Boolean(iso && ISO_RE.test(iso) && !Number.isNaN(Date.parse(`${iso}T12:00:00Z`)));
+}
+
+function diffDays(since: string, until: string): number {
+  const a = Date.parse(`${since}T12:00:00Z`);
+  const b = Date.parse(`${until}T12:00:00Z`);
+  return Math.round((b - a) / 86_400_000);
+}
+
+/**
+ * Resolve o intervalo a partir dos parâmetros da URL, caindo nos últimos 30
+ * dias quando ausentes ou inválidos. Nunca retorna datas futuras.
+ */
+export function resolveRange(params: {
+  [PARAM_FROM]?: string;
+  [PARAM_TO]?: string;
+}): SocialRange {
+  const today = todaySP();
+  const fallback: SocialRange = {
+    since: addDaysISO(today, -(DEFAULT_DAYS - 1)),
+    until: today,
+  };
+
+  const from = params[PARAM_FROM];
+  const to = params[PARAM_TO];
+  if (!valid(from) || !valid(to)) return fallback;
+
+  const since = from;
+  const until = to > today ? today : to;
+  const span = diffDays(since, until);
+  if (span < 0 || span + 1 > MAX_DAYS) return fallback;
+
+  return { since, until };
+}
+
+const labelFmt = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "UTC",
+  day: "2-digit",
+  month: "2-digit",
+  year: "2-digit",
+});
+
+/** "28/06/26 – 27/07/26" */
+export function formatRange({ since, until }: SocialRange): string {
+  const f = (iso: string) => labelFmt.format(new Date(`${iso}T12:00:00Z`));
+  return since === until ? f(since) : `${f(since)} – ${f(until)}`;
+}

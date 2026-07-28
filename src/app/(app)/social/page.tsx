@@ -1,28 +1,15 @@
-import Link from "next/link";
 import { FollowersTrendChart } from "@/components/charts/followers-trend";
 import { PostsInPeriod } from "@/components/social/posts-in-period";
 import { Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
 import type { Metric } from "@/lib/dashboard-data";
-import {
-  fmtCompact,
-  fmtInt,
-  getInstagramSocial,
-  SOCIAL_PERIODS,
-  type SocialPeriod,
-} from "@/lib/meta/instagram";
+import { formatRange, PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
+import { fmtCompact, fmtInt, getInstagramSocial } from "@/lib/meta/instagram";
 import { socialMetrics } from "@/lib/social-data";
 
 export const metadata = { title: "FlyTop OS · Social Media" };
 
 /** Cache das buscas na Graph API: 1h. */
 export const revalidate = 3600;
-
-function parsePeriod(raw: string | undefined): SocialPeriod {
-  const days = Number(raw?.replace(/d$/, ""));
-  return (SOCIAL_PERIODS as readonly number[]).includes(days)
-    ? (days as SocialPeriod)
-    : 30;
-}
 
 function pct(n: number): string {
   return n.toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "%";
@@ -31,11 +18,11 @@ function pct(n: number): string {
 export default async function SocialPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periodo?: string }>;
+  searchParams: Promise<{ [PARAM_FROM]?: string; [PARAM_TO]?: string }>;
 }) {
-  const period = parsePeriod((await searchParams).periodo);
-  const live = await getInstagramSocial(period);
-  const days = `${period} dias`;
+  const range = resolveRange(await searchParams);
+  const live = await getInstagramSocial(range);
+  const periodLabel = formatRange(range);
 
   const metrics: Metric[] = live
     ? [
@@ -43,14 +30,21 @@ export default async function SocialPage({
         {
           label: "Novos seguidores",
           value: live.newFollowers !== null ? `+${fmtInt(live.newFollowers)}` : "—",
-          tone: "blue",
-          hint: live.newFollowers !== null ? `últimos ${days}` : "indisponível para a conta",
+          tone: live.newFollowers !== null ? "blue" : undefined,
+          hint:
+            live.newFollowers === null
+              ? "a API só informa os últimos 30 dias"
+              : live.trendLimited
+                ? "últimos 30 dias do período"
+                : "no período",
         },
-        { label: "Posts", value: fmtInt(live.postsTotals.count), hint: `últimos ${days}` },
+        { label: "Posts", value: fmtInt(live.postsTotals.count), hint: "no período" },
         {
           label: "Alcance",
           value: live.reach !== null ? fmtCompact(live.reach) : "—",
-          hint: "pessoas únicas · orgânico + pago",
+          hint: live.reachIsSum
+            ? "soma de janelas de 30 dias · orgânico + pago"
+            : "pessoas únicas · orgânico + pago",
         },
         {
           label: "Visualizações",
@@ -91,27 +85,13 @@ export default async function SocialPage({
   return (
     <>
       <PageHead
-        eyebrow="Marketing · presença"
         title="Social Media"
         sub={
           live
-            ? `Audiência, alcance e engajamento · últimos ${days}`
+            ? `Audiência, alcance e engajamento · ${periodLabel}`
             : "Audiência, alcance e engajamento · dados ilustrativos"
         }
-        right={
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-            {SOCIAL_PERIODS.map((p) => (
-              <Link
-                key={p}
-                className={`chip${p === period ? " sel" : ""}`}
-                href={p === 30 ? "/social" : `/social?periodo=${p}d`}
-              >
-                {p} dias
-              </Link>
-            ))}
-            {!live && <Pill tone="blue">Aguardando conexão Meta</Pill>}
-          </span>
-        }
+        right={!live && <Pill tone="blue">Aguardando conexão Meta</Pill>}
       />
 
       <Metrics metrics={metrics} />
@@ -130,7 +110,13 @@ export default async function SocialPage({
         <div className="section">
           <SectionHead
             title="Tendência de novos seguidores"
-            sub={live?.followerTrend ? `por dia · últimos ${days}` : "últimos 6 meses"}
+            sub={
+              live?.followerTrend
+                ? live.trendLimited
+                  ? "por dia · últimos 30 dias (limite da API)"
+                  : "por dia · no período"
+                : "últimos 6 meses"
+            }
           />
           <div className="glass chart-card">
             <div className="chart-legend">
@@ -167,12 +153,12 @@ export default async function SocialPage({
         <div className="nt">
           {live ? (
             <>
-              <b>Fonte:</b> Graph API da Meta, atualizada a cada hora. A grade
-              principal usa métricas da conta (orgânico + pago);{" "}
-              <b>Desempenho orgânico</b> soma os insights de cada post do
-              período — por isso o alcance orgânico pode contar a mesma pessoa
-              mais de uma vez. A série de seguidores cobre no máximo 30 dias
-              (limite da API).
+              <b>Fonte:</b> Graph API da Meta, atualizada a cada hora. O período
+              vem do seletor no topo da tela. A grade principal usa métricas da
+              conta (orgânico + pago); <b>Desempenho orgânico</b> soma os
+              insights de cada post — por isso o alcance orgânico pode contar a
+              mesma pessoa mais de uma vez. A série de seguidores cobre no
+              máximo 30 dias (limite da API).
             </>
           ) : (
             <>

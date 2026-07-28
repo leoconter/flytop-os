@@ -12,7 +12,7 @@ export function PageHead({
   sub,
   right,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   sub?: ReactNode;
   right?: ReactNode;
@@ -20,7 +20,7 @@ export function PageHead({
   return (
     <div className="page-head">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
         <h1 className="page-title">{title}</h1>
         {sub && <p className="page-sub">{sub}</p>}
       </div>
