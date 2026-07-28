@@ -95,6 +95,7 @@ interface InsightRow {
 
 interface InsightResponse {
   data: InsightRow[];
+  paging?: { next?: string };
 }
 
 /* -------------------------------- helpers --------------------------------- */
@@ -143,6 +144,36 @@ async function insights(
   return body as InsightResponse;
 }
 
+/**
+ * Como `insights`, mas junta todas as páginas. A Graph API devolve só 25
+ * linhas por padrão — sem isso, uma série diária de um mês chegava cortada
+ * no dia 25 e o gráfico parecia terminar antes do fim do período.
+ */
+async function insightsAll(
+  path: string,
+  params: Record<string, string>,
+  maxPages = 8,
+): Promise<InsightRow[] | null> {
+  const first = await insights(path, { limit: "500", ...params });
+  if (!first) return null;
+
+  const rows = [...first.data];
+  let next = first.paging?.next;
+  for (let page = 1; page < maxPages && next; page++) {
+    const res = await fetch(next, { next: { revalidate: REVALIDATE_SECONDS } });
+    const body = await res.json();
+    if (!res.ok || body.error) {
+      console.error(
+        `[meta/ads] paginação ${path}: ${body?.error?.message ?? `HTTP ${res.status}`}`,
+      );
+      break;
+    }
+    rows.push(...(body.data ?? []));
+    next = body.paging?.next;
+  }
+  return rows;
+}
+
 const nameFilter = (operator: "CONTAIN" | "NOT_CONTAIN") =>
   JSON.stringify([{ field: "campaign.name", operator, value: LEADS_TERM }]);
 
@@ -179,13 +210,12 @@ export async function getAdsInsights(range: SocialRange): Promise<AdsLive | null
         time_range,
         filtering: nameFilter("NOT_CONTAIN"),
       }),
-      insights(`${act}/insights`, {
+      insightsAll(`${act}/insights`, {
         level: "campaign",
         fields: "campaign_name,spend,reach,impressions,clicks,actions",
         time_range,
-        limit: "200",
       }),
-      insights(`${act}/insights`, {
+      insightsAll(`${act}/insights`, {
         level: "account",
         fields: "spend,actions",
         time_range,
@@ -196,7 +226,7 @@ export async function getAdsInsights(range: SocialRange): Promise<AdsLive | null
 
     if (!leadsRes && !campaignRes) return null;
 
-    const rows = campaignRes?.data ?? [];
+    const rows = campaignRes ?? [];
     const toRow = (r: InsightRow): AdsCampaignRow => {
       const spend = num(r.spend);
       const conversions = actionOf(r, CONVERSION_ACTION);
@@ -215,11 +245,15 @@ export async function getAdsInsights(range: SocialRange): Promise<AdsLive | null
 
     const bySpend = (a: AdsCampaignRow, b: AdsCampaignRow) => b.spend - a.spend;
 
-    const daily: AdsDaily | null = dailyRes?.data.length
+    // A API pode devolver os dias fora de ordem entre páginas.
+    const dailyRows = (dailyRes ?? [])
+      .filter((d) => d.date_start)
+      .sort((a, b) => (a.date_start! < b.date_start! ? -1 : 1));
+    const daily: AdsDaily | null = dailyRows.length
       ? {
-          labels: dailyRes.data.map((d) => shortLabel(d.date_start ?? "")),
-          spend: dailyRes.data.map((d) => num(d.spend)),
-          cpa: dailyRes.data.map((d) => {
+          labels: dailyRows.map((d) => shortLabel(d.date_start!)),
+          spend: dailyRows.map((d) => num(d.spend)),
+          cpa: dailyRows.map((d) => {
             const c = actionOf(d, CONVERSION_ACTION);
             return c > 0 ? num(d.spend) / c : null;
           }),
