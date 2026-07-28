@@ -20,6 +20,24 @@ const REVALIDATE_SECONDS = 3600;
 /** Termo que separa as campanhas de captação das demais. */
 export const LEADS_TERM = "Leads";
 
+/**
+ * Praças acompanhadas dentro das campanhas de captação. O termo é buscado em
+ * qualquer parte do nome, então "[SP]", "[SP Estado]" e "[City SP]" caem
+ * todos em São Paulo — é o recorte por praça, não por segmentação.
+ */
+export const REGIONS = [
+  { term: "SP", label: "São Paulo" },
+  { term: "RJ", label: "Rio de Janeiro" },
+] as const;
+
+export interface AdsRegion {
+  label: string;
+  term: string;
+  /** Campanhas de captação cujo nome contém o termo. */
+  campaigns: number;
+  totals: AdsTotals;
+}
+
 /** Conversão contabilizada como resultado (evento personalizado do pixel). */
 const CONVERSION_ACTION = "offsite_conversion.fb_pixel_custom";
 
@@ -66,6 +84,8 @@ export interface AdsLive {
   others: AdsTotals;
   leadsCampaigns: AdsCampaignRow[];
   otherCampaigns: AdsCampaignRow[];
+  /** Recorte das campanhas de captação por praça (SP / RJ). */
+  regions: AdsRegion[];
   daily: AdsDaily | null;
 }
 
@@ -177,6 +197,13 @@ async function insightsAll(
 const nameFilter = (operator: "CONTAIN" | "NOT_CONTAIN") =>
   JSON.stringify([{ field: "campaign.name", operator, value: LEADS_TERM }]);
 
+/** Captação + praça: os filtros do array são combinados com E pela API. */
+const regionFilter = (term: string) =>
+  JSON.stringify([
+    { field: "campaign.name", operator: "CONTAIN", value: LEADS_TERM },
+    { field: "campaign.name", operator: "CONTAIN", value: term },
+  ]);
+
 const ACCOUNT_FIELDS =
   "spend,reach,impressions,clicks,ctr,cpm,actions,account_currency";
 
@@ -197,6 +224,19 @@ export async function getAdsInsights(range: SocialRange): Promise<AdsLive | null
   const time_range = JSON.stringify({ since: range.since, until: range.until });
 
   try {
+    // Uma chamada por praça: o alcance de cada uma sai desduplicado da API.
+    // Dispara junto com as demais e é aguardada depois (tipos separados).
+    const regionsPromise = Promise.all(
+      REGIONS.map((r) =>
+        insights(`${act}/insights`, {
+          level: "account",
+          fields: ACCOUNT_FIELDS,
+          time_range,
+          filtering: regionFilter(r.term),
+        }),
+      ),
+    );
+
     const [leadsRes, othersRes, campaignRes, dailyRes] = await Promise.all([
       insights(`${act}/insights`, {
         level: "account",
@@ -223,6 +263,7 @@ export async function getAdsInsights(range: SocialRange): Promise<AdsLive | null
         time_increment: "1",
       }),
     ]);
+    const regionRes = await regionsPromise;
 
     if (!leadsRes && !campaignRes) return null;
 
@@ -267,6 +308,16 @@ export async function getAdsInsights(range: SocialRange): Promise<AdsLive | null
       others: totalsOf(othersRes?.data?.[0]),
       leadsCampaigns: rows.filter(isLeads).map(toRow).sort(bySpend),
       otherCampaigns: rows.filter((r) => !isLeads(r)).map(toRow).sort(bySpend),
+      regions: REGIONS.map((r, i) => ({
+        label: r.label,
+        term: r.term,
+        campaigns: rows.filter(
+          (row) =>
+            isLeads(row) &&
+            (row.campaign_name ?? "").toUpperCase().includes(r.term),
+        ).length,
+        totals: totalsOf(regionRes[i]?.data?.[0]),
+      })).filter((r) => r.campaigns > 0 || r.totals.spend > 0),
       daily,
     };
   } catch (err) {

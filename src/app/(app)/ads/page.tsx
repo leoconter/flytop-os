@@ -4,6 +4,7 @@ import type { Metric } from "@/lib/dashboard-data";
 import { formatRange, PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
 import {
   type AdsCampaignRow,
+  type AdsRegion,
   fmtMoney,
   fmtMoneyCompact,
   getAdsInsights,
@@ -108,6 +109,82 @@ function CampaignTable({
                   <td className="r private">
                     {row.cpa !== null ? (
                       fmtMoney(row.cpa, currency, 2)
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Recorte por praça (SP / RJ) das campanhas de captação. */
+function RegionTable({
+  regions,
+  currency,
+  totalSpend,
+}: {
+  regions: AdsRegion[];
+  currency: string;
+  totalSpend: number;
+}) {
+  return (
+    <div className="section">
+      <div className="glass card">
+        <SectionHead
+          title="Por praça"
+          sub="campanhas de captação por região no nome"
+          flush
+        />
+        <div className="table-wrap" style={{ marginTop: 8 }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Praça</th>
+                <th className="r">Campanhas</th>
+                <th className="r">Investimento</th>
+                <th className="r">Alcance</th>
+                <th className="r">Cliques no link</th>
+                <th className="r">Conversões</th>
+                <th className="r">CPA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {regions.map((r) => (
+                <tr key={r.term}>
+                  <td>
+                    {r.label}{" "}
+                    <span className="muted mono-cell">[{r.term}]</span>
+                  </td>
+                  <td className="r">{fmtInt(r.campaigns)}</td>
+                  <td className="r private">
+                    {fmtMoney(r.totals.spend, currency)}
+                    {totalSpend > 0 && (
+                      <small
+                        style={{
+                          display: "block",
+                          fontSize: 11.5,
+                          color: "var(--text-3)",
+                        }}
+                      >
+                        {((r.totals.spend / totalSpend) * 100).toLocaleString("pt-BR", {
+                          maximumFractionDigits: 0,
+                        })}
+                        % do total
+                      </small>
+                    )}
+                  </td>
+                  <td className="r">{fmtInt(r.totals.reach)}</td>
+                  <td className="r">{fmtInt(r.totals.linkClicks)}</td>
+                  <td className="r">{fmtInt(r.totals.conversions)}</td>
+                  <td className="r private">
+                    {r.totals.cpa !== null ? (
+                      fmtMoney(r.totals.cpa, currency, 2)
                     ) : (
                       <span className="muted">—</span>
                     )}
@@ -282,6 +359,14 @@ export default async function AdsPage({
             />
           </div>
         </div>
+      )}
+
+      {live.regions.length > 0 && (
+        <RegionTable
+          regions={live.regions}
+          currency={currency}
+          totalSpend={leads.spend}
+        />
       )}
 
       <CampaignTable
