@@ -50,14 +50,19 @@ Convenção: **azul** = realizado/principal · **verde** = meta/positivo ·
 
 | Token          | Hex       | Uso                                        |
 | -------------- | --------- | ------------------------------------------ |
-| `--navy`       | `#0E2038` | sidebar (base do gradiente), ícone da marca |
+| `--navy`       | `#0E2038` | sidebar (base do gradiente)                |
 | `--navy-raise` | `#10243D` | topo do gradiente da sidebar               |
 | `--navy-deep`  | `#0B1A2C` | base do gradiente da sidebar               |
-| `--brass`      | `#CFA95D` | acento de latão: "OS" do logo, barra da nav ativa, dots |
+| `--brass`      | `#CFA95D` | acento de latão: barra da nav ativa, badges, dots |
 | `--brass-dark` | `#8C6D2F` | latão sobre fundo claro (ex.: `.rank.gold`) |
 
 O latão é o único acento "quente" da identidade — usar com muita parcimônia
-(logo, item ativo da nav, badge da sidebar). Nunca em botões ou gráficos.
+(item ativo da nav, badge da sidebar). Nunca em botões ou gráficos.
+
+**Logo:** `public/flytop-os-logo.png` — a marca oficial (fly em azul-marinho,
+"top os" em laranja). Como o azul-marinho é o mesmo da sidebar, ela vai sobre
+uma placa branca (`.brand-logo`); é o que garante contraste sem alterar as
+cores da marca.
 
 ### Superfície e texto
 

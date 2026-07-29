@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navGroups, navItems } from "./nav-config";
@@ -10,21 +11,16 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <span className="brand-mark">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-          </svg>
-        </span>
-        <span className="brand-name">
-          <b>FlyTop</b> <span className="os">OS</span>
-        </span>
+        {/* A logo tem o "fly" em azul-marinho, a mesma cor da sidebar; a placa
+            branca preserva as cores originais da marca sem perder contraste. */}
+        <Image
+          className="brand-logo"
+          src="/flytop-os-logo.png"
+          alt="FlyTop OS"
+          width={720}
+          height={204}
+          priority
+        />
       </div>
 
       {navGroups.map((group) => (
