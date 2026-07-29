@@ -284,16 +284,16 @@ export default async function AdsPage({
       label: "Conversões",
       value: fmtInt(leads.conversions),
       tone: "blue",
-      hint: "resultado do pixel",
-      info: "Disparos do evento do pixel — o resultado que estas campanhas otimizam.",
+      hint: "cliques no WhatsApp da LP",
+      info: "Cliques no botão de WhatsApp da landing page, que leva para a comunidade — o evento de pixel que estas campanhas otimizam. É intenção de entrar, não entrada confirmada: quem clica ainda pode não concluir.",
     },
     {
       label: "CPA",
       value: leads.cpa !== null ? fmtMoney(leads.cpa, currency, 2) : "—",
       tone: "green",
-      hint: "custo por conversão",
+      hint: "por clique no WhatsApp",
       privateValue: true,
-      info: "Investimento ÷ conversões: quanto custou cada resultado.",
+      info: "Investimento ÷ conversões: o custo de cada clique no botão de WhatsApp. Não é o custo por membro da comunidade — para isso falta cruzar com as entradas reais.",
     },
   ];
 
@@ -426,8 +426,9 @@ export default async function AdsPage({
           acima consideram <b>apenas as campanhas com &ldquo;{LEADS_TERM}&rdquo; no
           nome</b> — o corte é feito na própria API, então o alcance continua
           sendo de pessoas únicas (somar campanha a campanha contaria a mesma
-          pessoa mais de uma vez). <b>Conversões</b> é o evento personalizado do
-          pixel; o <b>CPA</b> divide o investimento por ele.
+          pessoa mais de uma vez). <b>Conversões</b> são os cliques no botão de
+          WhatsApp da landing page e o <b>CPA</b> é o custo desse clique — não
+          do membro que efetivamente entrou na comunidade.
         </div>
       </div>
 
