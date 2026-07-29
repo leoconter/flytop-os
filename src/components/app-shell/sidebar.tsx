@@ -11,14 +11,13 @@ export function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        {/* A logo tem o "fly" em azul-marinho, a mesma cor da sidebar; a placa
-            branca preserva as cores originais da marca sem perder contraste. */}
+        {/* Versão negativa da marca, feita para fundo escuro. */}
         <Image
           className="brand-logo"
           src="/flytop-os-logo.png"
           alt="FlyTop OS"
-          width={720}
-          height={204}
+          width={760}
+          height={235}
           priority
         />
       </div>

@@ -59,10 +59,12 @@ Convenção: **azul** = realizado/principal · **verde** = meta/positivo ·
 O latão é o único acento "quente" da identidade — usar com muita parcimônia
 (item ativo da nav, badge da sidebar). Nunca em botões ou gráficos.
 
-**Logo:** `public/flytop-os-logo.png` — a marca oficial (fly em azul-marinho,
-"top os" em laranja). Como o azul-marinho é o mesmo da sidebar, ela vai sobre
-uma placa branca (`.brand-logo`); é o que garante contraste sem alterar as
-cores da marca.
+**Logo:** `public/flytop-os-logo.png` — versão negativa da marca ("fly" em
+branco, "top os" em laranja, avião em azul-claro), feita para fundo escuro:
+assenta direto no navy da sidebar (`.brand-logo`), sem placa. O PNG entregue
+vinha com fundo cinza-claro sólido; ele foi recortado no conteúdo e o fundo
+virou alfa. Para usar a marca sobre fundo claro, o arquivo correto é a versão
+com "fly" em azul-marinho.
 
 ### Superfície e texto
 
