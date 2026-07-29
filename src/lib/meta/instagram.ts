@@ -360,20 +360,26 @@ export async function getInstagramSocial(
     const totalOf = (res: InsightTotalValue | null, name: string) =>
       res?.data.find((d) => d.name === name)?.total_value?.value ?? null;
 
-    for (const w of chunks) {
-      const main = await graphGet<InsightTotalValue>(`${ig}/insights`, {
-        metric: "reach,total_interactions",
-        period: "day",
-        metric_type: "total_value",
-        ...w,
-      }).catch(() => null);
-      const v = await graphGet<InsightTotalValue>(`${ig}/insights`, {
-        metric: "views",
-        period: "day",
-        metric_type: "total_value",
-        ...w,
-      }).catch(() => null);
+    // Janelas em paralelo: um intervalo anual são 12 janelas (24 chamadas),
+    // que em sequência deixariam a primeira carga da tela muito lenta.
+    const windowResults = await Promise.all(
+      chunks.map(async (w) => ({
+        main: await graphGet<InsightTotalValue>(`${ig}/insights`, {
+          metric: "reach,total_interactions",
+          period: "day",
+          metric_type: "total_value",
+          ...w,
+        }).catch(() => null),
+        views: await graphGet<InsightTotalValue>(`${ig}/insights`, {
+          metric: "views",
+          period: "day",
+          metric_type: "total_value",
+          ...w,
+        }).catch(() => null),
+      })),
+    );
 
+    for (const { main, views: v } of windowResults) {
       const r = totalOf(main, "reach");
       const i = totalOf(main, "total_interactions");
       const vv = totalOf(v, "views");

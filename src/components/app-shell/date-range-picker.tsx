@@ -60,6 +60,7 @@ function presetsFor(today: string): { label: string; range: Draft }[] {
       label: "Mês passado",
       range: { since: isoOf(p.y, p.m, 1), until: lastPrevMonth },
     },
+    { label: "Este ano", range: { since: isoOf(y, 0, 1), until: today } },
   ];
 }
 
