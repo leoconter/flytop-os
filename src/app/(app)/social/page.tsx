@@ -26,7 +26,12 @@ export default async function SocialPage({
 
   const metrics: Metric[] = live
     ? [
-        { label: "Seguidores", value: fmtInt(live.followers), hint: "base total" },
+        {
+          label: "Seguidores",
+          value: fmtInt(live.followers),
+          hint: "base total",
+          info: "Tamanho da audiência hoje. Não muda com o período selecionado.",
+        },
         {
           label: "Novos seguidores",
           value: live.newFollowers !== null ? `+${fmtInt(live.newFollowers)}` : "—",
@@ -45,6 +50,7 @@ export default async function SocialPage({
               : live.vsPreviousPct >= 0
                 ? "positive"
                 : "negative",
+          info: "Saldo de seguidores no período. A Meta só publica os últimos 30 dias e leva 1–2 dias para consolidar.",
         },
         {
           label: "Alcance",
@@ -52,17 +58,22 @@ export default async function SocialPage({
           hint: live.reachIsSum
             ? "soma de janelas de 30 dias · orgânico + pago"
             : "pessoas únicas · orgânico + pago",
+          info: live.reachIsSum
+            ? "Pessoas diferentes que viram algum conteúdo. Acima de 30 dias vira soma de janelas (limite da API), então há repetição."
+            : "Pessoas diferentes que viram algum conteúdo, orgânico ou impulsionado. Cada uma conta uma vez.",
         },
         {
           label: "Visualizações",
           value: live.views !== null ? fmtCompact(live.views) : "—",
           hint: "views · orgânico + pago",
+          info: "Exibições do conteúdo, contando repetições. Substituiu as impressões na API da Meta.",
         },
         {
           label: "Engajamento",
           value: live.engagementPct !== null ? pct(live.engagementPct) : "—",
           tone: "green",
           hint: "interações ÷ alcance",
+          info: "Interações ÷ alcance: de cada 100 pessoas alcançadas, quantas interagiram.",
         },
       ]
     : socialMetrics;
@@ -73,11 +84,13 @@ export default async function SocialPage({
           label: "Alcance orgânico",
           value: fmtCompact(live.organic.reach),
           hint: "soma do alcance dos posts",
+          info: "Soma do alcance de cada post. Quem viu dois posts conta duas vezes.",
         },
         {
           label: "Visualizações orgânicas",
           value: fmtCompact(live.organic.views),
           hint: "views dos posts do período",
+          info: "Exibições dos posts do período, sem impulsionamento.",
         },
         {
           label: "Engajamento orgânico",
@@ -85,6 +98,7 @@ export default async function SocialPage({
             live.organic.engagementPct !== null ? pct(live.organic.engagementPct) : "—",
           tone: "green",
           hint: `${fmtInt(live.organic.interactions)} interações ÷ alcance orgânico`,
+          info: "Mesma conta do engajamento, só com os posts do período — sem mídia paga.",
         },
       ]
     : null;

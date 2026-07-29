@@ -122,6 +122,11 @@ export interface Metric {
   privateValue?: boolean;
   /** Borra a dica quando o modo privacidade está ligado. */
   privateHint?: boolean;
+  /**
+   * Explicação curta da métrica. Quando presente, o cartão ganha um "i" ao
+   * lado do rótulo que abre o texto ao clique.
+   */
+  info?: string;
 }
 
 export const metrics: Metric[] = [

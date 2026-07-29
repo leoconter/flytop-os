@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import type { ListItem, Metric } from "@/lib/dashboard-data";
+import { MetricCard } from "./metric-card";
+
+export { MetricCard };
 
 function cx(...parts: (string | false | undefined | null)[]) {
   return parts.filter(Boolean).join(" ");
@@ -59,49 +62,6 @@ export function SectionHead({
     <div className={cx("section-head", flush && "flush")}>
       <span className="section-title">{title}</span>
       {sub && <span className="section-sub">{sub}</span>}
-    </div>
-  );
-}
-
-/** Cartão de métrica (glass). */
-export function MetricCard({ metric }: { metric: Metric }) {
-  return (
-    <div className="glass metric">
-      <p className="metric-label">{metric.label}</p>
-      <p
-        className={cx(
-          "metric-value",
-          metric.tone,
-          metric.small && "sm",
-          metric.privateValue && "private",
-        )}
-      >
-        {metric.value}
-      </p>
-
-      {metric.bar && (
-        <div
-          className={cx(
-            "metric-bar",
-            metric.bar.green && "green",
-            metric.privateValue && "private",
-          )}
-        >
-          <div style={{ width: `${metric.bar.pct}%` }} />
-        </div>
-      )}
-
-      {metric.hint && (
-        <p
-          className={cx(
-            "metric-hint",
-            metric.hintTone,
-            metric.privateHint && "private",
-          )}
-        >
-          {metric.hint}
-        </p>
-      )}
     </div>
   );
 }

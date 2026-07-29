@@ -266,14 +266,26 @@ export default async function AdsPage({
       value: fmtMoneyCompact(leads.spend, currency),
       hint: "campanhas de captação",
       privateValue: true,
+      info: `Gasto do período, só nas campanhas com "${LEADS_TERM}" no nome.`,
     },
-    { label: "Alcance", value: fmtCompact(leads.reach), hint: "pessoas únicas" },
-    { label: "Impressões", value: fmtCompact(leads.impressions), hint: "exibições" },
+    {
+      label: "Alcance",
+      value: fmtCompact(leads.reach),
+      hint: "pessoas únicas",
+      info: "Pessoas diferentes que viram os anúncios. Quem foi impactado por várias campanhas conta uma vez só.",
+    },
+    {
+      label: "Impressões",
+      value: fmtCompact(leads.impressions),
+      hint: "exibições",
+      info: "Quantas vezes os anúncios apareceram, contando repetições para a mesma pessoa.",
+    },
     {
       label: "Conversões",
       value: fmtInt(leads.conversions),
       tone: "blue",
       hint: "resultado do pixel",
+      info: "Disparos do evento do pixel — o resultado que estas campanhas otimizam.",
     },
     {
       label: "CPA",
@@ -281,21 +293,29 @@ export default async function AdsPage({
       tone: "green",
       hint: "custo por conversão",
       privateValue: true,
+      info: "Investimento ÷ conversões: quanto custou cada resultado.",
     },
   ];
 
   const trafficMetrics: Metric[] = [
-    { label: "Cliques no link", value: fmtInt(leads.linkClicks), hint: "saídas para a LP" },
+    {
+      label: "Cliques no link",
+      value: fmtInt(leads.linkClicks),
+      hint: "saídas para a LP",
+      info: "Cliques que levaram à página de destino. Não conta curtidas nem comentários.",
+    },
     {
       label: "CPC",
       value: leads.cpc !== null ? fmtMoney(leads.cpc, currency, 2) : "—",
       hint: "por clique no link",
       privateValue: true,
+      info: "Investimento ÷ cliques no link: o custo de cada visita.",
     },
     {
       label: "Visualizações da LP",
       value: fmtInt(leads.landingPageViews),
       hint: "página de destino carregada",
+      info: "Quantas vezes a página de destino carregou. A diferença para os cliques é quem desistiu no caminho.",
     },
     {
       label: "CTR",
@@ -304,6 +324,7 @@ export default async function AdsPage({
           ? leads.ctr.toLocaleString("pt-BR", { maximumFractionDigits: 2 }) + "%"
           : "—",
       hint: "cliques ÷ impressões",
+      info: "De cada 100 exibições, quantas viraram clique.",
     },
   ];
 
@@ -313,9 +334,20 @@ export default async function AdsPage({
       value: fmtMoneyCompact(others.spend, currency),
       hint: "fora do filtro de captação",
       privateValue: true,
+      info: `Gasto das campanhas sem "${LEADS_TERM}" no nome — impulsionamentos e engajamento.`,
     },
-    { label: "Alcance", value: fmtCompact(others.reach), hint: "pessoas únicas" },
-    { label: "Cliques no link", value: fmtInt(others.linkClicks), hint: "no período" },
+    {
+      label: "Alcance",
+      value: fmtCompact(others.reach),
+      hint: "pessoas únicas",
+      info: "Pessoas diferentes atingidas por essas campanhas.",
+    },
+    {
+      label: "Cliques no link",
+      value: fmtInt(others.linkClicks),
+      hint: "no período",
+      info: "Cliques para fora do anúncio. Sem o pixel de captação, não viram conversão aqui.",
+    },
   ];
 
   const shareOfSpend =
