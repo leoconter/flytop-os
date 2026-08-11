@@ -180,7 +180,7 @@ export async function getAirlinesAndRoutes(
   const { data, error } = await sb
     .from("monde_sale_tickets")
     .select(
-      "airline_name, total_customer_amount, monde_sales!inner(sale_date, status), monde_ticket_segments(seq, origin, destination, fare_class)",
+      "airline_name, total_customer_amount, monde_sales!inner(sale_date, status), monde_ticket_segments(seq, origin, destination, fare_class, airline_code)",
     )
     .gte("monde_sales.sale_date", range.since)
     .lte("monde_sales.sale_date", range.until)
@@ -191,8 +191,18 @@ export async function getAirlinesAndRoutes(
     return null;
   }
 
-  const { data: cabinMap } = await sb.from("fare_class_map").select("fare_class, cabin");
-  const cabinOf = new Map((cabinMap ?? []).map((c) => [c.fare_class as string, c.cabin as string]));
+  // A mesma letra muda de cabine conforme a companhia: a regra especifica
+  // vence a padrao. Ver a tela de Configuracoes.
+  const { data: cabinMap } = await sb
+    .from("fare_class_map")
+    .select("airline_code, fare_class, cabin");
+  const cabinOf = new Map<string, string>();
+  for (const c of cabinMap ?? []) {
+    const key = `${(c.airline_code as string) ?? "*"}|${c.fare_class as string}`;
+    cabinOf.set(key, c.cabin as string);
+  }
+  const resolveCabin = (airline: string | null, fare: string | null) =>
+    (fare ? cabinOf.get(`${airline ?? "*"}|${fare}`) ?? cabinOf.get(`*|${fare}`) : null) ?? null;
 
   const airlines = new Map<string, { revenue: number; count: number }>();
   const routes = new Map<string, { revenue: number; count: number }>();
@@ -201,7 +211,7 @@ export async function getAirlinesAndRoutes(
   type Row = {
     airline_name: string | null;
     total_customer_amount: number | null;
-    monde_ticket_segments: { seq: number; origin: string | null; destination: string | null; fare_class: string | null }[];
+    monde_ticket_segments: { seq: number; origin: string | null; destination: string | null; fare_class: string | null; airline_code: string | null }[];
   };
 
   for (const r of data as unknown as Row[]) {
@@ -223,7 +233,7 @@ export async function getAirlinesAndRoutes(
       rt.count += 1;
       routes.set(path, rt);
 
-      const cabin = cabinOf.get(segs[0].fare_class ?? "") ?? "Não mapeada";
+      const cabin = resolveCabin(segs[0].airline_code, segs[0].fare_class) ?? "Não mapeada";
       const cb = cabins.get(cabin) ?? { revenue: 0, count: 0 };
       cb.revenue += value;
       cb.count += 1;
