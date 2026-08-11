@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   addDaysISO,
-  DEFAULT_DAYS,
+  DEFAULT_LABEL,
+  defaultRange,
   formatRange,
   PARAM_FROM,
   PARAM_TO,
+  periodDefaultFor,
   todaySP,
 } from "@/lib/date-range";
 
@@ -148,11 +150,14 @@ export function DateRangePicker() {
 
   const urlSince = params.get(PARAM_FROM);
   const urlUntil = params.get(PARAM_TO);
+  // Cada tela abre no período que faz sentido para ela — o rótulo tem que
+  // dizer o mesmo que o servidor resolveu.
+  const mode = periodDefaultFor(pathname);
   // Rótulo derivado só da URL: nada de "hoje" na renderização do servidor.
   const label =
     urlSince && urlUntil
       ? formatRange({ since: urlSince, until: urlUntil })
-      : `Últimos ${DEFAULT_DAYS} dias`;
+      : DEFAULT_LABEL[mode];
 
   const [open, setOpen] = useState(false);
   const [today, setToday] = useState("");
@@ -179,9 +184,7 @@ export function DateRangePicker() {
   function openPanel() {
     const t = todaySP();
     const initial: Draft =
-      urlSince && urlUntil
-        ? { since: urlSince, until: urlUntil }
-        : { since: addDaysISO(t, -(DEFAULT_DAYS - 1)), until: t };
+      urlSince && urlUntil ? { since: urlSince, until: urlUntil } : defaultRange(mode);
     const { y, m } = partsOf(initial.until);
     setToday(t);
     setDraft(initial);

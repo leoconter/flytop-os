@@ -52,7 +52,8 @@ export default async function GeralPage({
 }: {
   searchParams: Promise<{ [PARAM_FROM]?: string; [PARAM_TO]?: string }>;
 }) {
-  const range = resolveRange(await searchParams);
+  // O Geral é uma leitura de mês: sem período na URL, abre no mês corrente.
+  const range = resolveRange(await searchParams, "mes");
 
   // A meta vem do cadastro (tela de Metas); META só entra se ninguém definiu.
   const goal = (await getAgencyGoal(range.until)) ?? META;

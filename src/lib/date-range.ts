@@ -13,6 +13,23 @@ export const DEFAULT_DAYS = 30;
 /** Teto de segurança para intervalos vindos da URL. */
 const MAX_DAYS = 366;
 
+/**
+ * Cada tela tem o período que faz sentido para ela. O Geral é uma leitura de
+ * mês (meta, projeção, ritmo), então abre no mês corrente; as demais abrem na
+ * janela móvel de 30 dias.
+ */
+export type PeriodDefault = "30d" | "mes";
+
+export const DEFAULT_LABEL: Record<PeriodDefault, string> = {
+  "30d": `Últimos ${DEFAULT_DAYS} dias`,
+  mes: "Este mês",
+};
+
+/** Padrão da rota. Usado no servidor (resolveRange) e no seletor do cabeçalho. */
+export function periodDefaultFor(pathname: string): PeriodDefault {
+  return pathname === "/" ? "mes" : "30d";
+}
+
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isoFmt = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/Sao_Paulo",
@@ -43,19 +60,27 @@ function diffDays(since: string, until: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
-/**
- * Resolve o intervalo a partir dos parâmetros da URL, caindo nos últimos 30
- * dias quando ausentes ou inválidos. Nunca retorna datas futuras.
- */
-export function resolveRange(params: {
-  [PARAM_FROM]?: string;
-  [PARAM_TO]?: string;
-}): SocialRange {
+/** Intervalo aberto por padrão, sem nada na URL. */
+export function defaultRange(mode: PeriodDefault = "30d"): SocialRange {
   const today = todaySP();
-  const fallback: SocialRange = {
-    since: addDaysISO(today, -(DEFAULT_DAYS - 1)),
-    until: today,
-  };
+  return mode === "mes"
+    ? { since: `${today.slice(0, 8)}01`, until: today }
+    : { since: addDaysISO(today, -(DEFAULT_DAYS - 1)), until: today };
+}
+
+/**
+ * Resolve o intervalo a partir dos parâmetros da URL, caindo no padrão da tela
+ * quando ausentes ou inválidos. Nunca retorna datas futuras.
+ */
+export function resolveRange(
+  params: {
+    [PARAM_FROM]?: string;
+    [PARAM_TO]?: string;
+  },
+  mode: PeriodDefault = "30d",
+): SocialRange {
+  const today = todaySP();
+  const fallback = defaultRange(mode);
 
   const from = params[PARAM_FROM];
   const to = params[PARAM_TO];

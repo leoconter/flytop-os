@@ -150,7 +150,13 @@ body.blur-on .chart-box:hover { filter: blur(0); transition: filter 0.2s ease; }
   display: flex; flex-direction: column; gap: 4px;
   background: linear-gradient(180deg, var(--navy-raise) 0%, var(--navy) 34%, var(--navy-deep) 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.04);
+  /* Janela baixa (notebook, meia tela) não pode esconder item de menu. */
+  overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
+/* Sem isso o flex comprime os itens em vez de deixar a barra rolar. Os grupos
+   são `display: contents`, então os itens de flex são estes, não o wrapper. */
+.brand, .nav-group-label, .nav-item, .sidebar-foot { flex-shrink: 0; }
 .brand { display: flex; align-items: center; padding: 10px 10px 20px; }
 /* Versão negativa da marca (fly em branco): assenta direto no navy. */
 .brand-logo { width: 100%; max-width: 156px; height: auto; display: block; }
@@ -204,7 +210,7 @@ body.blur-on .chart-box:hover { filter: blur(0); transition: filter 0.2s ease; }
 }
 .topbar .crumb { font-size: 13px; color: var(--text-3); }
 .topbar .crumb b { color: var(--text-1); font-weight: 600; }
-.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.topbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
 .chip {
   display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border-radius: var(--radius-pill);
   background: #fff; border: 1px solid rgba(16, 24, 40, 0.1); font-size: 12.5px; font-weight: 500; color: var(--text-2);
@@ -631,18 +637,21 @@ a.chip:hover { background: #f6f7f9; color: var(--text-1); }
 .cal-count { font-size: 11.5px; color: var(--text-2); margin-top: 8px; }
 
 /* ============================================================================
-   Tela de TV / kiosk (Dashboard Geral) — dobra única, sem scroll
-   ============================================================================ */
-/* O .content normal limita largura e rola; na TV usamos altura cheia e nada de scroll. */
-.content:has(.tv-screen) { max-width: none; height: 100%; padding: 14px 22px 16px; }
-.main:has(.tv-screen) { overflow: hidden; }
-.main:has(.tv-screen) .content { flex: 1; min-height: 0; }
+   Dashboard Geral — layout fluido na janela, dobra única na TV
 
-/* Modo TV: esconde a sidebar. */
+   Duas leituras da mesma tela. Na janela ela se comporta como qualquer outra
+   página: largura cheia, grades que se reacomodam e scroll normal. Só no modo
+   TV (tela cheia) o layout trava na altura do viewport, que é o que uma tela
+   de parede exige — e o que espreme tudo quando aplicado a uma janela.
+   ============================================================================ */
+/* Largura cheia (a tela é de painéis), mas sem travar altura nem scroll. */
+.content:has(.tv-screen) { max-width: none; padding: 20px 24px 40px; }
+
+/* Modo TV: esconde a moldura do app. */
 body.tv-mode .sidebar { display: none; }
 body.tv-mode .topbar { display: none; }
 
-.tv-screen { height: 100%; display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 12px; }
+.tv-screen { display: grid; gap: 12px; }
 
 .tv-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .tv-head .page-title { font-size: 26px; }
@@ -650,17 +659,17 @@ body.tv-mode .topbar { display: none; }
 .tv-head .tv-sub b { color: var(--text-1); font-weight: 600; }
 .tv-head-actions { display: flex; align-items: center; gap: 10px; }
 
+/* 4 → 2 → 1. Nunca 3: com quatro KPIs, três colunas deixam um órfão sozinho
+   na segunda linha. Por isso são degraus explícitos, não auto-fit. */
 .tv-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .tv-screen .metric { padding: 12px 16px 14px; }
 .tv-screen .metric-label { margin-bottom: 8px; font-size: 12.5px; }
 .tv-screen .metric-value { font-size: 27px; }
 .tv-screen .metric-bar { margin-top: 10px; }
 
-.tv-main { display: grid; grid-template-columns: 2.35fr 1fr; gap: 12px; min-height: 0; }
-.tv-col { display: grid; gap: 12px; min-height: 0; }
-.tv-col.left { grid-template-rows: 1fr 1fr; }
-.tv-col.center { grid-template-rows: minmax(0, 1fr) auto; }
-.tv-col.right { grid-template-rows: 1fr 1fr 1fr; }
+/* minmax(0,…): sem isso o conteúdo do gráfico impede a coluna de encolher. */
+.tv-main { display: grid; grid-template-columns: minmax(0, 2.35fr) minmax(0, 1fr); gap: 12px; }
+.tv-col { display: grid; gap: 12px; align-content: start; min-width: 0; }
 
 .tv-screen .card,
 .tv-screen .chart-card { padding: 13px 15px; min-height: 0; display: flex; flex-direction: column; }
@@ -675,13 +684,13 @@ body.tv-mode .topbar { display: none; }
 .tv-screen .list-value { font-size: 13px; }
 .tv-screen .rank { width: 24px; height: 24px; font-size: 11px; }
 
-/* gráfico central preenche a altura disponível */
-.tv-chart { flex: 1; min-height: 0; }
+/* Na janela o gráfico tem altura própria, proporcional ao viewport. */
+.tv-chart { height: clamp(230px, 38vh, 420px); }
 .tv-chart .chart-box { height: 100%; }
-.tv-screen .chart-legend { margin-bottom: 8px; gap: 16px; }
+.tv-screen .chart-legend { margin-bottom: 8px; gap: 16px; flex-wrap: wrap; }
 
 /* faixa de stat cards (equipe / alertas / membros) */
-.tv-stats { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; }
+.tv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .tv-stat { padding: 11px 14px; }
 .tv-stat .tl { font-size: 12px; color: var(--text-2); margin-bottom: 8px; font-weight: 500; }
 .tv-stat .tv-rows { display: flex; flex-direction: column; gap: 5px; }
@@ -693,21 +702,43 @@ body.tv-mode .topbar { display: none; }
 .tv-stat .big.green { color: var(--accent-green-dark); }
 .tv-stat .sub { font-size: 11.5px; color: var(--text-3); margin-top: 6px; }
 
-@media (max-width: 1100px) {
-  /* fora de uma TV grande, libera o scroll para não cortar conteúdo */
-  .main:has(.tv-screen) { overflow-y: auto; }
-  .content:has(.tv-screen) { height: auto; }
-  .main:has(.tv-screen) .content { flex: initial; }
-  .tv-screen { height: auto; }
-  .tv-kpis { grid-template-columns: repeat(2, 1fr); }
+/* Janela estreita: a coluna do gráfico e a lateral empilham. */
+@media (max-width: 1180px) {
   .tv-main { grid-template-columns: 1fr; }
-  .tv-col.left, .tv-col.center, .tv-col.right { grid-template-rows: none; }
-  .tv-chart .chart-box { height: 240px; }
+  .tv-kpis { grid-template-columns: repeat(2, 1fr); }
 }
+@media (max-width: 620px) {
+  .tv-kpis { grid-template-columns: 1fr; }
+  .tv-stats { grid-template-columns: 1fr; }
+}
+
+/* --------------------------------------------------------------------------
+   Modo TV (tela cheia): tudo em uma dobra, sem scroll. As proporções fixas
+   valem aqui porque a altura é conhecida — na janela elas é que espremiam.
+   -------------------------------------------------------------------------- */
+body.tv-mode .main:has(.tv-screen) { overflow: hidden; }
+body.tv-mode .content:has(.tv-screen) { height: 100%; flex: 1; min-height: 0; padding: 14px 22px 16px; }
+body.tv-mode .tv-screen { height: 100%; grid-template-rows: auto auto minmax(0, 1fr); }
+body.tv-mode .tv-kpis { grid-template-columns: repeat(4, 1fr); }
+body.tv-mode .tv-main { grid-template-columns: minmax(0, 2.35fr) minmax(0, 1fr); min-height: 0; }
+body.tv-mode .tv-col { min-height: 0; align-content: stretch; }
+body.tv-mode .tv-col.left { grid-template-rows: 1fr 1fr; }
+body.tv-mode .tv-col.center { grid-template-rows: minmax(0, 1fr) auto; }
+body.tv-mode .tv-col.right { grid-template-rows: 1fr 1fr 1fr; }
+/* O gráfico ocupa a sobra da coluna em vez de ter altura própria. */
+body.tv-mode .tv-chart { height: auto; flex: 1; min-height: 0; }
+body.tv-mode .tv-stats { grid-template-columns: 1.4fr 1fr 1fr; }
 
 /* ============================================================================
    Responsivo
    ============================================================================ */
+/* Janela reduzida (meia tela, notebook pequeno): antes de mexer na moldura,
+   os blocos de duas colunas passam a uma só. */
+@media (max-width: 1080px) {
+  .grid-2.split { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 900px) {
   .app { flex-direction: column; }
   .sidebar {
