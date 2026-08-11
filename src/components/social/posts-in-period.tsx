@@ -173,9 +173,9 @@ export function PostsInPeriod({
             const content = (
               <>
                 {post.thumb ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- CDN
-                  // do Instagram com URL assinada/temporária; next/image não
-                  // agrega aqui e exigiria liberar domínios variáveis.
+                  // A CDN do Instagram assina a URL e ela expira; next/image
+                  // não agrega aqui e exigiria liberar domínios variáveis.
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={post.thumb} alt="" style={thumbStyle} />
                 ) : (
                   <span style={iconBox}>
