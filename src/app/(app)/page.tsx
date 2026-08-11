@@ -21,6 +21,7 @@ import {
 import { PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
 import { fmtMoney, fmtMoneyCompact } from "@/lib/meta/ads";
 import { fmtInt } from "@/lib/meta/instagram";
+import { getAgencyGoal } from "@/lib/monde/goals";
 import { getMonthSeries } from "@/lib/monde/month";
 import { getAirlinesAndRoutes, getSellers } from "@/lib/monde/sales";
 
@@ -53,9 +54,12 @@ export default async function GeralPage({
 }) {
   const range = resolveRange(await searchParams);
 
+  // A meta vem do cadastro (tela de Metas); META só entra se ninguém definiu.
+  const goal = (await getAgencyGoal(range.until)) ?? META;
+
   // O Geral é uma visão de mês: usa o mês do fim do período selecionado.
   const [month, breakdown, sellers] = await Promise.all([
-    getMonthSeries(range.until, META),
+    getMonthSeries(range.until, goal),
     getAirlinesAndRoutes(range, 3),
     getSellers(range),
   ]);

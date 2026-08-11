@@ -74,6 +74,19 @@ export const navItems: NavItem[] = [
     ),
   },
   {
+    key: "terrestres",
+    label: "Terrestres",
+    title: "Produtos Terrestres",
+    href: "/terrestres",
+    group: "Operação",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <path d="M3 21h18M5 21V7l7-4 7 4v14" />
+        <path d="M9 21v-6h6v6" />
+      </svg>
+    ),
+  },
+  {
     key: "crm",
     label: "CRM",
     title: "CRM",
@@ -156,10 +169,24 @@ export const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    key: "metas",
+    label: "Metas",
+    title: "Metas de Venda",
+    href: "/metas",
+    group: "Administração",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="5" />
+        <circle cx="12" cy="12" r="1.4" />
+      </svg>
+    ),
+  },
 ];
 
 /** Ordem dos grupos na sidebar. */
-export const navGroups = ["Dashboards", "Operação", "Marketing"];
+export const navGroups = ["Dashboards", "Operação", "Marketing", "Administração"];
 
 export function titleForPath(pathname: string): string {
   const exact = navItems.find((n) => n.href === pathname);

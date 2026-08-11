@@ -17,6 +17,7 @@ import {
   toSegmentRows,
   toTicketRow,
 } from "./monde.ts";
+import { persistLandItems } from "./land.ts";
 
 // deno-lint-ignore no-explicit-any
 export type Db = { from: (table: string) => any };
@@ -161,7 +162,13 @@ export async function persistPage(
     if (error) throw new Error(`pagamentos: ${error.message}`);
   }
 
-  // 6. Espelho bruto.
+  // 6. Terrestres (hotel, carro, seguro, pacote, outros).
+  await persistLandItems(
+    db,
+    sales.map((s) => ({ sale_id: s.sale_id, payload: s as unknown as Record<string, unknown> })),
+  );
+
+  // 7. Espelho bruto.
   const rawRows = sales.map((s) => ({
     sale_id: s.sale_id,
     payload: s,
