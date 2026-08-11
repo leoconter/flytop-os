@@ -1,17 +1,29 @@
+/**
+ * Cliente Supabase para uso **no servidor**.
+ *
+ * Usa a service_role, que ignora a RLS — por isso nunca pode ser importado
+ * por um client component. Todas as telas que leem o banco são Server
+ * Components, então a chave não chega ao navegador.
+ */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Cliente Supabase opcional.
- *
- * Lê as credenciais de NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY.
- * Se elas não estiverem definidas (ex.: build sem .env.local), `supabase` é
- * `null` em vez de lançar erro — assim o projeto compila e roda sem credenciais.
- * Nenhuma migration/tabela é assumida aqui; isto é só o conector.
- */
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+let client: SupabaseClient | null = null;
 
-export const supabase: SupabaseClient | null =
-  url && anonKey ? createClient(url, anonKey) : null;
+export function supabaseConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
+  );
+}
 
-export const isSupabaseConfigured = Boolean(url && anonKey);
+/** null quando as credenciais faltam — as telas caem nos dados ilustrativos. */
+export function db(): SupabaseClient | null {
+  if (!supabaseConfigured()) return null;
+  if (!client) {
+    client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } },
+    );
+  }
+  return client;
+}

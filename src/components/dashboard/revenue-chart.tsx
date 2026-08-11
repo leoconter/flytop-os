@@ -72,13 +72,18 @@ function makeFillGradient(ctx: ScriptableContext<"line">) {
   return g;
 }
 
-export function RevenueChart() {
+/** Sem props usa a série ilustrativa; com props, a série real do banco. */
+export function RevenueChart({
+  series: input = series,
+}: {
+  series?: typeof series;
+} = {}) {
   const data: ChartData<"line", (number | null)[], number> = {
-    labels: series.labels,
+    labels: input.labels,
     datasets: [
       {
         label: "Realizado",
-        data: series.cumulative,
+        data: input.cumulative,
         borderColor: "#1E56B8",
         borderWidth: 2.5,
         backgroundColor: makeFillGradient,
@@ -97,7 +102,7 @@ export function RevenueChart() {
       },
       {
         label: "Projeção (pace)",
-        data: series.pace,
+        data: input.pace,
         borderColor: "rgba(30, 86, 184, 0.55)",
         borderWidth: 2,
         borderDash: [6, 6],
@@ -113,7 +118,7 @@ export function RevenueChart() {
       },
       {
         label: "Meta",
-        data: series.metaLine,
+        data: input.metaLine,
         borderColor: "rgba(30, 122, 70, 0.8)",
         borderWidth: 2,
         borderDash: [6, 6],
@@ -125,7 +130,7 @@ export function RevenueChart() {
       },
       {
         label: "Necessidade",
-        data: series.necessity,
+        data: input.necessity,
         borderColor: "rgba(176, 118, 30, 0.85)",
         borderWidth: 2,
         borderDash: [6, 6],

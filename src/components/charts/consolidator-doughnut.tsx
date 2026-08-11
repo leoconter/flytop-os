@@ -5,13 +5,18 @@ import { Doughnut } from "react-chartjs-2";
 import { consolidators } from "@/lib/interno-data";
 import { glassTooltip } from "./register";
 
-export function ConsolidatorDoughnut() {
+/** Sem props usa os dados ilustrativos; com props, as fatias do banco. */
+export function ConsolidatorDoughnut({
+  slices = consolidators,
+}: {
+  slices?: { label: string; value: number; color: string }[];
+} = {}) {
   const data: ChartData<"doughnut", number[], string> = {
-    labels: consolidators.map((c) => c.label),
+    labels: slices.map((c) => c.label),
     datasets: [
       {
-        data: consolidators.map((c) => c.value),
-        backgroundColor: consolidators.map((c) => c.color),
+        data: slices.map((c) => c.value),
+        backgroundColor: slices.map((c) => c.color),
         borderColor: "rgba(255, 255, 255, 0.6)",
         borderWidth: 2,
       },

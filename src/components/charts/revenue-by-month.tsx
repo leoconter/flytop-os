@@ -5,8 +5,16 @@ import { Bar } from "react-chartjs-2";
 import { revenueByMonth } from "@/lib/interno-data";
 import { brl, glassTooltip, moneyTick } from "./register";
 
-export function RevenueByMonthChart() {
-  const { labels, values, highlightIndex } = revenueByMonth;
+/** Sem props usa os dados ilustrativos; com props, a série do banco. */
+export function RevenueByMonthChart({
+  labels = revenueByMonth.labels,
+  values = revenueByMonth.values,
+  highlightIndex = revenueByMonth.highlightIndex,
+}: {
+  labels?: string[];
+  values?: number[];
+  highlightIndex?: number;
+} = {}) {
 
   const data: ChartData<"bar", number[], string> = {
     labels,

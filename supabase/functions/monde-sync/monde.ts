@@ -109,9 +109,18 @@ export interface MondeSale {
 /* -------------------------------- cliente --------------------------------- */
 
 /**
- * Busca uma página de vendas. O `Content-Type: application/json` é
- * obrigatório — sem ele a API responde 415, mesmo em GET.
+ * O `Content-Type: application/json` é obrigatório — sem ele a API responde
+ * 415, mesmo em GET.
  */
+function headers(token: string): HeadersInit {
+  return {
+    Authorization: token.startsWith("Basic ") ? token : `Basic ${token}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+}
+
+/** Busca uma página de vendas. */
 export async function fetchSalesPage(
   token: string,
   page: number,
@@ -122,14 +131,7 @@ export async function fetchSalesPage(
   url.searchParams.set("size", String(PAGE_SIZE));
   if (status) url.searchParams.set("status", status);
 
-  const res = await fetch(url, {
-    headers: {
-      Authorization: token.startsWith("Basic ") ? token : `Basic ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-  });
-
+  const res = await fetch(url, { headers: headers(token) });
   if (!res.ok) {
     throw new Error(`Monde /sales página ${page}: HTTP ${res.status} ${await res.text()}`);
   }
@@ -141,6 +143,39 @@ export async function fetchSalesPage(
     totalPages: body.pagination?.total_pages ?? 1,
     total: body.pagination?.total ?? 0,
   };
+}
+
+/**
+ * Percorre todas as páginas de um recurso simples (pessoas, vendedores,
+ * contas) e devolve a lista inteira. Só para recursos de volume conhecido —
+ * as vendas usam `fetchSalesPage`, que precisa parar no meio.
+ */
+export async function fetchList<T>(
+  token: string,
+  resource: string,
+  params: Record<string, string> = {},
+): Promise<T[]> {
+  const out: T[] = [];
+  let page = 1;
+  let totalPages = 1;
+
+  do {
+    const url = new URL(`${BASE}/${resource}`);
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("size", String(PAGE_SIZE));
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+
+    const res = await fetch(url, { headers: headers(token) });
+    if (!res.ok) {
+      throw new Error(`Monde /${resource} página ${page}: HTTP ${res.status}`);
+    }
+    const body = await res.json();
+    out.push(...(body.data ?? []));
+    totalPages = body.pagination?.total_pages ?? 1;
+    page++;
+  } while (page <= totalPages);
+
+  return out;
 }
 
 /* ------------------------------- utilidades ------------------------------- */
@@ -187,20 +222,39 @@ export interface CustomerRow {
 }
 
 /**
+ * Identidade estável de uma pessoa **sem guardar o documento**: hash do
+ * CPF/CNPJ quando existir; sem ele, de nome + nascimento + telefone.
+ *
+ * A mesma conta vale para quem vem da venda e para quem vem de /people — é o
+ * que permite juntar `monde_customers` com `monde_people`.
+ */
+export async function identityHash(
+  name: string,
+  document?: string | null,
+  birthdate?: string | null,
+  mobile?: string | null,
+): Promise<string> {
+  const doc = digits(document);
+  if (doc) return sha256(`doc:${doc}`);
+  return sha256(`pes:${name.toLowerCase()}|${birthdate ?? ""}|${digits(mobile) ?? ""}`);
+}
+
+/**
  * Converte uma pessoa da API no nosso cliente. Documentos não são gravados:
- * o CPF/CNPJ só serve para gerar a identidade estável (hash). Sem documento,
- * a identidade cai para nome + nascimento + telefone.
+ * o CPF/CNPJ só serve para gerar a identidade estável.
  */
 export async function toCustomer(p: MondePerson | null | undefined): Promise<CustomerRow | null> {
   if (!p) return null;
   const name = (p.name ?? p.legal_name ?? "").trim();
   if (!name) return null;
 
-  const doc = digits(p.cpf_cnpj ?? p.cpf);
   const mobile = digits(p.mobile_number);
-  const identity_hash = doc
-    ? await sha256(`doc:${doc}`)
-    : await sha256(`pes:${name.toLowerCase()}|${p.birthdate ?? ""}|${mobile ?? ""}`);
+  const identity_hash = await identityHash(
+    name,
+    p.cpf_cnpj ?? p.cpf,
+    p.birthdate,
+    p.mobile_number,
+  );
 
   return {
     identity_hash,

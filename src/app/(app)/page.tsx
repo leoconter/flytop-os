@@ -10,44 +10,145 @@ import {
   alertsByRegion,
   communityMembers,
   geralKpis,
+  type ListItem,
+  META,
+  type Metric,
   routes,
   salesClasses,
   suppliers,
   teams,
 } from "@/lib/dashboard-data";
+import { PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
+import { fmtMoney, fmtMoneyCompact } from "@/lib/meta/ads";
+import { fmtInt } from "@/lib/meta/instagram";
+import { getMonthSeries } from "@/lib/monde/month";
+import { getAirlinesAndRoutes, getSellers } from "@/lib/monde/sales";
 
-export const metadata = {
-  title: "FlyTop OS · Dashboard Geral",
-};
+export const metadata = { title: "FlyTop OS · Dashboard Geral" };
 
-export default function GeralPage() {
+/** Cache das leituras do banco: 1h, alinhado à carga diária do Monde. */
+export const revalidate = 3600;
+
+const MES_LONGO = [
+  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+function toListItems(
+  items: { name: string; salesCount: number; revenue: number }[],
+  mono = false,
+): ListItem[] {
+  return items.map((r) => ({
+    name: r.name,
+    meta: `${fmtInt(r.salesCount)} vendas`,
+    value: fmtMoney(r.revenue),
+    mono,
+  }));
+}
+
+export default async function GeralPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [PARAM_FROM]?: string; [PARAM_TO]?: string }>;
+}) {
+  const range = resolveRange(await searchParams);
+
+  // O Geral é uma visão de mês: usa o mês do fim do período selecionado.
+  const [month, breakdown, sellers] = await Promise.all([
+    getMonthSeries(range.until, META),
+    getAirlinesAndRoutes(range, 3),
+    getSellers(range),
+  ]);
+
+  const live = Boolean(month);
+  const monthLabel = month
+    ? `${MES_LONGO[Number(month.month.slice(5, 7)) - 1]} ${month.month.slice(0, 4)}`
+    : "maio 2026";
+
+  const kpis: Metric[] = month
+    ? [
+        {
+          label: "Faturamento atual",
+          value: fmtMoneyCompact(month.revenue),
+          hint: `${fmtInt(month.salesCount)} vendas em ${month.lastDay} dias`,
+          privateValue: true,
+          privateHint: true,
+        },
+        {
+          label: "% da meta",
+          value:
+            month.goalPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "%",
+          tone: "blue",
+          bar: { pct: Math.min(100, month.goalPct) },
+          privateValue: true,
+        },
+        {
+          label: "Ticket médio",
+          value: fmtMoney(month.avgTicket),
+          hint: "por venda",
+          privateValue: true,
+        },
+        {
+          label: `Projeção fim de ${MES_LONGO[Number(month.month.slice(5, 7)) - 1]}`,
+          value: fmtMoneyCompact(month.projection),
+          tone: month.projection >= month.goal ? "green" : "red",
+          hint:
+            (month.projection >= month.goal ? "+" : "") +
+            (((month.projection - month.goal) / month.goal) * 100).toLocaleString(
+              "pt-BR",
+              { maximumFractionDigits: 1 },
+            ) +
+            `% vs meta de ${fmtMoneyCompact(month.goal)}`,
+          hintTone: month.projection >= month.goal ? "positive" : "negative",
+          privateValue: true,
+          privateHint: true,
+        },
+      ]
+    : geralKpis;
+
+  const tracking = month
+    ? month.projection >= month.goal
+      ? "Tracking acima da meta"
+      : "Tracking abaixo da meta"
+    : "Tracking acima da meta";
+
   return (
     <div className="tv-screen">
-      {/* Cabeçalho compacto */}
       <div className="tv-head">
         <div>
           <h1 className="page-title">Dashboard Geral</h1>
           <p className="tv-sub">
-            <b className="private">64 vendas</b> · faturamento até 11/05:{" "}
-            <b className="private">R$ 1,32M</b> · maio 2026
+            {month ? (
+              <>
+                <b className="private">{fmtInt(month.salesCount)} vendas</b> ·
+                faturamento até {String(month.lastDay).padStart(2, "0")}/
+                {month.month.slice(5, 7)}:{" "}
+                <b className="private">{fmtMoneyCompact(month.revenue)}</b> ·{" "}
+                {monthLabel}
+              </>
+            ) : (
+              <>
+                <b className="private">64 vendas</b> · faturamento até 11/05:{" "}
+                <b className="private">R$ 1,32M</b> · maio 2026
+              </>
+            )}
           </p>
         </div>
         <div className="tv-head-actions">
-          <Pill>Tracking acima da meta</Pill>
+          <Pill tone={month && month.projection < month.goal ? "blue" : "green"}>
+            {tracking}
+          </Pill>
           <TvModeButton />
         </div>
       </div>
 
-      {/* KPIs grandes */}
       <div className="tv-kpis">
-        {geralKpis.map((m) => (
+        {kpis.map((m) => (
           <MetricCard key={m.label} metric={m} />
         ))}
       </div>
 
-      {/* Área principal */}
       <div className="tv-main">
-        {/* Esquerda: gráfico + faixa de stats */}
         <div className="tv-col center">
           <div className="glass chart-card">
             <div className="chart-legend">
@@ -65,24 +166,31 @@ export default function GeralPage() {
               </span>
               <span className="legend-item">
                 <span className="legend-line ll-dash-green" />
-                Meta · R$ 3,5M
+                Meta · {fmtMoneyCompact(month?.goal ?? META)}
               </span>
             </div>
             <div className="tv-chart">
-              <RevenueChart />
+              <RevenueChart series={month ?? undefined} />
             </div>
           </div>
 
           <div className="tv-stats">
             <div className="glass tv-stat">
-              <p className="tl">Venda por equipe</p>
+              <p className="tl">Venda por vendedor</p>
               <div className="tv-rows">
-                {teams.map((t) => (
-                  <div className="tv-line" key={t.name}>
-                    <span className="k">{t.name.replace("Equipe ", "")}</span>
-                    <span className="v private">{t.value}</span>
-                  </div>
-                ))}
+                {sellers
+                  ? sellers.slice(0, 4).map((s) => (
+                      <div className="tv-line" key={s.name}>
+                        <span className="k">{s.name.split(" ")[0]}</span>
+                        <span className="v private">{fmtMoneyCompact(s.revenue)}</span>
+                      </div>
+                    ))
+                  : teams.map((t) => (
+                      <div className="tv-line" key={t.name}>
+                        <span className="k">{t.name.replace("Equipe ", "")}</span>
+                        <span className="v private">{t.value}</span>
+                      </div>
+                    ))}
               </div>
             </div>
 
@@ -109,22 +217,28 @@ export default function GeralPage() {
           </div>
         </div>
 
-        {/* Direita: destinos + companhias + classes */}
         <div className="tv-col right">
           <ListCard
             title="Top 3 destinos"
             subtitle="por receita"
-            items={routes.slice(0, 3)}
+            items={breakdown ? toListItems(breakdown.routes, true) : routes.slice(0, 3)}
           />
           <ListCard
             title="Top 3 companhias"
             subtitle="por receita"
-            items={suppliers}
+            items={breakdown ? toListItems(breakdown.airlines) : suppliers}
           />
           <div className="glass card">
-            <SectionHead title="Classes mais vendidas" sub="por nº de vendas" flush />
+            <SectionHead title="Classes mais vendidas" sub="por receita" flush />
             <div className="list">
-              {salesClasses.map((c, i) => (
+              {(breakdown
+                ? breakdown.cabins.slice(0, 3).map((c) => ({
+                    name: c.name,
+                    meta: `${c.share.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% da receita`,
+                    value: `${fmtInt(c.salesCount)} vendas`,
+                  }))
+                : salesClasses
+              ).map((c, i) => (
                 <div className="list-row" key={c.name}>
                   <span className="rank">{i + 1}</span>
                   <div className="list-main">
@@ -138,6 +252,7 @@ export default function GeralPage() {
           </div>
         </div>
       </div>
+      {!live && <span hidden>dados ilustrativos</span>}
     </div>
   );
 }
