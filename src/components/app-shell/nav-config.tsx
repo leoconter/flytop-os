@@ -132,7 +132,7 @@ export const navItems: NavItem[] = [
     label: "Monde & Sincronização",
     title: "Monde & Sincronização",
     href: "/monde",
-    group: "Operação",
+    group: "Administração",
     icon: (
       <svg viewBox="0 0 24 24" {...sw}>
         <ellipse cx="12" cy="5" rx="9" ry="3" />

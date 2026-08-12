@@ -34,7 +34,7 @@ export function periodDefaultFor(pathname: string): PeriodDefault {
 }
 
 /** Telas de cadastro: configuram a plataforma, não exibem resultado. */
-const CADASTRO = ["/metas", "/configuracoes"];
+const CADASTRO = ["/metas", "/configuracoes", "/monde"];
 
 /**
  * Telas de cadastro não usam os controles de dados do cabeçalho.
