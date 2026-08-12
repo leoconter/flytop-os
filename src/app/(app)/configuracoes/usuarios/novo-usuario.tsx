@@ -1,18 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import type { SellerOption } from "@/lib/auth/users";
-import { criarUsuario, type FormState } from "./actions";
-
-function Botao() {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" className="btn btn-primary" disabled={pending}>
-      {pending ? "Criando…" : "Criar usuário"}
-    </button>
-  );
-}
+import { criarUsuario } from "./actions";
 
 /** Opções de vendedor, marcando quem já está em outra conta. */
 export function SellerSelect({
@@ -47,10 +37,8 @@ export function SellerSelect({
 }
 
 export function NovoUsuario({ sellers }: { sellers: SellerOption[] }) {
-  const [state, action] = useActionState<FormState, FormData>(criarUsuario, {});
-
   return (
-    <form action={action} className="form-grid" style={{ marginTop: 14 }}>
+    <FormAcao action={criarUsuario} limparAoConcluir className="form-grid" style={{ marginTop: 14 }}>
       <div className="field">
         <label htmlFor="firstName">Nome</label>
         <input id="firstName" className="input" name="firstName" required />
@@ -89,20 +77,9 @@ export function NovoUsuario({ sellers }: { sellers: SellerOption[] }) {
         <span className="metric-hint">é o que liga a conta às vendas do ERP</span>
       </div>
 
-      {state.erro && (
-        <div className="field full">
-          <p className="form-erro" role="alert">{state.erro}</p>
-        </div>
-      )}
-      {state.ok && (
-        <div className="field full">
-          <p className="form-ok" role="status">{state.ok}</p>
-        </div>
-      )}
-
       <div className="field full" style={{ alignItems: "flex-start" }}>
-        <Botao />
+        <BotaoAcao enviando="Criando…">Criar usuário</BotaoAcao>
       </div>
-    </form>
+    </FormAcao>
   );
 }

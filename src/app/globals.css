@@ -522,6 +522,8 @@ td .mono, .mono-cell { font-family: var(--font-mono); font-size: 12.5px; letter-
 .note-box.blue { background: rgba(30, 86, 184, 0.07); border-color: rgba(30, 86, 184, 0.2); }
 .note-box svg { width: 18px; height: 18px; color: var(--accent-orange-dark); flex-shrink: 0; margin-top: 1px; }
 .note-box.blue svg { color: var(--accent-blue-dark); }
+.note-box.red { background: rgba(179, 54, 44, 0.08); border-color: rgba(179, 54, 44, 0.22); }
+.note-box.red svg { color: var(--accent-red-dark); }
 .note-box .nt { font-size: 13px; line-height: 1.5; color: var(--text-2); }
 .note-box .nt b { color: var(--text-1); }
 

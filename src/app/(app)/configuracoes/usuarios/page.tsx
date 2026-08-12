@@ -1,4 +1,5 @@
 import { PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
+import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import { currentUser } from "@/lib/auth/session";
 import { listSellerOptions, listUsers } from "@/lib/auth/users";
 import { alternarAtivo, removerUsuario, salvarVinculo, trocarSenha } from "./actions";
@@ -87,7 +88,7 @@ export default async function UsuariosPage() {
                     <td className="mono-cell">{u.email}</td>
                     <td>{u.teamName ?? <span className="muted">—</span>}</td>
                     <td>
-                      <form
+                      <FormAcao
                         action={salvarVinculo}
                         style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
                       >
@@ -102,11 +103,11 @@ export default async function UsuariosPage() {
                           permitirTomado={u.sellerId}
                           label={`Vendedor de ${u.fullName}`}
                         />
-                        <button type="submit" className="btn btn-ghost btn-sm">Salvar</button>
-                      </form>
+                        <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
+                      </FormAcao>
                     </td>
                     <td>
-                      <form action={trocarSenha} style={{ display: "flex", gap: 8 }}>
+                      <FormAcao action={trocarSenha} limparAoConcluir style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <input type="hidden" name="userId" value={u.userId} />
                         <input
                           className="input"
@@ -119,34 +120,33 @@ export default async function UsuariosPage() {
                           style={{ maxWidth: 150 }}
                           required
                         />
-                        <button type="submit" className="btn btn-ghost btn-sm">Trocar</button>
-                      </form>
+                        <BotaoAcao className="btn btn-ghost btn-sm">Trocar</BotaoAcao>
+                      </FormAcao>
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: 6 }}>
-                        <form action={alternarAtivo}>
+                        <FormAcao action={alternarAtivo}>
                           <input type="hidden" name="userId" value={u.userId} />
                           <input type="hidden" name="ativar" value={u.active ? "0" : "1"} />
-                          <button
-                            type="submit"
+                          <BotaoAcao
                             className="btn btn-ghost btn-sm"
                             disabled={u.userId === eu?.userId}
                             title={u.active ? "Impede a conta de entrar" : "Devolve o acesso"}
                           >
                             {u.active ? "Desativar" : "Reativar"}
-                          </button>
-                        </form>
-                        <form action={removerUsuario}>
+                          </BotaoAcao>
+                        </FormAcao>
+                        <FormAcao action={removerUsuario}>
                           <input type="hidden" name="userId" value={u.userId} />
-                          <button
-                            type="submit"
+                          <BotaoAcao
                             className="btn btn-ghost btn-sm danger"
+                            enviando="Removendo…"
                             disabled={u.userId === eu?.userId}
                             title="Apaga a conta em definitivo"
                           >
                             Remover
-                          </button>
-                        </form>
+                          </BotaoAcao>
+                        </FormAcao>
                       </div>
                     </td>
                   </tr>

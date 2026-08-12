@@ -1,4 +1,5 @@
 import { PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
+import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import { getTeams } from "@/lib/monde/teams";
 import { criarEquipe, removerEquipe, renomearEquipe, salvarIntegrantes } from "./actions";
 
@@ -50,7 +51,7 @@ export default async function EquipesPage() {
               Crie uma equipe abaixo para começar a distribuir os vendedores.
             </p>
           ) : (
-            <form action={salvarIntegrantes}>
+            <FormAcao action={salvarIntegrantes}>
               <div className="table-wrap" style={{ marginTop: 8 }}>
                 <table>
                   <thead>
@@ -87,9 +88,9 @@ export default async function EquipesPage() {
                 </table>
               </div>
               <div style={{ marginTop: 14 }}>
-                <button type="submit" className="btn btn-primary">Salvar equipes</button>
+                <BotaoAcao>Salvar equipes</BotaoAcao>
               </div>
-            </form>
+            </FormAcao>
           )}
         </div>
       </div>
@@ -113,7 +114,7 @@ export default async function EquipesPage() {
                   {data.teams.map((t) => (
                     <tr key={t.id}>
                       <td>
-                        <form action={renomearEquipe} style={{ display: "flex", gap: 8 }}>
+                        <FormAcao action={renomearEquipe} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                           <input type="hidden" name="teamId" value={t.id} />
                           <input
                             className="input"
@@ -122,21 +123,21 @@ export default async function EquipesPage() {
                             aria-label={`Nome da equipe ${t.name}`}
                             style={{ maxWidth: 220 }}
                           />
-                          <button type="submit" className="btn btn-ghost btn-sm">Salvar</button>
-                        </form>
+                          <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
+                        </FormAcao>
                       </td>
                       <td className="r">{t.members.length}</td>
                       <td>
-                        <form action={removerEquipe}>
+                        <FormAcao action={removerEquipe}>
                           <input type="hidden" name="teamId" value={t.id} />
-                          <button
-                            type="submit"
+                          <BotaoAcao
                             className="btn btn-ghost btn-sm danger"
+                            enviando="Removendo…"
                             title="Os vendedores voltam para “sem equipe”; ninguém é apagado"
                           >
                             Remover
-                          </button>
-                        </form>
+                          </BotaoAcao>
+                        </FormAcao>
                       </td>
                     </tr>
                   ))}
@@ -150,7 +151,11 @@ export default async function EquipesPage() {
       <div className="section">
         <div className="glass card">
           <SectionHead title="Nova equipe" sub="ex.: SP, RJ, Corporativo" flush />
-          <form action={criarEquipe} style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+          <FormAcao
+            action={criarEquipe}
+            limparAoConcluir
+            style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}
+          >
             <input
               className="input"
               name="name"
@@ -159,8 +164,8 @@ export default async function EquipesPage() {
               required
               style={{ maxWidth: 260 }}
             />
-            <button type="submit" className="btn btn-primary">Criar equipe</button>
-          </form>
+            <BotaoAcao enviando="Criando…">Criar equipe</BotaoAcao>
+          </FormAcao>
         </div>
       </div>
     </>
