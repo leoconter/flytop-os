@@ -1,4 +1,4 @@
-import { PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
+import { PageHead, SectionHead } from "@/components/dashboard/ui";
 import { currentUser } from "@/lib/auth/session";
 import { listSellerOptions, listUsers } from "@/lib/auth/users";
 import { ListaUsuarios } from "./lista";
@@ -37,11 +37,7 @@ export default async function UsuariosPage() {
 
   return (
     <>
-      <PageHead
-        title="Usuários"
-        sub="Quem entra na plataforma e a quem cada conta corresponde no Monde"
-        right={<Pill tone="blue">{users.length} contas</Pill>}
-      />
+      <PageHead title="Usuários" />
 
       {semVinculo > 0 && (
         <div className="note-box orange">
@@ -64,11 +60,7 @@ export default async function UsuariosPage() {
         <div className="glass card">
           <SectionHead
             title="Contas"
-            sub={
-              semAcesso > 0
-                ? `${users.length} cadastradas · ${semAcesso} sem acesso`
-                : `${users.length} cadastradas`
-            }
+            sub={semAcesso > 0 ? `${semAcesso} sem acesso` : undefined}
             flush
             right={<NovoUsuario sellers={sellers} />}
           />
