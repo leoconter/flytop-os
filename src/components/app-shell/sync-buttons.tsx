@@ -88,7 +88,7 @@ export function SyncButtons() {
         modo="full"
         rotulo="Atualização completa"
         icone={<IconeCompleta />}
-        titulo="Relê o histórico inteiro do Monde — leva cerca de um minuto"
+        titulo="Relê o histórico inteiro do Monde — pode levar alguns minutos"
       />
     </div>
   );

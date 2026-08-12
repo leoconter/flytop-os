@@ -13,8 +13,12 @@ import { getUltimaSync } from "@/lib/monde/sync-status";
  * rota pré-carregada. Aqui a sessão é validada no Supabase e o perfil é lido do
  * banco, antes de qualquer tela desenhar. Cookie inventado não passa daqui.
  */
-/** A atualização completa relê 47 páginas e leva ~1 minuto: o padrão não cobre. */
-export const maxDuration = 180;
+/**
+ * A atualização completa relê as 47 páginas do histórico. Medido: 58s a função
+ * sozinha, 145s de ponta a ponta em produção (a revalidação das telas entra na
+ * conta). 300s é o teto do plano — margem, não estimativa otimista.
+ */
+export const maxDuration = 300;
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await currentUser();
