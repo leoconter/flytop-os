@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { authIdentity, currentUser } from "@/lib/auth/session";
+import { currentUser, statusConta } from "@/lib/auth/session";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "FlyTop OS · Entrar" };
@@ -14,9 +14,9 @@ export default async function LoginPage({
   // Quem já está dentro não vê tela de login.
   if (await currentUser()) redirect("/");
 
-  // Credencial válida sem perfil na aplicação: a pessoa entra e é devolvida
-  // para cá sem entender por quê. Melhor dizer o que falta.
-  const semPerfil = Boolean(await authIdentity());
+  // Credencial válida que mesmo assim não entra: a pessoa é devolvida para cá
+  // sem entender por quê. Cada caso tem um recado diferente.
+  const bloqueio = await statusConta();
 
   const de = (await searchParams).de ?? "";
 
@@ -33,11 +33,16 @@ export default async function LoginPage({
           />
         </div>
         <p className="login-sub">Plataforma interna de operações</p>
-        {semPerfil ? (
+        {bloqueio === "desativado" ? (
           <p className="login-erro" role="alert">
-            Sua credencial é válida, mas a conta não tem perfil nesta
-            plataforma. Peça a um administrador para cadastrá-la em
-            Configurações · Usuários.
+            Seu acesso está desativado. Os dados da conta continuam guardados —
+            fale com um administrador para reativá-la.
+          </p>
+        ) : bloqueio === "sem-perfil" ? (
+          <p className="login-erro" role="alert">
+            Sua credencial é válida, mas a conta ainda não foi cadastrada nesta
+            plataforma. Peça a um administrador para criá-la em Configurações ·
+            Usuários.
           </p>
         ) : (
           <LoginForm de={de.startsWith("/") ? de : ""} />

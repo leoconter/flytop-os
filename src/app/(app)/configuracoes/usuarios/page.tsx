@@ -1,9 +1,8 @@
 import { PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
-import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import { currentUser } from "@/lib/auth/session";
 import { listSellerOptions, listUsers } from "@/lib/auth/users";
-import { alternarAtivo, removerUsuario, salvarVinculo, trocarSenha } from "./actions";
-import { NovoUsuario, SellerSelect } from "./novo-usuario";
+import { ListaUsuarios } from "./lista";
+import { NovoUsuario } from "./novo-usuario";
 
 export const metadata = { title: "FlyTop OS · Usuários" };
 export const dynamic = "force-dynamic";
@@ -34,6 +33,7 @@ export default async function UsuariosPage() {
   }
 
   const semVinculo = users.filter((u) => !u.sellerId && u.role !== "admin").length;
+  const semAcesso = users.filter((u) => !u.active).length;
 
   return (
     <>
@@ -51,7 +51,9 @@ export default async function UsuariosPage() {
           </svg>
           <div className="nt">
             <b>{semVinculo}</b>{" "}
-            {semVinculo === 1 ? "conta de vendedor não está vinculada" : "contas de vendedor não estão vinculadas"}{" "}
+            {semVinculo === 1
+              ? "conta de vendedor não está vinculada"
+              : "contas de vendedor não estão vinculadas"}{" "}
             a ninguém no Monde. Sem o vínculo, a Tela do Vendedor não tem quais
             vendas mostrar para essas pessoas.
           </div>
@@ -60,118 +62,17 @@ export default async function UsuariosPage() {
 
       <div className="section">
         <div className="glass card">
-          <SectionHead title="Contas" sub={`${users.length} cadastradas`} flush />
-          <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table className="wide">
-              <thead>
-                <tr>
-                  <th>Pessoa</th>
-                  <th>E-mail</th>
-                  <th style={{ width: 300 }}>Papel e vínculo com o Monde</th>
-                  <th style={{ width: 215 }}>Nova senha</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.userId}>
-                    <td>
-                      {u.fullName}
-                      {u.userId === eu?.userId && (
-                        <span className="badge blue" style={{ marginLeft: 8 }}>você</span>
-                      )}
-                      {!u.active && (
-                        <span className="badge gray" style={{ marginLeft: 8 }}>desativada</span>
-                      )}
-                    </td>
-                    <td className="mono-cell">{u.email}</td>
-                    <td>
-                      {/* A chave carrega o valor gravado: quando ele muda, o
-                          formulário remonta e os campos passam a mostrar o que
-                          está no banco. Sem isso o <select> volta sozinho ao
-                          valor anterior depois de salvar, e parece que a
-                          gravação falhou. */}
-                      <FormAcao
-                        key={`${u.userId}|${u.role}|${u.sellerId ?? ""}`}
-                        action={salvarVinculo}
-                        exigeMudanca
-                        className="row-form"
-                      >
-                        <input type="hidden" name="userId" value={u.userId} />
-                        <div className="empilha">
-                          <select className="select" name="role" defaultValue={u.role}>
-                            <option value="vendedor">Vendedor</option>
-                            <option value="admin">Administrador</option>
-                          </select>
-                          <SellerSelect
-                            sellers={sellers}
-                            value={u.sellerId}
-                            permitirTomado={u.sellerId}
-                            label={`Vendedor de ${u.fullName}`}
-                          />
-                        </div>
-                        <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
-                      </FormAcao>
-                    </td>
-                    <td>
-                      <FormAcao action={trocarSenha} exigeMudanca limparAoConcluir className="row-form">
-                        <input type="hidden" name="userId" value={u.userId} />
-                        <input
-                          className="input"
-                          name="password"
-                          type="password"
-                          minLength={8}
-                          autoComplete="new-password"
-                          placeholder="nova senha"
-                          aria-label={`Nova senha de ${u.fullName}`}
-                          style={{ width: 132 }}
-                          required
-                        />
-                        <BotaoAcao className="btn btn-ghost btn-sm">Trocar</BotaoAcao>
-                      </FormAcao>
-                    </td>
-                    <td>
-                      <div className="empilha">
-                        <FormAcao action={alternarAtivo}>
-                          <input type="hidden" name="userId" value={u.userId} />
-                          <input type="hidden" name="ativar" value={u.active ? "0" : "1"} />
-                          <BotaoAcao
-                            className="btn btn-ghost btn-sm"
-                            disabled={u.userId === eu?.userId}
-                            title={u.active ? "Impede a conta de entrar" : "Devolve o acesso"}
-                          >
-                            {u.active ? "Desativar" : "Reativar"}
-                          </BotaoAcao>
-                        </FormAcao>
-                        <FormAcao action={removerUsuario}>
-                          <input type="hidden" name="userId" value={u.userId} />
-                          <BotaoAcao
-                            className="btn btn-ghost btn-sm danger"
-                            enviando="Removendo…"
-                            disabled={u.userId === eu?.userId}
-                            title="Apaga a conta em definitivo"
-                          >
-                            Remover
-                          </BotaoAcao>
-                        </FormAcao>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div className="section">
-        <div className="glass card">
           <SectionHead
-            title="Novo usuário"
-            sub="a senha vai direto para o Supabase Auth, sem passar por tabela nossa"
+            title="Contas"
+            sub={
+              semAcesso > 0
+                ? `${users.length} cadastradas · ${semAcesso} sem acesso`
+                : `${users.length} cadastradas`
+            }
             flush
+            right={<NovoUsuario sellers={sellers} />}
           />
-          <NovoUsuario sellers={sellers} />
+          <ListaUsuarios users={users} sellers={sellers} meuId={eu?.userId} />
         </div>
       </div>
     </>

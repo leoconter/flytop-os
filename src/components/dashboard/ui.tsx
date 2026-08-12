@@ -53,15 +53,19 @@ export function SectionHead({
   title,
   sub,
   flush,
+  right,
 }: {
   title: string;
   sub?: string;
   flush?: boolean;
+  /** Ação à direita do título — ex.: "Adicionar usuário". */
+  right?: ReactNode;
 }) {
   return (
     <div className={cx("section-head", flush && "flush")}>
       <span className="section-title">{title}</span>
       {sub && <span className="section-sub">{sub}</span>}
+      {right && <span className="section-right">{right}</span>}
     </div>
   );
 }

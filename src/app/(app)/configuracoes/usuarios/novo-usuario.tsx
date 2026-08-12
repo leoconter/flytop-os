@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import type { SellerOption } from "@/lib/auth/users";
 import { criarUsuario } from "./actions";
@@ -41,9 +42,34 @@ export function SellerSelect({
   );
 }
 
+/**
+ * Cadastro recolhido: a tela abre mostrando quem já existe, e o formulário só
+ * aparece quando alguém pede para adicionar.
+ */
 export function NovoUsuario({ sellers }: { sellers: SellerOption[] }) {
+  const [aberto, setAberto] = useState(false);
+  const fechar = useCallback(() => setAberto(false), []);
+
+  if (!aberto) {
+    return (
+      <button type="button" className="btn btn-primary" onClick={() => setAberto(true)}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Adicionar usuário
+      </button>
+    );
+  }
+
   return (
-    <FormAcao action={criarUsuario} exigeMudanca limparAoConcluir className="form-grid" style={{ marginTop: 14 }}>
+    <FormAcao
+      action={criarUsuario}
+      exigeMudanca
+      limparAoConcluir
+      aoConcluir={fechar}
+      className="form-grid"
+      style={{ marginTop: 14 }}
+    >
       <div className="field">
         <label htmlFor="firstName">Nome</label>
         <input id="firstName" className="input" name="firstName" required />
@@ -82,8 +108,11 @@ export function NovoUsuario({ sellers }: { sellers: SellerOption[] }) {
         <span className="metric-hint">é o que liga a conta às vendas do ERP</span>
       </div>
 
-      <div className="field full" style={{ alignItems: "flex-start" }}>
+      <div className="field full acoes-edicao">
         <BotaoAcao enviando="Criando…">Criar usuário</BotaoAcao>
+        <button type="button" className="btn btn-ghost" onClick={fechar}>
+          Cancelar
+        </button>
       </div>
     </FormAcao>
   );

@@ -146,6 +146,85 @@ export async function createUser(u: NovoUsuario): Promise<string | null> {
   return null;
 }
 
+export interface EdicaoUsuario {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: Role;
+  sellerId: string | null;
+  /** Vazio mantém a senha atual. */
+  password?: string;
+}
+
+/**
+ * Edita a conta inteira.
+ *
+ * E-mail e senha vivem no Supabase Auth; nome, papel e vínculo, aqui. O Auth
+ * vai primeiro: se ele recusar (e-mail já usado, senha fraca), nada é gravado
+ * do nosso lado. Se o nosso lado falhar depois, o e-mail no Auth é devolvido
+ * ao que era — senão a pessoa passaria a entrar por um endereço que a
+ * plataforma não conhece.
+ */
+export async function editUser(
+  userId: string,
+  emailAtual: string,
+  c: EdicaoUsuario,
+): Promise<string | null> {
+  const sb = db();
+  if (!sb) return "Banco não configurado";
+
+  const mudouEmail = c.email.toLowerCase() !== emailAtual.toLowerCase();
+  const patch: Record<string, unknown> = {
+    user_metadata: { first_name: c.firstName, last_name: c.lastName },
+  };
+  if (mudouEmail) {
+    patch.email = c.email;
+    patch.email_confirm = true;
+  }
+  if (c.password) patch.password = c.password;
+
+  const res = await fetch(adminUrl(`/${userId}`), {
+    method: "PUT",
+    headers: adminHeaders(),
+    body: JSON.stringify(patch),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const b = await res.json().catch(() => null);
+    const msg = String(b?.msg ?? b?.error_description ?? "");
+    if (/already|registered|exists/i.test(msg)) return "Já existe uma conta com esse e-mail.";
+    if (/password/i.test(msg)) return "Senha recusada: use ao menos 8 caracteres.";
+    return msg || "Não foi possível salvar a conta.";
+  }
+
+  const { error } = await sb
+    .from("app_users")
+    .update({
+      first_name: c.firstName,
+      last_name: c.lastName,
+      email: c.email,
+      role: c.role,
+      seller_id: c.sellerId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId);
+
+  if (error) {
+    if (mudouEmail) {
+      await fetch(adminUrl(`/${userId}`), {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ email: emailAtual, email_confirm: true }),
+        cache: "no-store",
+      }).catch(() => {});
+    }
+    if (error.code === "23505") return "Esse vendedor já está vinculado a outra conta.";
+    return error.message;
+  }
+
+  return null;
+}
+
 export async function updateUser(
   userId: string,
   campos: { role?: Role; sellerId?: string | null; active?: boolean },

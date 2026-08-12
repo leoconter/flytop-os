@@ -45,6 +45,8 @@ export function FormAcao({
   style,
   limparAoConcluir,
   exigeMudanca,
+  aoConcluir,
+  silencioso,
 }: {
   action: (prev: AcaoState, fd: FormData) => Promise<AcaoState>;
   children: ReactNode;
@@ -54,6 +56,10 @@ export function FormAcao({
   limparAoConcluir?: boolean;
   /** Mantém o botão apagado enquanto nada mudou. */
   exigeMudanca?: boolean;
+  /** Chamado depois de gravar — usado para fechar o painel de edição. */
+  aoConcluir?: () => void;
+  /** Não mostra a confirmação: para ações cuja própria linha já mostra o efeito. */
+  silencioso?: boolean;
 }) {
   const [state, formAction] = useActionState(action, {});
   const ref = useRef<HTMLFormElement>(null);
@@ -74,7 +80,8 @@ export function FormAcao({
     if (!state.ok) return;
     if (limparAoConcluir) ref.current?.reset();
     fotografar();
-  }, [state, limparAoConcluir, fotografar]);
+    aoConcluir?.();
+  }, [state, limparAoConcluir, fotografar, aoConcluir]);
 
   const conferir = () => setMudou(assinatura(ref.current) !== inicial.current);
 
@@ -94,7 +101,7 @@ export function FormAcao({
             {state.erro}
           </p>
         )}
-        {state.ok && (
+        {state.ok && !silencioso && (
           <p className="form-ok" role="status">
             {state.ok}
           </p>
@@ -117,7 +124,7 @@ export function BotaoAcao({
   ...rest
 }: {
   children: ReactNode;
-  enviando?: string;
+  enviando?: ReactNode;
   className?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { pending } = useFormStatus();

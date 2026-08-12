@@ -416,7 +416,7 @@ body.blur-on .chart-box:hover { filter: blur(0); transition: filter 0.2s ease; }
    Seções / layout
    ============================================================================ */
 .section { margin-bottom: 16px; }
-.section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.9rem; padding: 0 6px; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 0.9rem; padding: 0 6px; flex-wrap: wrap; }
 .section-head.flush { padding: 0; }
 .section-title { font-size: 17px; font-weight: 600; letter-spacing: -0.012em; }
 .section-sub { font-size: 13px; color: var(--text-2); }
@@ -927,3 +927,34 @@ th.sheet-now { color: var(--accent-blue-dark); font-weight: 700; }
 /* Seletor de vendedor da Tela do Vendedor (só administradores). */
 .seller-switch { display: inline-flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--text-2); }
 .seller-switch .select { max-width: 230px; }
+
+/* ============================================================================
+   Lista de usuários — dados em texto, ações em ícone
+   ============================================================================ */
+.section-head { position: relative; }
+.section-head .section-right { margin-left: auto; }
+.section-head .section-right .btn { display: inline-flex; align-items: center; gap: 7px; }
+.section-head .section-right .btn svg { width: 15px; height: 15px; }
+
+.acoes { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+.acoes .confirma { font-size: 12.5px; color: var(--accent-red-dark); font-weight: 600; margin-right: 4px; }
+
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: var(--radius-sm);
+  background: transparent; border: 1px solid transparent; cursor: pointer;
+  color: var(--text-2); transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.icon-btn svg { width: 17px; height: 17px; }
+.icon-btn:hover:not(:disabled) { background: #fff; border-color: rgba(16, 24, 40, 0.12); color: var(--text-1); }
+.icon-btn.on { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+.icon-btn.perigo:hover:not(:disabled) {
+  background: rgba(179, 54, 44, 0.08); border-color: rgba(179, 54, 44, 0.28); color: var(--accent-red-dark);
+}
+.icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Linha aberta e o painel de edição embaixo dela. */
+.linha-aberta > td { background: rgba(30, 86, 184, 0.045); }
+.linha-edicao > td { background: rgba(30, 86, 184, 0.045); padding: 4px 12px 20px; }
+.linha-edicao .form-grid { max-width: 780px; }
+.acoes-edicao { flex-direction: row !important; align-items: center; gap: 10px; }

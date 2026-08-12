@@ -147,6 +147,30 @@ export const authIdentity = cache(async (): Promise<{ id: string; email: string 
   return renovado;
 });
 
+/** Por que uma credencial válida mesmo assim não entra. */
+export type Bloqueio = "sem-perfil" | "desativado";
+
+/**
+ * Diagnóstico para a tela de login. Sem isto, quem foi desativado lê que "a
+ * conta não tem perfil" e conclui que foi apagada.
+ */
+export const statusConta = cache(async (): Promise<Bloqueio | null> => {
+  const auth = await authIdentity();
+  if (!auth) return null;
+
+  const sb = db();
+  if (!sb) return null;
+
+  const { data } = await sb
+    .from("v_app_users")
+    .select("active")
+    .eq("user_id", auth.id)
+    .maybeSingle();
+
+  if (!data) return "sem-perfil";
+  return data.active === false ? "desativado" : null;
+});
+
 /** Usuário da requisição: identidade validada + perfil da aplicação. */
 export const currentUser = cache(async (): Promise<SessionUser | null> => {
   const auth = await authIdentity();
