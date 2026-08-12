@@ -25,9 +25,12 @@ export const DEFAULT_LABEL: Record<PeriodDefault, string> = {
   mes: "Este mês",
 };
 
+/** Telas de leitura mensal: abrem no mês corrente, não na janela de 30 dias. */
+const POR_MES = ["/", "/vendedor"];
+
 /** Padrão da rota. Usado no servidor (resolveRange) e no seletor do cabeçalho. */
 export function periodDefaultFor(pathname: string): PeriodDefault {
-  return pathname === "/" ? "mes" : "30d";
+  return POR_MES.includes(pathname) ? "mes" : "30d";
 }
 
 /** Telas que ignoram o período — nelas o seletor não aparece. */
