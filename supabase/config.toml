@@ -1,0 +1,11 @@
+# Projeto FlyTop no Supabase.
+#
+# `project_id` é o ref do projeto (o subdomínio de NEXT_PUBLIC_SUPABASE_URL) —
+# é o que dispensa passar `--project-ref` em cada comando da CLI.
+project_id = "xqonfprapxuomerlaldu"
+
+[functions.monde-sync]
+# Exige JWT: quem chama é o agendador do banco, com a service_role guardada no
+# Vault. Sem isso a função ficaria aberta e qualquer um poderia disparar uma
+# varredura na API do ERP.
+verify_jwt = true
