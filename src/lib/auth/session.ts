@@ -11,6 +11,7 @@
  * não dá para forjar sessão mexendo no cookie.
  */
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/lib/supabase";
 
@@ -180,9 +181,23 @@ async function perfil(userId: string, email: string): Promise<SessionUser | null
   };
 }
 
-/** Para telas que exigem admin. Lança se não for — o middleware já barrou antes. */
+/** Para Server Actions administrativas. Lança se quem chamou não for admin. */
 export async function requireAdmin(): Promise<SessionUser> {
   const u = await currentUser();
   if (!u || u.role !== "admin") throw new Error("Acesso restrito a administradores");
+  return u;
+}
+
+/**
+ * Guarda de tela administrativa.
+ *
+ * Vale para todo o grupo "Administração" do menu. Esconder o item não protege
+ * nada — a URL continua digitável —, então cada uma dessas rotas precisa da
+ * checagem no servidor.
+ */
+export async function guardAdmin(): Promise<SessionUser> {
+  const u = await currentUser();
+  if (!u) redirect("/login");
+  if (u.role !== "admin") redirect("/");
   return u;
 }

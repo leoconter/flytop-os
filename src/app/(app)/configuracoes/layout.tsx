@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { currentUser } from "@/lib/auth/session";
+import { guardAdmin } from "@/lib/auth/session";
 import { ConfigTabs } from "./tabs";
 
 /**
@@ -9,9 +8,7 @@ import { ConfigTabs } from "./tabs";
  * nada, a URL continua digitável.
  */
 export default async function ConfiguracoesLayout({ children }: { children: ReactNode }) {
-  const user = await currentUser();
-  if (!user) redirect("/login");
-  if (user.role !== "admin") redirect("/");
+  await guardAdmin();
 
   return (
     <>
