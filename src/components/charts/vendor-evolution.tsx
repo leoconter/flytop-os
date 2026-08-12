@@ -7,7 +7,6 @@ import type {
   TooltipItem,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { vendorEvolution } from "@/lib/vendedor-data";
 import { brl, glassTooltip, moneyTick } from "./register";
 
 function fillGradient(ctx: ScriptableContext<"line">) {
@@ -20,13 +19,21 @@ function fillGradient(ctx: ScriptableContext<"line">) {
   return g;
 }
 
-export function VendorEvolutionChart() {
+/** Recebe a série pronta do servidor: rótulos "AAAA-MM-DD" e acumulado. */
+export function VendorEvolutionChart({
+  labels,
+  values,
+}: {
+  labels: string[];
+  values: number[];
+}) {
+  const dias = labels.map((iso) => Number(iso.slice(8, 10)));
   const data: ChartData<"line", number[], number> = {
-    labels: vendorEvolution.labels,
+    labels: dias,
     datasets: [
       {
         label: "Acumulado",
-        data: vendorEvolution.values,
+        data: values,
         borderColor: "#1E56B8",
         borderWidth: 2.5,
         backgroundColor: fillGradient,
