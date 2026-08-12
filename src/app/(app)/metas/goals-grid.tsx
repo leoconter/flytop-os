@@ -115,6 +115,9 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
   const [vals, setVals] = useState(inicial);
   const set = (k: string, v: string) => setVals((p) => ({ ...p, [k]: v }));
 
+  const inativos = data.sellers.filter((s) => s.active === false).length;
+  const [ocultarInativos, setOcultarInativos] = useState(true);
+
   /**
    * Depois de gravar, o servidor devolve os valores já normalizados. Sem isto o
    * que ficou na tela é o texto cru digitado ("500000" em vez de "500.000") e o
@@ -175,13 +178,20 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
 
       <div className="glass card">
         <div className="grid-head">
-          <div>
-            <div className="section-title">Metas Mensais · {data.year}</div>
-            <div className="section-sub">
-              meta de <b>faturamento</b> em reais — não é volume de vendas
-            </div>
+          <div className="section-title">Metas Mensais · {data.year}</div>
+          <div className="grid-actions">
+            {inativos > 0 && (
+              <label className="sheet-filter">
+                <input
+                  type="checkbox"
+                  checked={ocultarInativos}
+                  onChange={(e) => setOcultarInativos(e.target.checked)}
+                />
+                Ocultar inativos <span className="muted">({inativos})</span>
+              </label>
+            )}
+            <SaveButton dirty={dirty} />
           </div>
-          <SaveButton dirty={dirty} />
         </div>
 
         <div className="table-wrap sheet-wrap">
@@ -221,8 +231,14 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
                 </td>
               </tr>
 
+              {/* Oculta por CSS, não removendo do DOM: fora do formulário, os
+                  campos não seriam enviados e a gravação apagaria as metas
+                  desses vendedores. */}
               {data.sellers.map((s) => (
-                <tr key={s.sellerId}>
+                <tr
+                  key={s.sellerId}
+                  className={ocultarInativos && s.active === false ? "sheet-oculta" : undefined}
+                >
                   <td className="sheet-name">
                     {s.name}
                     {s.active === false && <span className="badge gray">inativo</span>}
@@ -246,10 +262,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
             </tbody>
             <tfoot>
               <tr className="sheet-sum">
-                <td className="sheet-name">
-                  Soma dos vendedores
-                  <span className="sheet-hint">conferência — não define a meta da agência</span>
-                </td>
+                <td className="sheet-name">Soma dos vendedores</td>
                 {data.months.map((mes, i) => (
                   <td key={mes} className={`r${i === data.currentMonth ? " sheet-now" : ""}`}>
                     <span className="private">{fmtBR.format(somaMes(i))}</span>

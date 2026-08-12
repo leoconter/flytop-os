@@ -739,7 +739,17 @@ body.tv-mode .tv-stats { grid-template-columns: 1.4fr 1fr 1fr; }
 .year-nav { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .year-nav .btn { min-width: 30px; padding: 5px 9px; font-size: 15px; line-height: 1; }
 
-.grid-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.grid-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.grid-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.sheet-filter {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; color: var(--text-2); user-select: none;
+}
+.sheet-filter input { width: 15px; height: 15px; accent-color: var(--accent-blue); cursor: pointer; }
+.sheet-filter .muted { color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* Linha filtrada: sai da vista, fica no formulário. */
+.sheet-oculta { display: none; }
 
 /* 14 colunas não cabem em 1180px: a planilha rola na horizontal, e a coluna
    do nome fica fixa para não se perder a referência da linha. */
