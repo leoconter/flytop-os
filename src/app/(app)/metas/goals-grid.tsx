@@ -25,15 +25,20 @@ function parse(raw: string): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
+/**
+ * O rótulo não muda: o botão é sempre "Salvar". Sem alteração ele fica apagado
+ * e inerte — o estado se lê pela aparência, não por um texto que se reescreve.
+ */
 function SaveButton({ dirty }: { dirty: number }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn btn-primary" disabled={pending || dirty === 0}>
-      {pending
-        ? "Salvando…"
-        : dirty === 0
-          ? "Nada alterado"
-          : `Salvar ${dirty} ${dirty === 1 ? "alteração" : "alterações"}`}
+    <button
+      type="submit"
+      className="btn btn-primary"
+      disabled={pending || dirty === 0}
+      title={dirty === 0 ? "Nenhuma alteração para salvar" : `${dirty} alteração(ões) pendente(s)`}
+    >
+      {pending ? "Salvando…" : "Salvar"}
     </button>
   );
 }
@@ -44,7 +49,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
     const m: Record<string, string> = {};
     data.months.forEach((mes, i) => {
       m[`agency:${mes}`] = toInput(data.agency[i]);
-      for (const s of data.sellers) m[`${s.sellerId}:${mes}`] = toInput(s.cells[i].amount);
+      for (const s of data.sellers) m[`${s.sellerId}:${mes}`] = toInput(s.goals[i]);
     });
     return m;
   }, [data]);
@@ -55,7 +60,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
   /**
    * Depois de gravar, o servidor devolve os valores já normalizados. Sem isto o
    * que ficou na tela é o texto cru digitado ("500000" em vez de "500.000") e o
-   * botão segue acusando alteração que já foi salva.
+   * botão segue habilitado por uma alteração que já foi salva.
    *
    * Compara o conteúdo, não a identidade do objeto: uma re-renderização que não
    * mudou nada não pode descartar o que a pessoa está digitando.
@@ -87,12 +92,30 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
   const totalLinha = (who: string) =>
     data.months.reduce((s, mes) => s + (parse(vals[`${who}:${mes}`] ?? "") ?? 0), 0);
 
-  /** Soma das metas de vendedor num mês — é o que vale como meta da agência. */
+  /** Soma das metas de vendedor num mês — é o que vale quando a agência está vazia. */
   const somaMes = (i: number) =>
     data.sellers.reduce(
       (s, v) => s + (parse(vals[`${v.sellerId}:${data.months[i]}`] ?? "") ?? 0),
       0,
     );
+
+  /** Uma célula editável, igual na linha da agência e nas dos vendedores. */
+  const Celula = ({ who, i, rotulo }: { who: string; i: number; rotulo: string }) => {
+    const k = `${who}:${data.months[i]}`;
+    return (
+      <td className={i === data.currentMonth ? "sheet-now" : ""}>
+        <input
+          className="sheet-input"
+          name={`c:${who}:${data.months[i]}`}
+          value={vals[k] ?? ""}
+          onChange={(e) => set(k, e.target.value)}
+          inputMode="decimal"
+          placeholder={who === "agency" ? "soma" : "—"}
+          aria-label={`${rotulo} em ${MES_CURTO[i]}/${data.year}`}
+        />
+      </td>
+    );
+  };
 
   return (
     <form action={saveGoalsYear}>
@@ -101,7 +124,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
       <div className="glass card">
         <div className="grid-head">
           <div>
-            <div className="section-title">Planilha de metas · {data.year}</div>
+            <div className="section-title">Metas Mensais · {data.year}</div>
             <div className="section-sub">
               vendedores nas linhas, meses nas colunas — preencha e salve de uma vez
             </div>
@@ -115,10 +138,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
               <tr>
                 <th className="sheet-name">Vendedor</th>
                 {MES_CURTO.map((m, i) => (
-                  <th
-                    key={m}
-                    className={`r${i === data.currentMonth ? " sheet-now" : ""}`}
-                  >
+                  <th key={m} className={`r${i === data.currentMonth ? " sheet-now" : ""}`}>
                     {m}
                   </th>
                 ))}
@@ -127,41 +147,37 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
               </tr>
             </thead>
             <tbody>
+              {/* A meta da agência é a linha que o Dashboard Geral lê: vem primeiro. */}
+              <tr className="sheet-agency">
+                <td className="sheet-name">
+                  Meta da agência
+                  <span className="sheet-hint">vazio = soma dos vendedores</span>
+                </td>
+                {data.months.map((_, i) => (
+                  <Celula key={i} who="agency" i={i} rotulo="Meta da agência" />
+                ))}
+                <td className="r sheet-total private">{fmtBR.format(totalLinha("agency"))}</td>
+                <td>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => replicar("agency")}
+                    title="Repete o valor preenchido nos meses seguintes que estão vazios"
+                  >
+                    Repetir →
+                  </button>
+                </td>
+              </tr>
+
               {data.sellers.map((s) => (
                 <tr key={s.sellerId}>
                   <td className="sheet-name">
                     {s.name}
                     {s.active === false && <span className="badge gray">inativo</span>}
                   </td>
-                  {data.months.map((mes, i) => {
-                    const k = `${s.sellerId}:${mes}`;
-                    const cell = s.cells[i];
-                    const meta = parse(vals[k] ?? "");
-                    const pct = meta && meta > 0 ? (cell.revenue / meta) * 100 : null;
-                    return (
-                      <td key={mes} className={i === data.currentMonth ? "sheet-now" : ""}>
-                        <input
-                          className="sheet-input"
-                          name={`c:${s.sellerId}:${mes}`}
-                          value={vals[k] ?? ""}
-                          onChange={(e) => set(k, e.target.value)}
-                          inputMode="decimal"
-                          placeholder="—"
-                          aria-label={`Meta de ${s.name} em ${MES_CURTO[i]}/${data.year}`}
-                        />
-                        {/* Só faz sentido comparar onde já houve venda. Vai com
-                            `private` porque é faturamento: some no modo oculto. */}
-                        {cell.revenue > 0 && (
-                          <span
-                            className={`sheet-pct private${pct === null ? " none" : pct >= 100 ? " ok" : ""}`}
-                            title={`Realizado: ${fmtBR.format(cell.revenue)} em ${cell.salesCount} vendas`}
-                          >
-                            {pct === null ? fmtBR.format(cell.revenue) : `${fmtBR.format(pct)}%`}
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
+                  {data.months.map((_, i) => (
+                    <Celula key={i} who={s.sellerId} i={i} rotulo={`Meta de ${s.name}`} />
+                  ))}
                   <td className="r sheet-total private">{fmtBR.format(totalLinha(s.sellerId))}</td>
                   <td>
                     <button
@@ -177,7 +193,6 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
               ))}
             </tbody>
             <tfoot>
-              {/* Soma das individuais: é o que o Dashboard Geral usa por padrão. */}
               <tr className="sheet-sum">
                 <td className="sheet-name">Soma dos vendedores</td>
                 {data.months.map((mes, i) => (
@@ -189,39 +204,6 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
                   {fmtBR.format(data.months.reduce((s, _, i) => s + somaMes(i), 0))}
                 </td>
                 <td />
-              </tr>
-              {/* Linha opcional: só preencher quando a meta da agência não for a soma. */}
-              <tr>
-                <td className="sheet-name">
-                  Meta da agência
-                  <span className="sheet-hint">opcional — vazio usa a soma</span>
-                </td>
-                {data.months.map((mes, i) => {
-                  const k = `agency:${mes}`;
-                  return (
-                    <td key={mes} className={i === data.currentMonth ? "sheet-now" : ""}>
-                      <input
-                        className="sheet-input"
-                        name={`c:agency:${mes}`}
-                        value={vals[k] ?? ""}
-                        onChange={(e) => set(k, e.target.value)}
-                        inputMode="decimal"
-                        placeholder="soma"
-                        aria-label={`Meta da agência em ${MES_CURTO[i]}/${data.year}`}
-                      />
-                    </td>
-                  );
-                })}
-                <td className="r sheet-total private">{fmtBR.format(totalLinha("agency"))}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => replicar("agency")}
-                  >
-                    Repetir →
-                  </button>
-                </td>
               </tr>
             </tfoot>
           </table>

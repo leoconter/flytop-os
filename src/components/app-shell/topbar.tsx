@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { PrivacyToggle } from "@/components/dashboard/privacy-toggle";
 import { DateRangePicker } from "./date-range-picker";
-import { DEFAULT_LABEL, periodDefaultFor } from "@/lib/date-range";
+import { DEFAULT_LABEL, periodDefaultFor, usesPeriod } from "@/lib/date-range";
 import { titleForPath } from "./nav-config";
 
 export function Topbar() {
@@ -18,13 +18,15 @@ export function Topbar() {
       </div>
       <div className="topbar-actions">
         {/* useSearchParams exige Suspense para as rotas estáticas prerenderizarem. */}
-        <Suspense
-          fallback={
-            <span className="chip">{DEFAULT_LABEL[periodDefaultFor(pathname)]}</span>
-          }
-        >
-          <DateRangePicker />
-        </Suspense>
+        {usesPeriod(pathname) && (
+          <Suspense
+            fallback={
+              <span className="chip">{DEFAULT_LABEL[periodDefaultFor(pathname)]}</span>
+            }
+          >
+            <DateRangePicker />
+          </Suspense>
+        )}
         <span className="chip live">
           <span className="d" />
           Sincronizado

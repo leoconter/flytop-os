@@ -30,6 +30,18 @@ export function periodDefaultFor(pathname: string): PeriodDefault {
   return pathname === "/" ? "mes" : "30d";
 }
 
+/** Telas que ignoram o período — nelas o seletor não aparece. */
+const SEM_PERIODO = ["/metas"];
+
+/**
+ * O seletor do cabeçalho só faz sentido onde a tela lê o período. Metas é
+ * anual e tem navegação própria: um calendário ali seria um controle que não
+ * muda nada.
+ */
+export function usesPeriod(pathname: string): boolean {
+  return !SEM_PERIODO.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isoFmt = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/Sao_Paulo",

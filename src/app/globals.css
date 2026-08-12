@@ -555,6 +555,10 @@ button.chip { cursor: pointer; font-family: inherit; }
 .btn-ghost { background: #fff; border-color: rgba(16, 24, 40, 0.12); color: var(--text-1); }
 .btn-ghost:hover { background: #f6f7f9; }
 .btn-block { width: 100%; }
+/* Desabilitado: apagado e inerte, sem trocar de rótulo. */
+.btn:disabled { opacity: 0.42; cursor: default; box-shadow: none; }
+.btn:disabled:hover { transform: none; }
+.btn-primary:disabled:hover { background: var(--accent-blue); box-shadow: none; }
 .btn-sm { padding: 7px 13px; font-size: 12.5px; border-radius: var(--radius-sm); }
 
 /* Ações em linha de tabela */
@@ -763,13 +767,19 @@ body.tv-mode .tv-stats { grid-template-columns: 1.4fr 1fr 1fr; }
 .sheet-input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(30, 86, 184, 0.12); }
 .sheet-input::placeholder { color: var(--text-3); }
 
-/* Realizado do mês, abaixo da meta: laranja abaixo de 100%, verde ao bater. */
-.sheet-pct {
-  display: block; text-align: right; font-size: 10.5px; margin-top: 2px;
-  color: var(--accent-orange-dark); font-variant-numeric: tabular-nums;
+/* Linha da agência: é a que o Dashboard Geral lê, então vem primeiro e pesa. */
+.sheet-agency td { background: rgba(30, 86, 184, 0.055); padding-top: 9px; padding-bottom: 9px; }
+.sheet-agency .sheet-name {
+  background: rgba(30, 86, 184, 0.075);
+  font-weight: 600; font-size: 13.5px; color: var(--accent-blue-dark);
 }
-.sheet-pct.ok { color: var(--accent-green-dark); }
-.sheet-pct.none { color: var(--text-3); }
+.sheet-agency .sheet-input {
+  border-color: rgba(30, 86, 184, 0.3); font-weight: 600;
+  background: #fff; box-shadow: 0 1px 2px rgba(30, 86, 184, 0.08);
+}
+.sheet-agency .sheet-total { color: var(--accent-blue-dark); }
+/* A faixa do mês corrente não pode apagar o destaque da linha. */
+.sheet-agency td.sheet-now { background: rgba(30, 86, 184, 0.11); }
 
 .sheet-now { background: rgba(30, 86, 184, 0.05); }
 th.sheet-now { color: var(--accent-blue-dark); font-weight: 700; }

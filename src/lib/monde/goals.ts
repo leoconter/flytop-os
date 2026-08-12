@@ -41,19 +41,12 @@ export async function getAgencyGoal(month: string): Promise<number | null> {
   return soma > 0 ? soma : null;
 }
 
-/** Uma célula da planilha: a meta do vendedor naquele mês e o que ele fez. */
-export interface GoalCell {
-  amount: number | null;
-  revenue: number;
-  salesCount: number;
-}
-
 export interface SellerYear {
   sellerId: string;
   name: string;
   active: boolean | null;
-  /** 12 posições, janeiro a dezembro. */
-  cells: GoalCell[];
+  /** Meta de cada mês, janeiro a dezembro. */
+  goals: (number | null)[];
 }
 
 export interface GoalsYear {
@@ -70,16 +63,13 @@ export interface GoalsYear {
 /**
  * A planilha do ano: vendedores nas linhas, meses nas colunas.
  *
- * A meta é cadastro da plataforma — o Monde não tem esse conceito. O realizado
- * de cada célula vem das vendas do ERP, cruzado pelo nome do vendedor, para a
- * meta ser digitada olhando o que já aconteceu.
+ * Só metas — o realizado tem tela própria. Aqui isso mantém a leitura barata:
+ * dois selects, nenhuma varredura de vendas.
  */
 export async function getGoalsYear(year: number): Promise<GoalsYear | null> {
   const sb = db();
   if (!sb) return null;
 
-  const first = `${year}-01-01`;
-  const last = `${year}-12-31`;
   const months = Array.from(
     { length: 12 },
     (_, i) => `${year}-${String(i + 1).padStart(2, "0")}-01`,
@@ -89,7 +79,7 @@ export async function getGoalsYear(year: number): Promise<GoalsYear | null> {
     sb
       .from("sales_goals")
       .select("scope, seller_id, month, amount")
-      .gte("month", first)
+      .gte("month", `${year}-01-01`)
       .lte("month", `${year}-12-01`),
     sb.from("monde_sellers").select("seller_id, name, active").order("name"),
   ]);
@@ -99,43 +89,10 @@ export async function getGoalsYear(year: number): Promise<GoalsYear | null> {
     return null;
   }
 
-  // v_sales_by_seller é diária: um ano inteiro passa do teto de 1000 linhas do
-  // PostgREST, então lê paginado.
-  const sales: { name: string; date: string; revenue: number; count: number }[] = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await sb
-      .from("v_sales_by_seller")
-      .select("travel_agent_name, sale_date, sales_count, revenue")
-      .gte("sale_date", first)
-      .lte("sale_date", last)
-      .range(from, from + 999);
-    if (error || !data) break;
-    sales.push(
-      ...data.map((r) => ({
-        name: (r.travel_agent_name as string) ?? "",
-        date: r.sale_date as string,
-        revenue: Number(r.revenue ?? 0),
-        count: Number(r.sales_count ?? 0),
-      })),
-    );
-    if (data.length < 1000) break;
-  }
-
-  // Realizado por vendedor e mês.
-  const realized = new Map<string, { revenue: number; count: number }>();
-  for (const s of sales) {
-    const k = `${s.name}|${Number(s.date.slice(5, 7)) - 1}`;
-    const cur = realized.get(k) ?? { revenue: 0, count: 0 };
-    cur.revenue += s.revenue;
-    cur.count += s.count;
-    realized.set(k, cur);
-  }
-
-  const goals = goalsRes.data ?? [];
   const idx = (m: string) => Number(String(m).slice(5, 7)) - 1;
   const goalBySeller = new Map<string, number>();
   const agency: (number | null)[] = Array(12).fill(null);
-  for (const g of goals) {
+  for (const g of goalsRes.data ?? []) {
     if (g.scope === "agency") agency[idx(g.month as string)] = Number(g.amount);
     else goalBySeller.set(`${g.seller_id}|${idx(g.month as string)}`, Number(g.amount));
   }
@@ -144,14 +101,10 @@ export async function getGoalsYear(year: number): Promise<GoalsYear | null> {
     sellerId: s.seller_id as string,
     name: s.name as string,
     active: s.active as boolean | null,
-    cells: Array.from({ length: 12 }, (_, m) => {
-      const r = realized.get(`${s.name}|${m}`) ?? { revenue: 0, count: 0 };
-      return {
-        amount: goalBySeller.get(`${s.seller_id}|${m}`) ?? null,
-        revenue: r.revenue,
-        salesCount: r.count,
-      };
-    }),
+    goals: Array.from(
+      { length: 12 },
+      (_, m) => goalBySeller.get(`${s.seller_id}|${m}`) ?? null,
+    ),
   }));
 
   const hoje = todayISO();
