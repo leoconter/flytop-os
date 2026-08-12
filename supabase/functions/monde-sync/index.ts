@@ -13,11 +13,10 @@
  * Segredo esperado: MONDE_API_TOKEN (o Basic token da API v3 do Monde).
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { DEFAULT_WINDOW_DAYS, runDaily } from "./daily.ts";
 import { fetchSalesPage } from "./monde.ts";
 import { type Counters, emptyCounters, persistPage } from "./persist.ts";
 
-/** Dias para trás cobertos pela carga diária — folga para venda cadastrada com atraso. */
-const DEFAULT_WINDOW_DAYS = 15;
 /** Páginas por chamada no backfill, para não estourar o tempo da função. */
 const BACKFILL_PAGES_PER_CALL = 5;
 
@@ -71,34 +70,9 @@ Deno.serve(async (req) => {
       }
       nextPage = page <= totalPages ? page : null;
     } else {
-      // Diário: anda enquanto as vendas estiverem dentro da janela. Como a API
-      // ordena da mais recente para a mais antiga, isso para nas primeiras
-      // páginas em vez de varrer as 47.
-      const cutoff = new Date(Date.now() - windowDays * 86_400_000)
-        .toISOString()
-        .slice(0, 10);
-      let page = 1;
-      let totalPages = 1;
-
-      while (page <= totalPages) {
-        const res = await fetchSalesPage(token, page);
-        totalPages = res.totalPages;
-        const inWindow = res.sales.filter((s) => s.sale_date >= cutoff);
-        await persistPage(db, inWindow, counters);
-        if (inWindow.length < res.sales.length) break; // passou da janela
-        page++;
-      }
-
-      // Canceladas somem da listagem padrão: sem este passo, uma venda
-      // cancelada no ERP ficaria valendo aqui para sempre.
-      let cPage = 1;
-      let cTotal = 1;
-      do {
-        const res = await fetchSalesPage(token, cPage, "canceled");
-        cTotal = res.totalPages;
-        await persistPage(db, res.sales, counters);
-        cPage++;
-      } while (cPage <= cTotal);
+      // Mesma implementação que a rota agendada da Vercel usa.
+      const c = await runDaily(db, token, windowDays);
+      Object.assign(counters, c);
     }
 
     await db

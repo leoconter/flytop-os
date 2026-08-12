@@ -9,6 +9,7 @@
  * `jsr:@supabase/supabase-js`, no Node de `node_modules`.
  */
 import {
+  type CustomerRow,
   type MondeSale,
   toCustomer,
   toPassengerRow,
@@ -43,7 +44,7 @@ export async function persistPage(
 
   // 1. Clientes (pagante + passageiros), deduplicados dentro do lote — o
   //    Postgres recusa um upsert que afete a mesma linha duas vezes.
-  const customerByHash = new Map<string, Record<string, unknown>>();
+  const customerByHash = new Map<string, CustomerRow>();
   const payerHash = new Map<string, string>();
   const passengerHash = new Map<string, string>();
 

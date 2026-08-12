@@ -11,10 +11,20 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PUBLICAS = ["/login"];
 
+/**
+ * Rotas de máquina: têm autenticação própria (segredo do cron) e não podem
+ * cair no redirecionamento para a tela de login — um agendador não sabe
+ * preencher formulário.
+ */
+const MAQUINA = ["/api/"];
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (PUBLICAS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+  if (
+    PUBLICAS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+    MAQUINA.some((p) => pathname.startsWith(p))
+  ) {
     return NextResponse.next();
   }
 
