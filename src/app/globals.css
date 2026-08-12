@@ -183,12 +183,30 @@ body.blur-on .chart-box:hover { filter: blur(0); transition: filter 0.2s ease; }
   border-radius: var(--radius-pill); padding: 1px 8px;
 }
 .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding-top: 14px; }
-.preview-pill {
-  display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
-  padding: 6px 12px; border-radius: var(--radius-pill); background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(222, 230, 240, 0.75); font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em;
+/* Atualização sob demanda, no rodapé da sidebar (só administradores). */
+.sync-box { display: flex; flex-direction: column; gap: 6px; }
+.sync-btn {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 11px;
+  border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09); color: rgba(214, 224, 238, 0.82);
+  font-family: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; text-align: left;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
-.preview-pill .d { width: 6px; height: 6px; border-radius: 50%; background: var(--brass); box-shadow: 0 0 8px rgba(207, 169, 93, 0.6); }
+.sync-btn svg { width: 15px; height: 15px; display: block; }
+.sync-btn > span { display: inline-flex; flex-shrink: 0; }
+.sync-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); color: #eef2f7; border-color: rgba(255, 255, 255, 0.16); }
+.sync-btn:disabled { opacity: 0.55; cursor: progress; }
+.girando { animation: girar 1s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+.sync-msg { font-size: 11px; line-height: 1.35; margin: 4px 2px 2px; }
+.sync-msg.ok { color: rgba(150, 214, 176, 0.9); }
+.sync-msg.erro { color: #ffb4ac; }
+
+/* Selo de atualização: verde quando deu certo, vermelho quando falhou. */
+.chip.falhou {
+  background: rgba(179, 54, 44, 0.14); border-color: rgba(179, 54, 44, 0.3); color: var(--accent-red-dark);
+}
+.chip.falhou .d { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-red); box-shadow: 0 0 8px rgba(179, 54, 44, 0.7); }
 .user-chip {
   display: flex; align-items: center; gap: 11px; padding: 10px; border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08);

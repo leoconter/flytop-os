@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { SessionUser } from "@/lib/auth/session";
 import { sair } from "@/app/login/actions";
 import { navGroups, navItems } from "./nav-config";
+import { SyncButtons } from "./sync-buttons";
 
 /** Iniciais para o avatar: "Ana Júlia Gehling" → "AG". */
 function iniciais(u: SessionUser): string {
@@ -57,10 +58,7 @@ export function Sidebar({ user }: { user: SessionUser }) {
       ))}
 
       <div className="sidebar-foot">
-        <span className="preview-pill">
-          <span className="d" />
-          Prévia · dados ilustrativos
-        </span>
+        {user.role === "admin" && <SyncButtons />}
         <div className="user-chip">
           <span className="avatar">{iniciais(user)}</span>
           <div className="user-id">

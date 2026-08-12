@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { PrivacyToggle } from "@/components/dashboard/privacy-toggle";
 import { DateRangePicker } from "./date-range-picker";
 import { DEFAULT_LABEL, periodDefaultFor, telaDeCadastro } from "@/lib/date-range";
+import type { UltimaSync } from "@/lib/monde/sync-status";
 import { titleForPath } from "./nav-config";
 
-export function Topbar() {
+export function Topbar({ sync }: { sync: UltimaSync | null }) {
   const pathname = usePathname();
   const title = titleForPath(pathname);
   // Cadastro não tem período nem valor a esconder: o cabeçalho fica só com o
@@ -30,9 +31,14 @@ export function Topbar() {
             <DateRangePicker />
           </Suspense>
         )}
-        <span className="chip live">
+        {/* Data real da última carga: um selo fixo dizendo "Sincronizado"
+            continuaria verde mesmo com a atualização falhando. */}
+        <span
+          className={`chip ${sync && !sync.ok ? "falhou" : "live"}`}
+          title={sync?.erro ?? "Última leitura dos dados do Monde"}
+        >
           <span className="d" />
-          Sincronizado
+          {sync ? (sync.ok ? `Atualizado ${sync.quando}` : `Falha ${sync.quando}`) : "Sem atualização"}
         </span>
         {!cadastro && <PrivacyToggle />}
       </div>
