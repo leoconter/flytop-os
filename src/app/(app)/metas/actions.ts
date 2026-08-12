@@ -4,61 +4,74 @@ import { revalidatePath } from "next/cache";
 import { monthKey } from "@/lib/monde/goals";
 import { db } from "@/lib/supabase";
 
+/** Aceita "3.500.000,00" e "3500000" — o campo é digitado por pessoas. */
+function parseAmount(raw: string): number | null {
+  const t = raw.trim();
+  if (!t) return null;
+  const n = Number(t.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
+  if (Number.isNaN(n) || n < 0) throw new Error(`Valor inválido: "${raw}"`);
+  return n;
+}
+
 /**
- * Grava a meta da agência ou de um vendedor.
+ * Grava a planilha de metas de um ano inteiro.
  *
- * Server Action: a escrita acontece no servidor, com a service_role — a chave
- * nunca chega ao navegador. Valor vazio apaga a meta.
+ * Os campos chegam como `c:<agency|sellerId>:<AAAA-MM-01>`. Em vez de uma
+ * escrita por célula (seriam ~160), lê o que já existe no ano e aplica só a
+ * diferença: um delete e um insert, no máximo.
  */
-export async function saveGoal(formData: FormData): Promise<void> {
+export async function saveGoalsYear(formData: FormData): Promise<void> {
   const sb = db();
   if (!sb) throw new Error("Banco não configurado");
 
-  const month = monthKey(String(formData.get("month") ?? ""));
-  const sellerId = String(formData.get("sellerId") ?? "").trim();
-  const raw = String(formData.get("amount") ?? "").trim();
-  const scope = sellerId ? "seller" : "agency";
-
-  // Aceita "3.500.000,00" e "3500000" — o campo é digitado por pessoas.
-  const amount = raw
-    ? Number(raw.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""))
-    : null;
-
-  if (raw && (amount === null || Number.isNaN(amount) || amount < 0)) {
-    throw new Error("Valor inválido");
+  const year = Number(formData.get("year"));
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    throw new Error("Ano inválido");
   }
 
-  if (amount === null) {
-    const q = sb.from("sales_goals").delete().eq("month", month).eq("scope", scope);
-    const { error } = sellerId ? await q.eq("seller_id", sellerId) : await q;
-    if (error) throw new Error(error.message);
-    revalidatePath("/metas");
-    revalidatePath("/");
-    return;
+  // Célula preenchida → meta desejada; vazia → sem meta.
+  const desired = new Map<string, number>();
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("c:")) continue;
+    const [, who, month] = key.split(":");
+    if (!month?.startsWith(String(year))) continue;
+    const amount = parseAmount(String(value));
+    if (amount !== null) desired.set(`${who}|${month}`, amount);
   }
 
-  // Sem upsert de propósito: os índices únicos da tabela são parciais
-  // (`where scope = ...`), e o Postgres não aceita índice parcial como alvo de
-  // ON CONFLICT. Eles seguem garantindo a unicidade — só não servem de âncora.
-  const find = sb.from("sales_goals").select("id").eq("month", month).eq("scope", scope);
-  const { data: existing, error: findErr } = sellerId
-    ? await find.eq("seller_id", sellerId).maybeSingle()
-    : await find.is("seller_id", null).maybeSingle();
-  if (findErr) throw new Error(findErr.message);
+  const { data: existing, error: readErr } = await sb
+    .from("sales_goals")
+    .select("id, scope, seller_id, month, amount")
+    .gte("month", `${year}-01-01`)
+    .lte("month", `${year}-12-01`);
+  if (readErr) throw new Error(readErr.message);
 
-  if (existing) {
-    const { error } = await sb
-      .from("sales_goals")
-      .update({ amount, updated_at: new Date().toISOString() })
-      .eq("id", existing.id);
+  const stale: string[] = [];
+  for (const row of existing ?? []) {
+    const who = row.scope === "agency" ? "agency" : String(row.seller_id);
+    const k = `${who}|${monthKey(String(row.month))}`;
+    const want = desired.get(k);
+    // Some ou mudou de valor: nos dois casos a linha antiga sai.
+    if (want === undefined || want !== Number(row.amount)) stale.push(row.id as string);
+    if (want !== undefined && want === Number(row.amount)) desired.delete(k);
+  }
+
+  if (stale.length) {
+    const { error } = await sb.from("sales_goals").delete().in("id", stale);
     if (error) throw new Error(error.message);
-  } else {
-    const { error } = await sb.from("sales_goals").insert({
+  }
+
+  const inserts = [...desired].map(([k, amount]) => {
+    const [who, month] = k.split("|");
+    return {
       month,
-      scope,
-      seller_id: sellerId || null,
+      scope: who === "agency" ? "agency" : "seller",
+      seller_id: who === "agency" ? null : who,
       amount,
-    });
+    };
+  });
+  if (inserts.length) {
+    const { error } = await sb.from("sales_goals").insert(inserts);
     if (error) throw new Error(error.message);
   }
 

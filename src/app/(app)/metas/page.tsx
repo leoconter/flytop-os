@@ -1,52 +1,44 @@
-import { Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
+import Link from "next/link";
+import { Metrics, PageHead, Pill } from "@/components/dashboard/ui";
 import type { Metric } from "@/lib/dashboard-data";
 import { PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
-import { fmtMoney, fmtMoneyCompact } from "@/lib/meta/ads";
+import { fmtMoneyCompact } from "@/lib/meta/ads";
 import { fmtInt } from "@/lib/meta/instagram";
-import { getGoalsMonth } from "@/lib/monde/goals";
-import { saveGoal } from "./actions";
+import { getGoalsYear } from "@/lib/monde/goals";
+import { GoalsGrid } from "./goals-grid";
 
 export const metadata = { title: "FlyTop OS · Metas de Venda" };
 
-const MES = [
+/** Cadastro: nunca pode servir uma versão prerenderizada no build. */
+export const dynamic = "force-dynamic";
+
+const MES_LONGO = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-function monthLabel(key: string): string {
-  return `${MES[Number(key.slice(5, 7)) - 1]} de ${key.slice(0, 4)}`;
-}
-
-/** Barra de progresso da meta, verde ao bater. */
-function GoalBar({ pct }: { pct: number | null }) {
-  if (pct === null) return <span className="muted">—</span>;
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 10, minWidth: 150 }}>
-      <span className={`metric-bar${pct >= 100 ? " green" : ""}`} style={{ flex: 1, marginTop: 0 }}>
-        <div style={{ width: `${Math.min(100, pct)}%` }} />
-      </span>
-      <b style={{ fontSize: 13, minWidth: 46, textAlign: "right" }}>
-        {pct.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}%
-      </b>
-    </span>
-  );
-}
-
 export default async function MetasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [PARAM_FROM]?: string; [PARAM_TO]?: string }>;
+  searchParams: Promise<{ [PARAM_FROM]?: string; [PARAM_TO]?: string; ano?: string }>;
 }) {
-  // A tela é mensal: usa o mês do fim do período selecionado no cabeçalho.
-  const range = resolveRange(await searchParams);
-  const data = await getGoalsMonth(range.until);
+  const params = await searchParams;
+  const range = resolveRange(params);
+  // O ano vem da URL; sem ele, o do período escolhido no cabeçalho.
+  const pedido = Number(params.ano);
+  const year =
+    Number.isInteger(pedido) && pedido >= 2000 && pedido <= 2100
+      ? pedido
+      : Number(range.until.slice(0, 4));
+
+  const data = await getGoalsYear(year);
 
   if (!data) {
     return (
       <>
         <PageHead
           title="Metas de Venda"
-          sub="Cadastro da meta mensal da agência e por vendedor"
+          sub="Planilha anual de metas por vendedor"
           right={<Pill tone="blue">Aguardando conexão</Pill>}
         />
         <div className="note-box blue">
@@ -62,38 +54,59 @@ export default async function MetasPage({
     );
   }
 
-  const label = monthLabel(data.month);
-  const falta = data.agencyGoal ? data.agencyGoal - data.revenue : null;
+  // Mês de referência dos indicadores: o corrente, ou o último com venda.
+  const ultimoComVenda = data.months.reduce(
+    (acc, _, i) => (data.sellers.some((s) => s.cells[i].revenue > 0) ? i : acc),
+    0,
+  );
+  const ref = data.currentMonth ?? ultimoComVenda;
+
+  const metaRef =
+    data.agency[ref] ??
+    data.sellers.reduce((s, v) => s + (v.cells[ref].amount ?? 0), 0);
+  const realizadoRef = data.sellers.reduce((s, v) => s + v.cells[ref].revenue, 0);
+  const vendasRef = data.sellers.reduce((s, v) => s + v.cells[ref].salesCount, 0);
+  const pctRef = metaRef > 0 ? (realizadoRef / metaRef) * 100 : null;
+
+  const metaAno = data.months.reduce(
+    (s, _, i) =>
+      s +
+      (data.agency[i] ?? data.sellers.reduce((a, v) => a + (v.cells[i].amount ?? 0), 0)),
+    0,
+  );
+  const comMeta = data.sellers.filter((v) => v.cells.some((c) => c.amount !== null)).length;
+  const label = `${MES_LONGO[ref]} de ${year}`;
 
   const metrics: Metric[] = [
     {
-      label: "Meta da agência",
-      value: data.agencyGoal ? fmtMoneyCompact(data.agencyGoal) : "não definida",
-      small: !data.agencyGoal,
-      hint: label,
+      label: `Meta de ${MES_LONGO[ref]}`,
+      value: metaRef > 0 ? fmtMoneyCompact(metaRef) : "não definida",
+      small: metaRef === 0,
+      hint: data.agency[ref] !== null ? "definida na linha da agência" : "soma dos vendedores",
       privateValue: true,
-      info: "Meta de faturamento do mês. É ela que alimenta a linha de meta e a projeção do Dashboard Geral.",
+      info: "Meta do mês de referência. É ela que alimenta a linha de meta e a projeção do Dashboard Geral.",
     },
     {
       label: "Realizado",
-      value: fmtMoneyCompact(data.revenue),
-      hint: `${fmtInt(data.salesCount)} vendas no mês`,
+      value: fmtMoneyCompact(realizadoRef),
+      hint: `${fmtInt(vendasRef)} vendas em ${label}`,
       privateValue: true,
-      info: "Faturamento das vendas do mês, sem as canceladas.",
+      info: "Faturamento das vendas do mês, sem as canceladas. Vem do Monde.",
     },
     {
       label: "% da meta",
-      value: data.pct !== null ? `${data.pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—",
-      tone: data.pct !== null && data.pct >= 100 ? "green" : "blue",
-      bar: data.pct !== null ? { pct: Math.min(100, data.pct), green: data.pct >= 100 } : undefined,
+      value: pctRef !== null ? `${pctRef.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—",
+      tone: pctRef !== null && pctRef >= 100 ? "green" : "blue",
+      bar: pctRef !== null ? { pct: Math.min(100, pctRef), green: pctRef >= 100 } : undefined,
       privateValue: true,
     },
     {
-      label: falta !== null && falta > 0 ? "Falta para a meta" : "Acima da meta",
-      value: falta !== null ? fmtMoneyCompact(Math.abs(falta)) : "—",
-      tone: falta !== null && falta <= 0 ? "green" : undefined,
-      hint: data.agencyGoal ? label : "defina a meta abaixo",
+      label: `Meta do ano de ${year}`,
+      value: metaAno > 0 ? fmtMoneyCompact(metaAno) : "não definida",
+      small: metaAno === 0,
+      hint: `${comMeta} de ${data.sellers.length} vendedores com meta`,
       privateValue: true,
+      info: "Soma dos doze meses, usando a meta da agência quando definida e a soma dos vendedores quando não.",
     },
   ];
 
@@ -101,114 +114,24 @@ export default async function MetasPage({
     <>
       <PageHead
         title="Metas de Venda"
-        sub={`Cadastro da meta da agência e por vendedor · ${label}`}
-        right={<Pill tone="blue">Acesso restrito</Pill>}
+        sub="Planilha anual — a meta é cadastro da plataforma, não vem do Monde"
+        right={
+          <span className="year-nav">
+            <Link className="btn btn-ghost btn-sm" href={`/metas?ano=${year - 1}`} aria-label="Ano anterior">
+              ‹
+            </Link>
+            <b>{year}</b>
+            <Link className="btn btn-ghost btn-sm" href={`/metas?ano=${year + 1}`} aria-label="Próximo ano">
+              ›
+            </Link>
+          </span>
+        }
       />
 
       <Metrics metrics={metrics} />
 
       <div className="section">
-        <div className="glass card">
-          <SectionHead
-            title="Meta da agência"
-            sub={`vale para ${label}`}
-            flush
-          />
-          <form
-            action={saveGoal}
-            style={{ display: "flex", gap: 12, alignItems: "flex-end", marginTop: 14, flexWrap: "wrap" }}
-          >
-            <input type="hidden" name="month" value={data.month} />
-            <div className="field" style={{ maxWidth: 240 }}>
-              <label htmlFor="agency-goal">Meta de faturamento (R$)</label>
-              <input
-                id="agency-goal"
-                className="input"
-                name="amount"
-                inputMode="decimal"
-                placeholder="3.500.000"
-                defaultValue={data.agencyGoal ?? ""}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary">
-              Salvar meta
-            </button>
-            <p className="metric-hint" style={{ marginLeft: "auto", maxWidth: 320 }}>
-              Deixe em branco e salve para remover a meta do mês. Para outro mês,
-              troque o período no seletor do topo.
-            </p>
-          </form>
-        </div>
-      </div>
-
-      <div className="section">
-        <div className="glass card">
-          <SectionHead
-            title="Metas por vendedor"
-            sub={
-              data.sellersGoalTotal > 0
-                ? `soma das individuais: ${fmtMoney(data.sellersGoalTotal)}`
-                : "nenhuma meta individual definida"
-            }
-            flush
-          />
-          <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Vendedor</th>
-                  <th className="r">Realizado</th>
-                  <th className="r">Vendas</th>
-                  <th style={{ width: 190 }}>Progresso</th>
-                  <th style={{ width: 230 }}>Meta (R$)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.sellers.map((s) => {
-                  const pct = s.amount && s.amount > 0 ? (s.revenue / s.amount) * 100 : null;
-                  return (
-                    <tr key={s.sellerId}>
-                      <td>
-                        {s.name}
-                        {s.active === false && (
-                          <span className="badge gray" style={{ marginLeft: 8 }}>
-                            inativo
-                          </span>
-                        )}
-                      </td>
-                      <td className="r private">{fmtMoney(s.revenue)}</td>
-                      <td className="r">{fmtInt(s.salesCount)}</td>
-                      <td>
-                        <GoalBar pct={pct} />
-                      </td>
-                      <td>
-                        <form
-                          action={saveGoal}
-                          style={{ display: "flex", gap: 8, alignItems: "center" }}
-                        >
-                          <input type="hidden" name="month" value={data.month} />
-                          <input type="hidden" name="sellerId" value={s.sellerId} />
-                          <input
-                            className="input"
-                            name="amount"
-                            inputMode="decimal"
-                            placeholder="sem meta"
-                            defaultValue={s.amount ?? ""}
-                            aria-label={`Meta de ${s.name}`}
-                            style={{ maxWidth: 130 }}
-                          />
-                          <button type="submit" className="btn btn-ghost btn-sm">
-                            Salvar
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <GoalsGrid data={data} />
       </div>
 
       <div className="note-box blue">
@@ -217,11 +140,12 @@ export default async function MetasPage({
           <path d="M12 16v-4M12 8h.01" />
         </svg>
         <div className="nt">
-          A meta é <b>configuração da plataforma</b> — o Monde não tem esse
-          conceito, então ela vive aqui e vale por mês. O <b>Dashboard Geral</b>{" "}
-          lê esta meta para desenhar a linha de meta, a necessidade diária e a
-          projeção de fechamento. O realizado de cada vendedor vem das vendas do
-          ERP, cruzado pelo nome.
+          <b>O Monde não tem meta como dado.</b> Ele guarda o valor apenas dentro
+          da frase do plano de comissão (&ldquo;meta do mês: R$ 650.000,00&rdquo;), e só
+          quando o mês fecha — em agosto, por exemplo, ainda não existe nenhuma.
+          Por isso a meta vive aqui. O número abaixo de cada célula é o{" "}
+          <b>realizado do vendedor naquele mês</b>, vindo das vendas do ERP, para
+          a meta ser digitada olhando o que já aconteceu.
         </div>
       </div>
     </>

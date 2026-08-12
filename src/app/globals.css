@@ -730,6 +730,56 @@ body.tv-mode .tv-chart { height: auto; flex: 1; min-height: 0; }
 body.tv-mode .tv-stats { grid-template-columns: 1.4fr 1fr 1fr; }
 
 /* ============================================================================
+   Planilha de metas — vendedores nas linhas, meses nas colunas
+   ============================================================================ */
+.year-nav { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.year-nav .btn { min-width: 30px; padding: 5px 9px; font-size: 15px; line-height: 1; }
+
+.grid-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* 14 colunas não cabem em 1180px: a planilha rola na horizontal, e a coluna
+   do nome fica fixa para não se perder a referência da linha. */
+.sheet-wrap { overflow-x: auto; }
+.sheet { border-collapse: separate; border-spacing: 0; }
+.sheet th, .sheet td { padding: 5px 6px; white-space: nowrap; }
+.sheet th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+.sheet th.r, .sheet td.r { text-align: right; }
+
+.sheet .sheet-name {
+  position: sticky; left: 0; z-index: 1; text-align: left;
+  background: var(--glass-strong); backdrop-filter: blur(14px);
+  min-width: 190px; font-size: 13px;
+  box-shadow: 1px 0 0 rgba(16, 24, 40, 0.07);
+}
+.sheet .sheet-name .badge { margin-left: 8px; }
+.sheet-hint { display: block; font-size: 10.5px; color: var(--text-3); font-weight: 400; margin-top: 1px; }
+
+.sheet-input {
+  width: 86px; padding: 6px 8px; border-radius: var(--radius-sm);
+  border: 1px solid rgba(16, 24, 40, 0.12); background: #fff;
+  font-family: inherit; font-size: 12.5px; color: var(--text-1);
+  text-align: right; font-variant-numeric: tabular-nums;
+}
+.sheet-input:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(30, 86, 184, 0.12); }
+.sheet-input::placeholder { color: var(--text-3); }
+
+/* Realizado do mês, abaixo da meta: laranja abaixo de 100%, verde ao bater. */
+.sheet-pct {
+  display: block; text-align: right; font-size: 10.5px; margin-top: 2px;
+  color: var(--accent-orange-dark); font-variant-numeric: tabular-nums;
+}
+.sheet-pct.ok { color: var(--accent-green-dark); }
+.sheet-pct.none { color: var(--text-3); }
+
+.sheet-now { background: rgba(30, 86, 184, 0.05); }
+th.sheet-now { color: var(--accent-blue-dark); font-weight: 700; }
+.sheet-total { font-weight: 600; font-size: 12.5px; }
+
+.sheet tfoot td { border-top: 1px solid rgba(16, 24, 40, 0.1); padding-top: 10px; }
+.sheet-sum td { font-weight: 600; font-size: 12.5px; color: var(--text-1); }
+.sheet-sum .sheet-name { font-weight: 600; }
+
+/* ============================================================================
    Responsivo
    ============================================================================ */
 /* Janela reduzida (meia tela, notebook pequeno): antes de mexer na moldura,
