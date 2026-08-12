@@ -17,12 +17,70 @@ function toInput(n: number | null): string {
   return n === null ? "" : fmtBR.format(n);
 }
 
-/** Lê o que a pessoa digitou, aceitando ponto de milhar e vírgula decimal. */
+/** Só dígitos, já agrupados de três em três. Meta é valor cheio, sem centavos. */
+function formatar(raw: string): string {
+  const digitos = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 12);
+  return digitos ? fmtBR.format(Number(digitos)) : "";
+}
+
+/** O texto do campo de volta a número. */
 function parse(raw: string): number | null {
-  const t = raw.trim();
-  if (!t) return null;
-  const n = Number(t.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
-  return Number.isNaN(n) ? null : n;
+  const digitos = raw.replace(/\D/g, "");
+  return digitos ? Number(digitos) : null;
+}
+
+/**
+ * Uma célula editável, igual na linha da agência e nas dos vendedores.
+ *
+ * Aceita só dígitos e reagrupa os milhares a cada tecla. Como o texto cresce ao
+ * ganhar pontos, o cursor é recolocado depois da mesma quantidade de dígitos
+ * que havia antes dele — senão, editar o meio do número o jogaria para o fim.
+ *
+ * Fica no escopo do módulo de propósito: definida dentro do componente pai, a
+ * cada render ela seria um tipo novo, o React remontaria o <input> e o campo
+ * perderia o foco a cada tecla.
+ */
+function Celula({
+  name,
+  value,
+  onValor,
+  destaque,
+  rotulo,
+}: {
+  name: string;
+  value: string;
+  onValor: (texto: string) => void;
+  destaque: boolean;
+  rotulo: string;
+}) {
+  return (
+    <td className={destaque ? "sheet-now" : ""}>
+      <input
+        className="sheet-input"
+        name={name}
+        value={value}
+        onChange={(e) => {
+          const el = e.target;
+          const antes = el.value.slice(0, el.selectionStart ?? 0).replace(/\D/g, "").length;
+          const texto = formatar(el.value);
+          onValor(texto);
+          requestAnimationFrame(() => {
+            let pos = 0;
+            let vistos = 0;
+            while (pos < texto.length && vistos < antes) {
+              if (/\d/.test(texto[pos])) vistos++;
+              pos++;
+            }
+            el.setSelectionRange(pos, pos);
+          });
+        }}
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="—"
+        aria-label={rotulo}
+      />
+    </td>
+  );
 }
 
 /**
@@ -92,29 +150,23 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
   const totalLinha = (who: string) =>
     data.months.reduce((s, mes) => s + (parse(vals[`${who}:${mes}`] ?? "") ?? 0), 0);
 
-  /** Soma das metas de vendedor num mês — é o que vale quando a agência está vazia. */
+  /** Soma das metas de vendedor num mês — conferência, não define nada. */
   const somaMes = (i: number) =>
     data.sellers.reduce(
       (s, v) => s + (parse(vals[`${v.sellerId}:${data.months[i]}`] ?? "") ?? 0),
       0,
     );
 
-  /** Uma célula editável, igual na linha da agência e nas dos vendedores. */
-  const Celula = ({ who, i, rotulo }: { who: string; i: number; rotulo: string }) => {
+  /** Monta as props de uma célula a partir da linha e do mês. */
+  const celula = (who: string, i: number, rotulo: string) => {
     const k = `${who}:${data.months[i]}`;
-    return (
-      <td className={i === data.currentMonth ? "sheet-now" : ""}>
-        <input
-          className="sheet-input"
-          name={`c:${who}:${data.months[i]}`}
-          value={vals[k] ?? ""}
-          onChange={(e) => set(k, e.target.value)}
-          inputMode="decimal"
-          placeholder={who === "agency" ? "soma" : "—"}
-          aria-label={`${rotulo} em ${MES_CURTO[i]}/${data.year}`}
-        />
-      </td>
-    );
+    return {
+      name: `c:${who}:${data.months[i]}`,
+      value: vals[k] ?? "",
+      onValor: (texto: string) => set(k, texto),
+      destaque: i === data.currentMonth,
+      rotulo: `${rotulo} em ${MES_CURTO[i]}/${data.year}`,
+    };
   };
 
   return (
@@ -126,7 +178,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
           <div>
             <div className="section-title">Metas Mensais · {data.year}</div>
             <div className="section-sub">
-              vendedores nas linhas, meses nas colunas — preencha e salve de uma vez
+              meta de <b>faturamento</b> em reais — não é volume de vendas
             </div>
           </div>
           <SaveButton dirty={dirty} />
@@ -151,10 +203,10 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
               <tr className="sheet-agency">
                 <td className="sheet-name">
                   Meta da agência
-                  <span className="sheet-hint">vazio = soma dos vendedores</span>
+                  <span className="sheet-hint">é a meta que o Dashboard Geral usa</span>
                 </td>
                 {data.months.map((_, i) => (
-                  <Celula key={i} who="agency" i={i} rotulo="Meta da agência" />
+                  <Celula key={i} {...celula("agency", i, "Meta da agência")} />
                 ))}
                 <td className="r sheet-total private">{fmtBR.format(totalLinha("agency"))}</td>
                 <td>
@@ -176,7 +228,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
                     {s.active === false && <span className="badge gray">inativo</span>}
                   </td>
                   {data.months.map((_, i) => (
-                    <Celula key={i} who={s.sellerId} i={i} rotulo={`Meta de ${s.name}`} />
+                    <Celula key={i} {...celula(s.sellerId, i, `Meta de ${s.name}`)} />
                   ))}
                   <td className="r sheet-total private">{fmtBR.format(totalLinha(s.sellerId))}</td>
                   <td>
@@ -194,7 +246,10 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
             </tbody>
             <tfoot>
               <tr className="sheet-sum">
-                <td className="sheet-name">Soma dos vendedores</td>
+                <td className="sheet-name">
+                  Soma dos vendedores
+                  <span className="sheet-hint">conferência — não define a meta da agência</span>
+                </td>
                 {data.months.map((mes, i) => (
                   <td key={mes} className={`r${i === data.currentMonth ? " sheet-now" : ""}`}>
                     <span className="private">{fmtBR.format(somaMes(i))}</span>

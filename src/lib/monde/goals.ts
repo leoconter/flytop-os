@@ -13,32 +13,24 @@ export function monthKey(iso: string): string {
 }
 
 /**
- * Meta da agência do mês.
+ * Meta de faturamento da agência no mês, como foi cadastrada.
  *
- * Quando não há meta da agência cadastrada, vale a soma das metas individuais
- * — é assim que a FlyTop trabalha (o plano de comissão do Monde define a meta
- * por vendedor, e a da agência é o total). Sem isso, preencher a planilha de
- * vendedores deixaria o Dashboard Geral sem meta, o que ninguém espera.
+ * Não é a soma das metas individuais: a da agência é um número próprio, e a
+ * soma dos vendedores aparece na planilha só como conferência. Somar por conta
+ * própria faria a plataforma inventar uma meta que ninguém definiu.
  */
 export async function getAgencyGoal(month: string): Promise<number | null> {
   const sb = db();
   if (!sb) return null;
 
-  const key = monthKey(month);
   const { data } = await sb
     .from("sales_goals")
-    .select("scope, amount")
-    .eq("month", key);
+    .select("amount")
+    .eq("scope", "agency")
+    .eq("month", monthKey(month))
+    .maybeSingle();
 
-  if (!data?.length) return null;
-
-  const agency = data.find((g) => g.scope === "agency");
-  if (agency) return Number(agency.amount);
-
-  const soma = data
-    .filter((g) => g.scope === "seller")
-    .reduce((s, g) => s + Number(g.amount ?? 0), 0);
-  return soma > 0 ? soma : null;
+  return data ? Number(data.amount) : null;
 }
 
 export interface SellerYear {
@@ -54,7 +46,7 @@ export interface GoalsYear {
   /** Chaves "AAAA-MM-01", janeiro a dezembro. */
   months: string[];
   sellers: SellerYear[];
-  /** Meta da agência explicitamente cadastrada, por mês (null = usar a soma). */
+  /** Meta da agência por mês. Independente das individuais. */
   agency: (number | null)[];
   /** Índice do mês corrente, ou null se o ano não é o corrente. */
   currentMonth: number | null;
