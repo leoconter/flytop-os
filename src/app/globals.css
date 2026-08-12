@@ -595,10 +595,15 @@ button.chip { cursor: pointer; font-family: inherit; }
 .btn-ghost { background: #fff; border-color: rgba(16, 24, 40, 0.12); color: var(--text-1); }
 .btn-ghost:hover { background: #f6f7f9; }
 .btn-block { width: 100%; }
-/* Desabilitado: apagado e inerte, sem trocar de rótulo. */
-.btn:disabled { opacity: 0.42; cursor: default; box-shadow: none; }
+/* Desabilitado: apagado e inerte, sem trocar de rótulo. Um botão aceso que
+   não faz nada promete uma ação que não existe. */
+.btn:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }
 .btn:disabled:hover { transform: none; }
+.btn-primary:disabled,
 .btn-primary:disabled:hover { background: var(--accent-blue); box-shadow: none; }
+.btn-ghost:disabled,
+.btn-ghost:disabled:hover { background: #fff; }
+.btn.danger:disabled:hover { background: #fff; border-color: rgba(16, 24, 40, 0.12); }
 .btn-sm { padding: 7px 13px; font-size: 12.5px; border-radius: var(--radius-sm); }
 
 /* Ações em linha de tabela */
@@ -787,6 +792,35 @@ body.tv-mode .tv-stats { grid-template-columns: 1.4fr 1fr 1fr; }
 }
 .tab:hover { color: var(--text-1); }
 .tab.on { background: #fff; color: var(--text-1); font-weight: 600; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.07); }
+
+/* Formulário dentro de uma linha de tabela.
+   `.select`/`.input` são `width: 100%` por padrão (feitos para formulário em
+   coluna); numa linha isso empurra o botão para baixo e dobra a altura da
+   linha. Aqui eles voltam a ocupar só o que precisam, e a mensagem de
+   resultado é a única coisa que quebra para a linha de baixo. */
+/* Grid de colunas automáticas em vez de flex: cada controle pede a largura de
+   que precisa, então a célula (e a coluna da tabela) crescem em vez de
+   empurrar o botão para a linha de baixo. A mensagem é colocada à mão na
+   segunda linha, fora desse fluxo. */
+.row-form {
+  display: grid; grid-auto-flow: column; grid-auto-columns: max-content;
+  gap: 6px 8px; align-items: center; justify-items: start;
+}
+.row-form .select,
+.row-form .input { width: auto; min-width: 0; padding: 8px 11px; font-size: 13px; }
+.row-form .select { padding-right: 30px; background-position: right 10px center; max-width: 215px; }
+/* Dois seletores um sobre o outro, com o botão ao lado: cabe na coluna sem
+   jogar o Salvar para uma terceira linha. */
+.empilha { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.empilha .btn { width: 100%; justify-content: center; }
+.empilha .select { width: 100%; max-width: 215px; padding: 8px 30px 8px 11px; font-size: 13px;
+  background-position: right 10px center; }
+.row-form > .form-erro,
+.row-form > .form-ok { grid-row: 2; grid-column: 1 / -1; margin-top: 2px; }
+
+/* Tabelas com muitos controles preferem rolar a espremer as colunas. */
+.table-wrap > table.wide { min-width: 1000px; }
+.table-wrap > table.wider { min-width: 1180px; }
 
 .form-erro {
   font-size: 12.5px; color: var(--accent-red-dark); background: rgba(179, 54, 44, 0.09);

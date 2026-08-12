@@ -1,4 +1,5 @@
 import { Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
+import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import type { Metric } from "@/lib/dashboard-data";
 import { fmtInt } from "@/lib/meta/instagram";
 import {
@@ -122,7 +123,7 @@ export default async function ConfiguracoesPage() {
             flush
           />
           <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table>
+            <table className="wide">
               <thead>
                 <tr>
                   <th>Companhia</th>
@@ -166,9 +167,11 @@ export default async function ConfiguracoesPage() {
                     </td>
                     <td>
                       {u.fareClass && u.airlineCode ? (
-                        <form
+                        <FormAcao
+                          key={`${u.airlineCode}|${u.fareClass}|${u.cabin ?? ""}|${u.source}`}
                           action={saveFareRule}
-                          style={{ display: "flex", gap: 8, alignItems: "center" }}
+                          exigeMudanca
+                          className="row-form"
                         >
                           <input type="hidden" name="airlineCode" value={u.airlineCode} />
                           <input type="hidden" name="fareClass" value={u.fareClass} />
@@ -177,10 +180,8 @@ export default async function ConfiguracoesPage() {
                             allowEmpty={u.source === "especifica"}
                             label={`Cabine de ${u.airlineCode} ${u.fareClass}`}
                           />
-                          <button type="submit" className="btn btn-ghost btn-sm">
-                            Salvar
-                          </button>
-                        </form>
+                          <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
+                        </FormAcao>
                       ) : (
                         <span className="muted">—</span>
                       )}
@@ -203,7 +204,7 @@ export default async function ConfiguracoesPage() {
               flush
             />
             <div className="table-wrap" style={{ marginTop: 8 }}>
-              <table>
+              <table className="wide">
                 <thead>
                   <tr>
                     <th>Companhia</th>
@@ -217,17 +218,17 @@ export default async function ConfiguracoesPage() {
                       <td className="mono-cell">{r.airlineCode}</td>
                       <td className="mono-cell">{r.fareClass}</td>
                       <td>
-                        <form
+                        <FormAcao
+                          key={`${r.id}|${r.cabin}`}
                           action={saveFareRule}
-                          style={{ display: "flex", gap: 8, alignItems: "center" }}
+                          exigeMudanca
+                          className="row-form"
                         >
                           <input type="hidden" name="airlineCode" value={r.airlineCode ?? ""} />
                           <input type="hidden" name="fareClass" value={r.fareClass} />
                           <CabinSelect value={r.cabin} allowEmpty />
-                          <button type="submit" className="btn btn-ghost btn-sm">
-                            Salvar
-                          </button>
-                        </form>
+                          <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
+                        </FormAcao>
                       </td>
                     </tr>
                   ))}
@@ -261,9 +262,11 @@ export default async function ConfiguracoesPage() {
                   <tr key={r.id}>
                     <td className="mono-cell">{r.fareClass}</td>
                     <td>
-                      <form
+                      <FormAcao
+                        key={`${r.id}|${r.cabin}|${r.confirmed}`}
                         action={saveFareRule}
-                        style={{ display: "flex", gap: 8, alignItems: "center" }}
+                        exigeMudanca
+                        className="row-form"
                       >
                         <input type="hidden" name="airlineCode" value="" />
                         <input type="hidden" name="fareClass" value={r.fareClass} />
@@ -274,10 +277,8 @@ export default async function ConfiguracoesPage() {
                           <input type="checkbox" name="confirmed" defaultChecked={r.confirmed} />
                           conferida
                         </label>
-                        <button type="submit" className="btn btn-ghost btn-sm">
-                          Salvar
-                        </button>
-                      </form>
+                        <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
+                      </FormAcao>
                     </td>
                     <td>
                       {r.confirmed ? (
@@ -307,7 +308,7 @@ export default async function ConfiguracoesPage() {
       <div className="section">
         <div className="glass card">
           <SectionHead title="Nova regra" sub="para uma companhia específica" flush />
-          <form action={saveFareRule} className="form-grid" style={{ marginTop: 14 }}>
+          <FormAcao action={saveFareRule} exigeMudanca limparAoConcluir className="form-grid" style={{ marginTop: 14 }}>
             <div className="field">
               <label htmlFor="nova-cia">Companhia (código IATA)</label>
               <input
@@ -334,11 +335,9 @@ export default async function ConfiguracoesPage() {
               <CabinSelect label="Cabine da nova regra" />
             </div>
             <div className="field" style={{ justifyContent: "flex-end" }}>
-              <button type="submit" className="btn btn-primary">
-                Adicionar regra
-              </button>
+              <BotaoAcao enviando="Adicionando…">Adicionar regra</BotaoAcao>
             </div>
-          </form>
+          </FormAcao>
         </div>
       </div>
 

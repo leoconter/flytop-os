@@ -62,14 +62,13 @@ export default async function UsuariosPage() {
         <div className="glass card">
           <SectionHead title="Contas" sub={`${users.length} cadastradas`} flush />
           <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table>
+            <table className="wide">
               <thead>
                 <tr>
                   <th>Pessoa</th>
                   <th>E-mail</th>
-                  <th>Equipe</th>
-                  <th style={{ width: 430 }}>Papel e vínculo com o Monde</th>
-                  <th style={{ width: 250 }}>Nova senha</th>
+                  <th style={{ width: 300 }}>Papel e vínculo com o Monde</th>
+                  <th style={{ width: 215 }}>Nova senha</th>
                   <th />
                 </tr>
               </thead>
@@ -86,28 +85,36 @@ export default async function UsuariosPage() {
                       )}
                     </td>
                     <td className="mono-cell">{u.email}</td>
-                    <td>{u.teamName ?? <span className="muted">—</span>}</td>
                     <td>
+                      {/* A chave carrega o valor gravado: quando ele muda, o
+                          formulário remonta e os campos passam a mostrar o que
+                          está no banco. Sem isso o <select> volta sozinho ao
+                          valor anterior depois de salvar, e parece que a
+                          gravação falhou. */}
                       <FormAcao
+                        key={`${u.userId}|${u.role}|${u.sellerId ?? ""}`}
                         action={salvarVinculo}
-                        style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}
+                        exigeMudanca
+                        className="row-form"
                       >
                         <input type="hidden" name="userId" value={u.userId} />
-                        <select className="select" name="role" defaultValue={u.role} style={{ maxWidth: 150 }}>
-                          <option value="vendedor">Vendedor</option>
-                          <option value="admin">Administrador</option>
-                        </select>
-                        <SellerSelect
-                          sellers={sellers}
-                          value={u.sellerId}
-                          permitirTomado={u.sellerId}
-                          label={`Vendedor de ${u.fullName}`}
-                        />
+                        <div className="empilha">
+                          <select className="select" name="role" defaultValue={u.role}>
+                            <option value="vendedor">Vendedor</option>
+                            <option value="admin">Administrador</option>
+                          </select>
+                          <SellerSelect
+                            sellers={sellers}
+                            value={u.sellerId}
+                            permitirTomado={u.sellerId}
+                            label={`Vendedor de ${u.fullName}`}
+                          />
+                        </div>
                         <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
                       </FormAcao>
                     </td>
                     <td>
-                      <FormAcao action={trocarSenha} limparAoConcluir style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <FormAcao action={trocarSenha} exigeMudanca limparAoConcluir className="row-form">
                         <input type="hidden" name="userId" value={u.userId} />
                         <input
                           className="input"
@@ -115,16 +122,16 @@ export default async function UsuariosPage() {
                           type="password"
                           minLength={8}
                           autoComplete="new-password"
-                          placeholder="mín. 8 caracteres"
+                          placeholder="nova senha"
                           aria-label={`Nova senha de ${u.fullName}`}
-                          style={{ maxWidth: 150 }}
+                          style={{ width: 132 }}
                           required
                         />
                         <BotaoAcao className="btn btn-ghost btn-sm">Trocar</BotaoAcao>
                       </FormAcao>
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 6 }}>
+                      <div className="empilha">
                         <FormAcao action={alternarAtivo}>
                           <input type="hidden" name="userId" value={u.userId} />
                           <input type="hidden" name="ativar" value={u.active ? "0" : "1"} />

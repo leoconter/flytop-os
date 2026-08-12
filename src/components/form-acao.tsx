@@ -1,6 +1,15 @@
 "use client";
 
-import { useActionState, useEffect, useRef, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useFormStatus } from "react-dom";
 
 /** Resultado de uma Server Action de formulário. */
@@ -9,13 +18,25 @@ export interface AcaoState {
   ok?: string;
 }
 
+/** O botão precisa saber se há algo para gravar; o contexto evita passar prop. */
+const FormCtx = createContext<{ podeEnviar: boolean }>({ podeEnviar: true });
+
+/** Estado do formulário como texto, para comparar com o de quando abriu. */
+function assinatura(form: HTMLFormElement | null): string {
+  if (!form) return "";
+  return [...new FormData(form)]
+    .map(([k, v]) => `${k}=${typeof v === "string" ? v : ""}`)
+    .join("&");
+}
+
 /**
  * Formulário com resposta na própria tela.
  *
- * Existe porque `throw` numa Server Action derruba a página inteira: o
- * navegador troca tudo por "A server error occurred" e a pessoa precisa
- * recarregar. Nome de equipe repetido, senha curta ou vendedor já vinculado
- * são erros previsíveis — têm que virar recado, não tela de erro.
+ * Existe por dois motivos. Primeiro: `throw` numa Server Action derruba a
+ * página inteira — nome repetido ou senha curta são erros de uso normal e
+ * precisam virar recado, não tela de erro. Segundo: um botão "Salvar" acesso
+ * quando não há nada a salvar promete uma ação que não existe; com
+ * `exigeMudanca` ele só acende depois que algo muda de verdade.
  */
 export function FormAcao({
   action,
@@ -23,6 +44,7 @@ export function FormAcao({
   className,
   style,
   limparAoConcluir,
+  exigeMudanca,
 }: {
   action: (prev: AcaoState, fd: FormData) => Promise<AcaoState>;
   children: ReactNode;
@@ -30,43 +52,68 @@ export function FormAcao({
   style?: React.CSSProperties;
   /** Esvazia os campos depois de gravar — útil em formulário de cadastro. */
   limparAoConcluir?: boolean;
+  /** Mantém o botão apagado enquanto nada mudou. */
+  exigeMudanca?: boolean;
 }) {
   const [state, formAction] = useActionState(action, {});
   const ref = useRef<HTMLFormElement>(null);
-  const ultimoOk = useRef<string | undefined>(undefined);
+  const inicial = useRef<string>("");
+  const [mudou, setMudou] = useState(false);
 
+  const fotografar = useCallback(() => {
+    inicial.current = assinatura(ref.current);
+    setMudou(false);
+  }, []);
+
+  // Ponto de partida: o que estava na tela quando ela abriu.
+  useEffect(fotografar, [fotografar]);
+
+  // Depois de gravar, o que está na tela virou o novo ponto de partida — o
+  // botão tem que apagar de novo em vez de seguir convidando a salvar.
   useEffect(() => {
-    if (limparAoConcluir && state.ok && state.ok !== ultimoOk.current) {
-      ultimoOk.current = state.ok;
-      ref.current?.reset();
-    }
-  }, [state.ok, limparAoConcluir]);
+    if (!state.ok) return;
+    if (limparAoConcluir) ref.current?.reset();
+    fotografar();
+  }, [state, limparAoConcluir, fotografar]);
+
+  const conferir = () => setMudou(assinatura(ref.current) !== inicial.current);
 
   return (
-    <form ref={ref} action={formAction} className={className} style={style}>
-      {children}
-      {state.erro && (
-        <p className="form-erro" role="alert">
-          {state.erro}
-        </p>
-      )}
-      {state.ok && (
-        <p className="form-ok" role="status">
-          {state.ok}
-        </p>
-      )}
-    </form>
+    <FormCtx.Provider value={{ podeEnviar: !exigeMudanca || mudou }}>
+      <form
+        ref={ref}
+        action={formAction}
+        className={className}
+        style={style}
+        onInput={exigeMudanca ? conferir : undefined}
+        onChange={exigeMudanca ? conferir : undefined}
+      >
+        {children}
+        {state.erro && (
+          <p className="form-erro" role="alert">
+            {state.erro}
+          </p>
+        )}
+        {state.ok && (
+          <p className="form-ok" role="status">
+            {state.ok}
+          </p>
+        )}
+      </form>
+    </FormCtx.Provider>
   );
 }
 
 /**
- * Botão que se desabilita enquanto envia — é o que impede o clique duplo de
- * virar duas gravações (e, no caso de nome único, um erro de servidor).
+ * Botão de envio que reflete o que pode fazer: apagado enquanto não há
+ * alteração, apagado enquanto envia. Desabilitar durante o envio é também o
+ * que impede o clique duplo virar duas gravações.
  */
 export function BotaoAcao({
   children,
   enviando,
   className = "btn btn-primary",
+  disabled,
   ...rest
 }: {
   children: ReactNode;
@@ -74,8 +121,14 @@ export function BotaoAcao({
   className?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { pending } = useFormStatus();
+  const { podeEnviar } = useContext(FormCtx);
   return (
-    <button type="submit" className={className} disabled={pending} {...rest}>
+    <button
+      type="submit"
+      className={className}
+      disabled={pending || disabled || !podeEnviar}
+      {...rest}
+    >
       {pending ? (enviando ?? "Salvando…") : children}
     </button>
   );

@@ -25,10 +25,15 @@ export function SellerSelect({
       {sellers.map((s) => {
         const tomado = Boolean(s.takenBy) && s.sellerId !== permitirTomado;
         return (
-          <option key={s.sellerId} value={s.sellerId} disabled={tomado}>
+          <option
+            key={s.sellerId}
+            value={s.sellerId}
+            disabled={tomado}
+            title={tomado ? `Já vinculado a ${s.takenBy}` : undefined}
+          >
             {s.name}
             {s.active === false ? " (inativo)" : ""}
-            {tomado ? ` — já vinculado a ${s.takenBy}` : ""}
+            {tomado ? " · em uso" : ""}
           </option>
         );
       })}
@@ -38,7 +43,7 @@ export function SellerSelect({
 
 export function NovoUsuario({ sellers }: { sellers: SellerOption[] }) {
   return (
-    <FormAcao action={criarUsuario} limparAoConcluir className="form-grid" style={{ marginTop: 14 }}>
+    <FormAcao action={criarUsuario} exigeMudanca limparAoConcluir className="form-grid" style={{ marginTop: 14 }}>
       <div className="field">
         <label htmlFor="firstName">Nome</label>
         <input id="firstName" className="input" name="firstName" required />

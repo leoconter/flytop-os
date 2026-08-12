@@ -51,7 +51,7 @@ export default async function EquipesPage() {
               Crie uma equipe abaixo para começar a distribuir os vendedores.
             </p>
           ) : (
-            <FormAcao action={salvarIntegrantes}>
+            <FormAcao key={todos.map((m) => `${m.sellerId}:${m.teamId}`).join(",")} action={salvarIntegrantes} exigeMudanca>
               <div className="table-wrap" style={{ marginTop: 8 }}>
                 <table>
                   <thead>
@@ -114,14 +114,14 @@ export default async function EquipesPage() {
                   {data.teams.map((t) => (
                     <tr key={t.id}>
                       <td>
-                        <FormAcao action={renomearEquipe} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <FormAcao key={`${t.id}|${t.name}`} action={renomearEquipe} exigeMudanca className="row-form">
                           <input type="hidden" name="teamId" value={t.id} />
                           <input
                             className="input"
                             name="name"
                             defaultValue={t.name}
                             aria-label={`Nome da equipe ${t.name}`}
-                            style={{ maxWidth: 220 }}
+                            style={{ width: 210 }}
                           />
                           <BotaoAcao className="btn btn-ghost btn-sm">Salvar</BotaoAcao>
                         </FormAcao>
@@ -153,6 +153,7 @@ export default async function EquipesPage() {
           <SectionHead title="Nova equipe" sub="ex.: SP, RJ, Corporativo" flush />
           <FormAcao
             action={criarEquipe}
+            exigeMudanca
             limparAoConcluir
             style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap", alignItems: "center" }}
           >
