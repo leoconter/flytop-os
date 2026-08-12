@@ -218,7 +218,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
                 {data.months.map((_, i) => (
                   <Celula key={i} {...celula("agency", i, "Meta da agência")} />
                 ))}
-                <td className="r sheet-total private">{fmtBR.format(totalLinha("agency"))}</td>
+                <td className="r sheet-total">{fmtBR.format(totalLinha("agency"))}</td>
                 <td>
                   <button
                     type="button"
@@ -246,7 +246,7 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
                   {data.months.map((_, i) => (
                     <Celula key={i} {...celula(s.sellerId, i, `Meta de ${s.name}`)} />
                   ))}
-                  <td className="r sheet-total private">{fmtBR.format(totalLinha(s.sellerId))}</td>
+                  <td className="r sheet-total">{fmtBR.format(totalLinha(s.sellerId))}</td>
                   <td>
                     <button
                       type="button"
@@ -265,10 +265,10 @@ export function GoalsGrid({ data }: { data: GoalsYear }) {
                 <td className="sheet-name">Soma dos vendedores</td>
                 {data.months.map((mes, i) => (
                   <td key={mes} className={`r${i === data.currentMonth ? " sheet-now" : ""}`}>
-                    <span className="private">{fmtBR.format(somaMes(i))}</span>
+                    {fmtBR.format(somaMes(i))}
                   </td>
                 ))}
-                <td className="r sheet-total private">
+                <td className="r sheet-total">
                   {fmtBR.format(data.months.reduce((s, _, i) => s + somaMes(i), 0))}
                 </td>
                 <td />

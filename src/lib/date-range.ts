@@ -33,16 +33,18 @@ export function periodDefaultFor(pathname: string): PeriodDefault {
   return POR_MES.includes(pathname) ? "mes" : "30d";
 }
 
-/** Telas que ignoram o período — nelas o seletor não aparece. */
-const SEM_PERIODO = ["/metas"];
+/** Telas de cadastro: configuram a plataforma, não exibem resultado. */
+const CADASTRO = ["/metas", "/configuracoes"];
 
 /**
- * O seletor do cabeçalho só faz sentido onde a tela lê o período. Metas é
- * anual e tem navegação própria: um calendário ali seria um controle que não
- * muda nada.
+ * Telas de cadastro não usam os controles de dados do cabeçalho.
+ *
+ * Nem o período — Metas é anual e tem navegação própria, Configurações ignora
+ * data — nem o "ocultar valores": não há resultado financeiro para esconder,
+ * e as metas ficam em campos de digitação, que o borrão não alcança.
  */
-export function usesPeriod(pathname: string): boolean {
-  return !SEM_PERIODO.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+export function telaDeCadastro(pathname: string): boolean {
+  return CADASTRO.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
