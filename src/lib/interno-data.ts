@@ -1,5 +1,5 @@
 /**
- * Dados ilustrativos do Dashboard Interno (visão dos sócios).
+ * Dados ilustrativos do Controle Interno (visão dos sócios).
  * Portado do preview da Fase 1.
  */
 import type { ListItem, Metric } from "./dashboard-data";

@@ -25,7 +25,7 @@ export const navItems: NavItem[] = [
     label: "Dashboard Geral",
     title: "Dashboard Geral",
     href: "/",
-    group: "Dashboards",
+    group: "Controle",
     icon: (
       <svg viewBox="0 0 24 24" {...sw}>
         <rect x="2" y="3" width="20" height="14" rx="2" />
@@ -35,27 +35,14 @@ export const navItems: NavItem[] = [
   },
   {
     key: "interno",
-    label: "Dashboard Interno",
-    title: "Dashboard Interno",
+    label: "Controle Interno",
+    title: "Controle Interno",
     href: "/interno",
-    group: "Dashboards",
+    group: "Controle",
     icon: (
       <svg viewBox="0 0 24 24" {...sw}>
         <path d="M3 3v18h18" />
         <path d="M7 14l4-4 3 3 5-6" />
-      </svg>
-    ),
-  },
-  {
-    key: "vendedor",
-    label: "Tela do Vendedor",
-    title: "Tela do Vendedor",
-    href: "/vendedor",
-    group: "Dashboards",
-    icon: (
-      <svg viewBox="0 0 24 24" {...sw}>
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
       </svg>
     ),
   },
@@ -74,10 +61,10 @@ export const navItems: NavItem[] = [
   },
   {
     key: "terrestres",
-    label: "Terrestres",
+    label: "Terrestre",
     title: "Produtos Terrestres",
     href: "/terrestres",
-    group: "Operação",
+    group: "Controle",
     icon: (
       <svg viewBox="0 0 24 24" {...sw}>
         <path d="M3 21h18M5 21V7l7-4 7 4v14" />
@@ -100,29 +87,29 @@ export const navItems: NavItem[] = [
     ),
   },
   {
+    key: "vendedor",
+    label: "Tela do Vendedor",
+    title: "Tela do Vendedor",
+    href: "/vendedor",
+    group: "Operação",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
+      </svg>
+    ),
+  },
+  {
     key: "comunidade",
     label: "Comunidade",
     title: "Comunidade",
     href: "/comunidade",
-    group: "Operação",
+    group: "Controle",
     icon: (
       <svg viewBox="0 0 24 24" {...sw}>
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11" />
-      </svg>
-    ),
-  },
-  {
-    key: "jornada",
-    label: "Jornada de Compra",
-    title: "Jornada de Compra",
-    href: "/jornada",
-    group: "Operação",
-    icon: (
-      <svg viewBox="0 0 24 24" {...sw}>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3.5 2" />
       </svg>
     ),
   },
@@ -198,11 +185,20 @@ export const navItems: NavItem[] = [
 ];
 
 /** Ordem dos grupos na sidebar. */
-export const navGroups = ["Dashboards", "Operação", "Marketing", "Administração"];
+export const navGroups = ["Controle", "Operação", "Marketing", "Administração"];
+
+/**
+ * Telas que existem sem estar no menu: chega-se a elas de dentro da tela mãe.
+ * Ficam aqui só para o breadcrumb ter o nome certo.
+ */
+const SUBTELAS: Record<string, string> = {
+  "/interno/jornada": "Jornada de Compra",
+};
 
 export function titleForPath(pathname: string): string {
   const exact = navItems.find((n) => n.href === pathname);
   if (exact) return exact.title;
+  if (SUBTELAS[pathname]) return SUBTELAS[pathname];
   // sub-rota (ex.: /alertas/dados) → herda o título do item pai
   const parent = navItems
     .filter((n) => n.href !== "/" && pathname.startsWith(n.href + "/"))

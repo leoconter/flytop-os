@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { JourneyDistributionChart } from "@/components/charts/journey-distribution";
 import { JourneyMonthlyChart } from "@/components/charts/journey-monthly";
 import { Badge, Metrics, PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
@@ -13,14 +14,24 @@ export default function JornadaPage() {
   return (
     <>
       <PageHead
-        eyebrow="Inteligência · comunidade → venda"
+        eyebrow="Controle Interno · comunidade → venda"
         title="Jornada de Compra"
         sub={
           <>
             Tempo entre <b>entrar na comunidade</b> e <b>realizar a compra</b>
           </>
         }
-        right={<Pill tone="blue">maio 2026</Pill>}
+        right={
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Pill tone="blue">maio 2026</Pill>
+            <Link href="/interno" className="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Voltar para o Controle Interno
+            </Link>
+          </div>
+        }
       />
 
       <Metrics metrics={jornadaMetrics} />

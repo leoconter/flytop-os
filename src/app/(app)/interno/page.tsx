@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ConsolidatorDoughnut } from "@/components/charts/consolidator-doughnut";
 import { RevenueByMonthChart } from "@/components/charts/revenue-by-month";
 import {
@@ -26,7 +27,7 @@ import {
   salesByRoute,
 } from "@/lib/interno-data";
 
-export const metadata = { title: "FlyTop OS · Dashboard Interno" };
+export const metadata = { title: "FlyTop OS · Controle Interno" };
 
 /** Cache das leituras do banco: 1h, alinhado à carga diária do Monde. */
 export const revalidate = 3600;
@@ -99,18 +100,27 @@ export default async function InternoPage({
   return (
     <>
       <PageHead
-        title="Dashboard Interno"
+        title="Controle Interno"
         sub={
           live
             ? `Indicadores analíticos · ${periodLabel}`
             : "Indicadores analíticos · dados ilustrativos"
         }
         right={
-          live ? (
-            <Pill tone="blue">Acesso restrito</Pill>
-          ) : (
-            <Pill tone="blue">Aguardando conexão Monde</Pill>
-          )
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* A Jornada de Compra saiu do menu e passou a viver aqui dentro:
+                é a mesma leitura analítica, do outro lado do funil. */}
+            <Link href="/interno/jornada" className="chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3.5 2" />
+              </svg>
+              Jornada de Compra
+            </Link>
+            <Pill tone="blue">
+              {live ? "Acesso restrito" : "Aguardando conexão Monde"}
+            </Pill>
+          </div>
         }
       />
 
