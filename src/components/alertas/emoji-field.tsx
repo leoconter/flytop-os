@@ -198,7 +198,10 @@ function Gatilho({ inserir, alto }: { inserir: (e: string) => void; alto?: boole
   }, [aberto]);
 
   return (
-    <span className={`emoji-caixa${alto ? " alto" : ""}`} ref={caixa}>
+    <span
+      className={`emoji-caixa${alto ? " alto" : ""}${aberto ? " aberta" : ""}`}
+      ref={caixa}
+    >
       <button
         type="button"
         className={`emoji-btn${aberto ? " on" : ""}`}

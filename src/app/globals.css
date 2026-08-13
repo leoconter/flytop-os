@@ -673,6 +673,11 @@ a.chip:hover { background: #f6f7f9; color: var(--text-1); }
 .emoji-caixa { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
 /* Na área de texto o campo é alto: o botão acompanha o topo, não o meio. */
 .emoji-caixa.alto { top: 9px; transform: none; }
+/* O `transform` acima abre um contexto de empilhamento: o z-index do painel
+   vale só dentro dele, e os campos de baixo — que são `relative` e vêm depois
+   no HTML — passavam por cima. Quem precisa subir é a caixa inteira. Só
+   enquanto está aberta, senão o botão ficaria acima do calendário. */
+.emoji-caixa.aberta { z-index: 40; }
 
 .emoji-btn {
   width: 28px; height: 28px; border-radius: var(--radius-sm);
