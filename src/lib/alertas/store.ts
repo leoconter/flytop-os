@@ -232,6 +232,32 @@ function limitesSP(agora = new Date()): { hoje: string; mes: string } {
   return { hoje: dia, mes: dia.slice(0, 7) };
 }
 
+/**
+ * Os enviados dentro do período, pelo dia em São Paulo.
+ *
+ * O recorte é pela data de envio, não pela de cadastro: a pergunta da tela de
+ * dados é "o que saiu para os grupos nesse intervalo".
+ */
+export function enviadosNoPeriodo(
+  alertas: Alerta[],
+  range: { since: string; until: string },
+): Alerta[] {
+  return alertas.filter((a) => {
+    if (!a.enviadoEm) return false;
+    const dia = spDia.format(new Date(a.enviadoEm));
+    return dia >= range.since && dia <= range.until;
+  });
+}
+
+/** Contagem por companhia, destino e cabine de um conjunto já recortado. */
+export function contagens(enviados: Alerta[]) {
+  return {
+    porCompanhia: ranking(enviados, (a) => a.fields.companhia),
+    porDestino: ranking(enviados, (a) => a.fields.destino),
+    porCabine: ranking(enviados, (a) => a.fields.cabine),
+  };
+}
+
 /** Só conta o que foi de fato enviado — o resto ainda é rascunho. */
 function ranking(alertas: Alerta[], campo: (a: Alerta) => string): Contagem[] {
   const mapa = new Map<string, number>();
@@ -261,8 +287,6 @@ export function estatisticas(alertas: Alerta[], agora = new Date()): Estatistica
     enviadosMes: enviados.filter((a) => diaSP(a.enviadoEm!).startsWith(mes)).length,
     naFila: alertas.length - enviados.length,
     total: alertas.length,
-    porCompanhia: ranking(enviados, (a) => a.fields.companhia),
-    porDestino: ranking(enviados, (a) => a.fields.destino),
-    porCabine: ranking(enviados, (a) => a.fields.cabine),
+    ...contagens(enviados),
   };
 }

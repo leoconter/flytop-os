@@ -47,6 +47,21 @@ export function telaDeCadastro(pathname: string): boolean {
   return CADASTRO.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/**
+ * Telas que também não têm período, mas continuam mostrando valores.
+ *
+ * O banco de alertas é fila de trabalho, não recorte de datas: um alerta
+ * cadastrado semana passada e ainda não enviado precisa aparecer. Comparação
+ * exata, não por prefixo — `/alertas/dados` é justamente a tela que usa o
+ * período.
+ */
+const SEM_PERIODO = ["/alertas", "/alertas/novo"];
+
+/** O seletor de período faz sentido nesta rota? */
+export function mostraPeriodo(pathname: string): boolean {
+  return !telaDeCadastro(pathname) && !SEM_PERIODO.includes(pathname);
+}
+
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 const isoFmt = new Intl.DateTimeFormat("en-CA", {
   timeZone: "America/Sao_Paulo",

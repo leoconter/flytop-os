@@ -4,7 +4,12 @@ import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { PrivacyToggle } from "@/components/dashboard/privacy-toggle";
 import { DateRangePicker } from "./date-range-picker";
-import { DEFAULT_LABEL, periodDefaultFor, telaDeCadastro } from "@/lib/date-range";
+import {
+  DEFAULT_LABEL,
+  mostraPeriodo,
+  periodDefaultFor,
+  telaDeCadastro,
+} from "@/lib/date-range";
 import type { UltimaSync } from "@/lib/monde/sync-status";
 import { titleForPath } from "./nav-config";
 
@@ -12,8 +17,10 @@ export function Topbar({ sync }: { sync: UltimaSync | null }) {
   const pathname = usePathname();
   const title = titleForPath(pathname);
   // Cadastro não tem período nem valor a esconder: o cabeçalho fica só com o
-  // selo de sincronização.
+  // selo de sincronização. O período some em mais telas que o "ocultar
+  // valores" — a lista de alertas mostra preço, mas não é um recorte de datas.
   const cadastro = telaDeCadastro(pathname);
+  const comPeriodo = mostraPeriodo(pathname);
 
   return (
     <div className="topbar">
@@ -22,7 +29,7 @@ export function Topbar({ sync }: { sync: UltimaSync | null }) {
       </div>
       <div className="topbar-actions">
         {/* useSearchParams exige Suspense para as rotas estáticas prerenderizarem. */}
-        {!cadastro && (
+        {comPeriodo && (
           <Suspense
             fallback={
               <span className="chip">{DEFAULT_LABEL[periodDefaultFor(pathname)]}</span>

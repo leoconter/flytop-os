@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { Badge, Metrics, PageHead, SectionHead } from "@/components/dashboard/ui";
 import { money, percentOff } from "@/lib/alert-message";
-import { type Contagem, estatisticas, listarAlertas } from "@/lib/alertas/store";
+import {
+  contagens,
+  type Contagem,
+  enviadosNoPeriodo,
+  listarAlertas,
+} from "@/lib/alertas/store";
 import type { Metric } from "@/lib/dashboard-data";
+import { formatRange, PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
 import { fmtInt } from "@/lib/meta/instagram";
 
 export const metadata = {
@@ -33,7 +39,7 @@ function CountList({
       <SectionHead title={title} sub={sub} flush />
       {items.length === 0 ? (
         <p className="metric-hint" style={{ marginTop: 14 }}>
-          Nada enviado ainda.
+          Nada enviado no período.
         </p>
       ) : (
         <div className="list" style={{ marginTop: 14 }}>
@@ -54,24 +60,44 @@ function CountList({
   );
 }
 
-export default async function DadosAlertasPage() {
+export default async function DadosAlertasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [PARAM_FROM]?: string; [PARAM_TO]?: string }>;
+}) {
+  const range = resolveRange(await searchParams);
   const listagem = await listarAlertas();
   const alertas = "alertas" in listagem ? listagem.alertas : [];
-  const st = estatisticas(alertas);
-  const enviados = alertas.filter((a) => a.enviadoEm).slice(0, 10);
-  const topCompanhia = st.porCompanhia[0];
+
+  // A fila é estado de agora, não do período: um alerta parado há um mês
+  // continua parado, escolha-se o intervalo que for.
+  const naFila = alertas.filter((a) => !a.enviadoEm).length;
+  const enviados = enviadosNoPeriodo(alertas, range);
+  const { porCompanhia, porDestino, porCabine } = contagens(enviados);
+
+  const rotulo = formatRange(range);
+  const primeiro = (c: Contagem[]) => c[0];
+  const contagem = (c?: Contagem) =>
+    c ? `${fmtInt(c.count)} ${c.count === 1 ? "alerta" : "alertas"}` : "nada enviado no período";
 
   const metrics: Metric[] = [
-    { label: "Enviados hoje", value: fmtInt(st.enviadosHoje), hint: "marcados como enviados" },
-    { label: "Enviados no mês", value: fmtInt(st.enviadosMes), hint: "no mês corrente" },
-    { label: "Na fila", value: fmtInt(st.naFila), hint: "cadastrados, ainda não enviados" },
+    { label: "Enviados no período", value: fmtInt(enviados.length), hint: rotulo },
     {
       label: "Companhia mais alertada",
-      value: topCompanhia?.name ?? "—",
+      value: primeiro(porCompanhia)?.name ?? "—",
       small: true,
-      hint: topCompanhia
-        ? `${fmtInt(topCompanhia.count)} ${topCompanhia.count === 1 ? "alerta" : "alertas"}`
-        : "nenhum envio registrado",
+      hint: contagem(primeiro(porCompanhia)),
+    },
+    {
+      label: "Destino mais alertado",
+      value: primeiro(porDestino)?.name ?? "—",
+      small: true,
+      hint: contagem(primeiro(porDestino)),
+    },
+    {
+      label: "Na fila",
+      value: fmtInt(naFila),
+      hint: "cadastrados, ainda não enviados",
     },
   ];
 
@@ -80,7 +106,7 @@ export default async function DadosAlertasPage() {
       <PageHead
         eyebrow="Alertas · banco de dados"
         title="Dados de alertas"
-        sub="Contagem do que já foi enviado, por companhia, destino e cabine"
+        sub={`O que foi enviado entre ${rotulo}, por companhia, destino e cabine`}
         right={
           <Link href="/alertas" className="chip">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
@@ -94,19 +120,19 @@ export default async function DadosAlertasPage() {
       <Metrics metrics={metrics} />
 
       <div className="grid-2">
-        <CountList title="Por companhia" sub="alertas enviados" items={st.porCompanhia} />
-        <CountList title="Por destino" sub="alertas enviados" items={st.porDestino} />
+        <CountList title="Por companhia" sub="alertas enviados" items={porCompanhia} />
+        <CountList title="Por destino" sub="alertas enviados" items={porDestino} />
         {/* Antes havia um corte por continente; o cadastro não pergunta o
             continente, então ele seria um palpite a partir do nome do destino. */}
-        <CountList title="Por cabine" sub="alertas enviados" items={st.porCabine} />
+        <CountList title="Por cabine" sub="alertas enviados" items={porCabine} />
       </div>
 
       <div className="section">
         <div className="glass card">
-          <SectionHead title="Últimos alertas enviados" sub="histórico recente" flush />
+          <SectionHead title="Alertas enviados" sub="do mais recente ao mais antigo" flush />
           {enviados.length === 0 ? (
             <p className="metric-hint" style={{ marginTop: 14 }}>
-              Nenhum alerta marcado como enviado até agora.
+              Nenhum alerta marcado como enviado entre {rotulo}.
             </p>
           ) : (
             <div className="table-wrap" style={{ marginTop: 8 }}>
@@ -123,7 +149,7 @@ export default async function DadosAlertasPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {enviados.map((a) => (
+                  {enviados.slice(0, 50).map((a) => (
                     <tr key={a.id}>
                       <td className="muted">{quando.format(new Date(a.enviadoEm!))}</td>
                       <td>
