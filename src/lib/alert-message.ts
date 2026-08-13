@@ -62,19 +62,38 @@ export interface AlertFields {
   voltaDates: string[];
 }
 
-/** Monta o texto do alerta a partir dos campos, seguindo o template do FlyTop. */
+/**
+ * Monta o texto do alerta a partir dos campos, seguindo o template do FlyTop.
+ *
+ * As linhas que dependem de um valor somem quando ele não foi preenchido: um
+ * alerta sem preço "de" não deve sair com "~R$ 0~" riscado, nem "em até 0x sem
+ * juros" — esse texto é copiado e colado no grupo exatamente como está aqui.
+ */
 export function buildMessage(f: AlertFields): string {
+  const de = num(f.de);
+  const por = num(f.por);
+  const parcelas = num(f.xjuros);
+
+  const preco = [
+    de > por ? `~${money(de)}~` : null,
+    `✅ *${money(por)} ida e volta com taxas*${de > por ? ` • ${percentOff(de, por)} OFF` : ""}`,
+    parcelas > 0 ? `\n*Em até ${parcelas}x sem juros*` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const produto = [f.cabine, f.companhia].filter(Boolean).join(" ");
+  const cabecalho = [`🔹 Destino: ${f.destino}`, produto ? `🔹 *${produto}*` : null]
+    .filter(Boolean)
+    .join("\n");
+
   return `*${f.titulo}*
 
-🔹 Destino: ${f.destino}
-🔹 *${f.cabine} ${f.companhia}*
+${cabecalho}
 
 🛫 Saídas de ${f.origem}
 
-~${money(f.de)}~
-✅ *${money(f.por)} ida e volta com taxas* • ${percentOff(f.de, f.por)} OFF
-
-*Em até ${num(f.xjuros)}x sem juros
+${preco}
 
 🗓️ Ida:
 

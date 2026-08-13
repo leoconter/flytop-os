@@ -39,8 +39,7 @@ export function WhatsAppPreview({ message }: { message: string }) {
           </div>
         ) : (
           <p className="wa-empty">
-            Preencha os campos e clique em <b>Gerar alerta</b> para ver a
-            mensagem aqui.
+            Preencha o título e o destino para ver a mensagem aqui.
           </p>
         )}
       </div>

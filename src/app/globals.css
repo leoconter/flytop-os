@@ -851,6 +851,20 @@ body.tv-mode .tv-stats { grid-template-columns: 1.4fr 1fr 1fr; }
 .btn.danger { color: var(--accent-red-dark); }
 .btn.danger:hover { background: rgba(179, 54, 44, 0.08); border-color: rgba(179, 54, 44, 0.28); }
 
+/* Recado de um formulário que ocupa as duas colunas: atravessa a grade em vez
+   de virar mais uma célula ao lado do conteúdo. */
+.grid-2 > .form-erro,
+.grid-2 > .form-ok { grid-column: 1 / -1; }
+
+/* Confirmação de que o texto foi para a área de transferência. */
+.btn.copiado,
+.btn.copiado:hover {
+  color: var(--accent-green-dark);
+  border-color: rgba(30, 122, 70, 0.35);
+  background: rgba(30, 122, 70, 0.08);
+}
+.btn.copiado svg { color: var(--accent-green-dark); }
+
 /* ============================================================================
    Planilha de metas — vendedores nas linhas, meses nas colunas
    ============================================================================ */
