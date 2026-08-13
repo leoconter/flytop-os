@@ -47,6 +47,20 @@ export const navItems: NavItem[] = [
     ),
   },
   {
+    key: "tarefas",
+    label: "Tarefas",
+    title: "Tarefas",
+    href: "/tarefas",
+    group: "Operação",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <path d="M9 11l2 2 4-4" />
+        <rect x="3" y="4" width="18" height="17" rx="2" />
+        <path d="M8 2v4M16 2v4" />
+      </svg>
+    ),
+  },
+  {
     key: "alertas",
     label: "Alertas",
     title: "Alertas",
@@ -193,6 +207,7 @@ export const navGroups = ["Controle", "Operação", "Marketing", "Administraçã
  */
 const SUBTELAS: Record<string, string> = {
   "/interno/jornada": "Jornada de Compra",
+  "/tarefas/nova": "Nova tarefa",
 };
 
 export function titleForPath(pathname: string): string {
