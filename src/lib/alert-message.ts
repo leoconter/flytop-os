@@ -76,8 +76,10 @@ export function buildMessage(f: AlertFields): string {
 
   const preco = [
     de > por ? `~${money(de)}~` : null,
-    `✅ *${money(por)} ida e volta com taxas*${de > por ? ` • ${percentOff(de, por)} OFF` : ""}`,
-    parcelas > 0 ? `\n*Em até ${parcelas}x sem juros*` : null,
+    por > 0
+      ? `✅ *${money(por)} ida e volta com taxas*${de > por ? ` • ${percentOff(de, por)} OFF` : ""}`
+      : null,
+    parcelas > 0 ? `${por > 0 ? "\n" : ""}*Em até ${parcelas}x sem juros*` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -87,26 +89,19 @@ export function buildMessage(f: AlertFields): string {
     .filter(Boolean)
     .join("\n");
 
-  return `*${f.titulo}*
-
-${cabecalho}
-
-🛫 Saídas de ${f.origem}
-
-${preco}
-
-🗓️ Ida:
-
-${formatDates(f.idaDates)}
-
-🗓️ Volta:
-
-${formatDates(f.voltaDates)}
-
-⚠️ *Oferta válida apenas para as datas acima*
-
-📲 Nos chame para realizar a emissão:
-👉 flytopviagens.com.br/fale-conosco
-
-_Fly Top Viagens LTDA_ ®️`;
+  // Blocos, não um texto único: um bloco vazio some em vez de virar linha em
+  // branco sobrando no meio da mensagem.
+  return [
+    `*${f.titulo}*`,
+    cabecalho,
+    f.origem ? `🛫 Saídas de ${f.origem}` : null,
+    preco,
+    `🗓️ Ida:\n\n${formatDates(f.idaDates)}`,
+    `🗓️ Volta:\n\n${formatDates(f.voltaDates)}`,
+    "⚠️ *Oferta válida apenas para as datas acima*",
+    "📲 Nos chame para realizar a emissão:\n👉 flytopviagens.com.br/fale-conosco",
+    "_Fly Top Viagens LTDA_ ®️",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }

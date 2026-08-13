@@ -8,6 +8,7 @@ import { salvarAlerta } from "@/app/(app)/alertas/actions";
 import { type AlertFields, buildMessage, percentOff } from "@/lib/alert-message";
 import { cabines, companhias } from "@/lib/alertas-data";
 import { CalendarField } from "./calendar-field";
+import { EntradaComEmoji, TextoComEmoji } from "./emoji-field";
 import { WhatsAppPreview } from "./whatsapp-preview";
 
 const VAZIO: AlertFields = {
@@ -89,12 +90,11 @@ export function AlertBuilder({
         <div className="form-grid" style={{ marginTop: 14 }}>
           <div className="field full">
             <label htmlFor="al-titulo">Título</label>
-            <input
+            <EntradaComEmoji
               id="al-titulo"
-              className="input"
               name="titulo"
               value={titulo}
-              onChange={(e) => setField("titulo", e.target.value)}
+              onChange={(v) => setField("titulo", v)}
               placeholder="✈️ BAIXOU! LISBOA NA EXECUTIVA COM 38% OFF!"
               required
             />
@@ -102,22 +102,20 @@ export function AlertBuilder({
 
           <div className="field">
             <label htmlFor="al-origem">Origem</label>
-            <input
+            <EntradaComEmoji
               id="al-origem"
-              className="input"
               name="origem"
               value={origem}
-              onChange={(e) => setField("origem", e.target.value)}
+              onChange={(v) => setField("origem", v)}
             />
           </div>
           <div className="field">
             <label htmlFor="al-destino">Destino</label>
-            <input
+            <EntradaComEmoji
               id="al-destino"
-              className="input"
               name="destino"
               value={destino}
-              onChange={(e) => setField("destino", e.target.value)}
+              onChange={(v) => setField("destino", v)}
               placeholder="Lisboa 🇵🇹"
               required
             />
@@ -215,14 +213,13 @@ export function AlertBuilder({
 
           <div className="field full">
             <label htmlFor="al-msg">Mensagem</label>
-            <textarea
+            <TextoComEmoji
               id="al-msg"
-              className="textarea"
               name="mensagem"
               value={mensagem}
-              onChange={(e) => {
+              onChange={(v) => {
                 setManual(true);
-                setTextoManual(e.target.value);
+                setTextoManual(v);
               }}
               placeholder="Preencha os campos acima — a mensagem se monta sozinha."
             />
