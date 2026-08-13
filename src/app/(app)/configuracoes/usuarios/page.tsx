@@ -1,5 +1,5 @@
 import { PageHead, SectionHead } from "@/components/dashboard/ui";
-import { currentUser } from "@/lib/auth/session";
+import { currentUser, guardAdmin } from "@/lib/auth/session";
 import { listSellerOptions, listUsers } from "@/lib/auth/users";
 import { ListaUsuarios } from "./lista";
 import { NovoUsuario } from "./novo-usuario";
@@ -8,6 +8,9 @@ export const metadata = { title: "FlyTop OS · Usuários" };
 export const dynamic = "force-dynamic";
 
 export default async function UsuariosPage() {
+  // A guarda saiu do layout: Configurações agora tem aba para todo mundo.
+  await guardAdmin();
+
   const [users, sellers, eu] = await Promise.all([
     listUsers(),
     listSellerOptions(),

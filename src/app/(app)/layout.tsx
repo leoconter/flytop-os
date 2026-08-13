@@ -31,8 +31,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <>
       <Orbs />
       {/* No layout, não numa tela: o alerta pode sair enquanto a pessoa está
-          em qualquer parte da plataforma. */}
-      <AvisoVoo />
+          em qualquer parte da plataforma. Quem desligou em Minha conta nem
+          monta o componente — assim também para de perguntar ao servidor. */}
+      {user.alertFlyby && <AvisoVoo />}
       <div className="app">
         <Sidebar user={user} />
         <div className="main">

@@ -60,13 +60,17 @@ export function Sidebar({ user }: { user: SessionUser }) {
       <div className="sidebar-foot">
         {user.role === "admin" && <SyncButtons />}
         <div className="user-chip">
-          <span className="avatar">{iniciais(user)}</span>
-          <div className="user-id">
-            <div className="nm">{user.fullName}</div>
-            <div className="rl">
-              {user.role === "admin" ? "Administrador" : (user.teamName ?? "Vendedor")}
+          {/* O vendedor não vê o grupo Administração, então é por aqui que ele
+              chega às configurações da própria conta. */}
+          <Link href="/configuracoes" className="user-eu" title="Minha conta">
+            <span className="avatar">{iniciais(user)}</span>
+            <div className="user-id">
+              <div className="nm">{user.fullName}</div>
+              <div className="rl">
+                {user.role === "admin" ? "Administrador" : (user.teamName ?? "Vendedor")}
+              </div>
             </div>
-          </div>
+          </Link>
           <form action={sair}>
             <button type="submit" className="sair" title="Sair" aria-label="Sair">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -31,6 +31,8 @@ export interface SessionUser {
   sellerId: string | null;
   sellerName: string | null;
   teamName: string | null;
+  /** Ver o aviãozinho quando um alerta é marcado como enviado. */
+  alertFlyby: boolean;
 }
 
 function authUrl(path: string): string {
@@ -185,7 +187,9 @@ async function perfil(userId: string, email: string): Promise<SessionUser | null
 
   const { data } = await sb
     .from("v_app_users")
-    .select("user_id, first_name, last_name, full_name, email, role, active, seller_id, seller_name, team_name")
+    .select(
+      "user_id, first_name, last_name, full_name, email, role, active, seller_id, seller_name, team_name, alert_flyby",
+    )
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -202,6 +206,7 @@ async function perfil(userId: string, email: string): Promise<SessionUser | null
     sellerId: (data.seller_id as string) ?? null,
     sellerName: (data.seller_name as string) ?? null,
     teamName: (data.team_name as string) ?? null,
+    alertFlyby: data.alert_flyby !== false,
   };
 }
 

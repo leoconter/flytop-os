@@ -2,11 +2,15 @@ import { PageHead, Pill, SectionHead } from "@/components/dashboard/ui";
 import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import { getTeams } from "@/lib/monde/teams";
 import { criarEquipe, removerEquipe, renomearEquipe, salvarIntegrantes } from "./actions";
+import { guardAdmin } from "@/lib/auth/session";
 
 export const metadata = { title: "FlyTop OS · Equipes" };
 export const dynamic = "force-dynamic";
 
 export default async function EquipesPage() {
+  // A guarda saiu do layout: Configurações agora tem aba para todo mundo.
+  await guardAdmin();
+
   const data = await getTeams();
 
   if (!data) {
