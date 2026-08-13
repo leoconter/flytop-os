@@ -8,8 +8,10 @@ import { CamposTarefa } from "@/components/tarefas/campos";
 import { Checklist } from "@/components/tarefas/checklist";
 import { Etiqueta } from "@/components/tarefas/etiquetas";
 import { ExcluirTarefa } from "@/components/tarefas/excluir";
+import { Recorrencia } from "@/components/tarefas/recorrencia";
 import { currentUser } from "@/lib/auth/session";
 import { listUsers } from "@/lib/auth/users";
+import { regraDe } from "@/lib/tarefas/recorrencia";
 import { buscarTarefa, detalhesTarefa } from "@/lib/tarefas/store";
 import { editarTarefa } from "../actions";
 
@@ -119,6 +121,13 @@ export default async function TarefaPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
+          <Recorrencia
+            taskId={tarefa.id}
+            regra={regraDe(tarefa)}
+            proxima={tarefa.recurNextAt}
+            novaTarefa={tarefa.recurNewTask}
+            reabrirComo={tarefa.recurResetStatus}
+          />
           <Checklist taskId={tarefa.id} itens={detalhes.checklist} />
           <AnexosTarefa taskId={tarefa.id} anexos={detalhes.anexos} />
         </div>

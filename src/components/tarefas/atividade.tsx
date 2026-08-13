@@ -37,6 +37,13 @@ function frase(e: Evento): string {
       return `${quem} anexou ${e.to ?? "um arquivo"}`;
     case "removeu_anexo":
       return `${quem} removeu ${e.to ?? "um anexo"}`;
+    case "recorrencia":
+      // O agendador do banco não tem autor: a frase não pode começar por
+      // "Alguém" quando ninguém mexeu.
+      if (e.to === "reaberta pela recorrencia") return "Reaberta pela recorrência";
+      if (e.to === "nova ocorrencia") return "Criada pela recorrência da anterior";
+      if (e.to === "desligada") return `${quem} desligou a repetição`;
+      return `${quem} definiu a repetição: ${e.to?.toLowerCase() ?? "—"}`;
     case "alterou": {
       const campo = CAMPO_LABEL[e.field ?? ""] ?? e.field ?? "algo";
       if (!e.from) return `${quem} definiu ${campo} como ${e.to ?? "vazio"}`;

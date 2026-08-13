@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ETAPA_LABEL, ETAPAS, PRIORIDADE_PESO, type Etapa } from "@/lib/tarefas/modelo";
 import type { Tarefa } from "@/lib/tarefas/store";
-import { Avatar, Bandeira, Etiqueta, Modal } from "./etiquetas";
+import { descrever, regraDe } from "@/lib/tarefas/recorrencia";
+import { Avatar, Bandeira, Etiqueta, Modal, Repete } from "./etiquetas";
 
 const dataCurta = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -86,7 +87,10 @@ function Grupo({ etapa, itens }: { etapa: Etapa; itens: Tarefa[] }) {
                   )}
                 </td>
                 <td>
-                  <Modal modalidade={t.modality} />
+                  <span className="tk-quem-nome">
+                    <Modal modalidade={t.modality} />
+                    <Repete texto={descrever(regraDe(t))} />
+                  </span>
                 </td>
                 <td className="mono-cell">{t.locator ?? <span className="muted">—</span>}</td>
                 <td>

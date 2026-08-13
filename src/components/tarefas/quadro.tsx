@@ -6,7 +6,8 @@ import { useRef, useState, useTransition } from "react";
 import { moverTarefa } from "@/app/(app)/tarefas/actions";
 import { ETAPA_LABEL, ETAPA_TOM, ETAPAS, type Etapa } from "@/lib/tarefas/modelo";
 import type { Tarefa } from "@/lib/tarefas/store";
-import { Avatar, Bandeira, Modal } from "./etiquetas";
+import { descrever, regraDe } from "@/lib/tarefas/recorrencia";
+import { Avatar, Bandeira, Modal, Repete } from "./etiquetas";
 
 const IconeComentario = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -37,6 +38,7 @@ function Cartao({ t, arrastando }: { t: Tarefa; arrastando: boolean }) {
       <div className="tk-meta">
         <Modal modalidade={t.modality} />
         {t.locator && <span className="tk-loc">{t.locator}</span>}
+        <Repete texto={descrever(regraDe(t))} />
       </div>
       <div className="tk-rodape">
         <span className="tk-sinais">

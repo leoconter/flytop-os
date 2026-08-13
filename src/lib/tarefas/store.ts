@@ -36,10 +36,19 @@ export interface Tarefa {
   anexos: number;
   checklistTotal: number;
   checklistFeitos: number;
+  /* Recorrência. `recurKind` nulo = a tarefa não repete. */
+  recurKind: string | null;
+  recurInterval: number;
+  recurUnit: string | null;
+  recurWeekdays: number[];
+  recurMonthday: number | null;
+  recurNewTask: boolean;
+  recurResetStatus: string;
+  recurNextAt: string | null;
 }
 
 const COLUNAS =
-  "id, seq, title, description, locator, modality, priority, status, position, assignee_id, assignee_name, created_by, created_by_name, created_at, updated_at, completed_at, comments_count, attachments_count, checklist_total, checklist_done";
+  "id, seq, title, description, locator, modality, priority, status, position, assignee_id, assignee_name, created_by, created_by_name, created_at, updated_at, completed_at, comments_count, attachments_count, checklist_total, checklist_done, recur_kind, recur_interval, recur_unit, recur_weekdays, recur_monthday, recur_new_task, recur_reset_status, recur_next_at";
 
 type Linha = Record<string, unknown>;
 
@@ -65,6 +74,14 @@ function paraTarefa(r: Linha): Tarefa {
     anexos: Number(r.attachments_count ?? 0),
     checklistTotal: Number(r.checklist_total ?? 0),
     checklistFeitos: Number(r.checklist_done ?? 0),
+    recurKind: (r.recur_kind as string) ?? null,
+    recurInterval: Number(r.recur_interval ?? 1),
+    recurUnit: (r.recur_unit as string) ?? null,
+    recurWeekdays: (r.recur_weekdays as number[]) ?? [],
+    recurMonthday: r.recur_monthday === null || r.recur_monthday === undefined ? null : Number(r.recur_monthday),
+    recurNewTask: Boolean(r.recur_new_task),
+    recurResetStatus: (r.recur_reset_status as string) ?? "a_fazer",
+    recurNextAt: (r.recur_next_at as string) ?? null,
   };
 }
 

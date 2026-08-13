@@ -722,6 +722,44 @@ a.chip:hover { background: #f6f7f9; color: var(--text-1); }
 }
 .quem.vazio { background: rgba(16, 24, 40, 0.06); color: var(--text-3); }
 
+/* --- recorrência ----------------------------------------------------------- */
+.tk-repete-selo { display: inline-flex; color: var(--accent-blue); flex-shrink: 0; }
+.tk-repete-selo svg { width: 13px; height: 13px; }
+
+.tk-repete { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 0; font-size: 13.5px; }
+.tk-repete > svg { width: 17px; height: 17px; color: var(--accent-blue); flex-shrink: 0; margin-top: 1px; }
+.tk-repete > span { display: flex; flex-direction: column; gap: 2px; }
+.tk-repete .sub { font-size: 12px; color: var(--text-3); }
+
+.tk-rec-form { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+.tk-rec-linha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tk-rec-linha.empilha { align-items: flex-start; }
+.tk-rec-rot { font-size: 12.5px; font-weight: 600; color: var(--text-2); min-width: 74px; }
+.tk-rec-form .select { width: auto; min-width: 150px; padding-right: 32px; }
+.tk-rec-num { width: 78px; min-width: 0; text-align: center; }
+.tk-rec-opcao { margin: 2px 0; }
+
+/* Os dias da semana, no gesto do ClickUp: uma fileira de botões que acendem. */
+.tk-dias { display: inline-flex; gap: 3px; flex-wrap: wrap; }
+.tk-dias button {
+  min-width: 40px; padding: 7px 4px; cursor: pointer; font-family: inherit;
+  font-size: 12px; color: var(--text-2);
+  background: #fff; border: 1px solid rgba(16, 24, 40, 0.12);
+  border-radius: var(--radius-sm);
+}
+.tk-dias button:hover:not(.on) { border-color: rgba(16, 24, 40, 0.24); }
+.tk-dias button.on {
+  background: var(--accent-blue); border-color: var(--accent-blue);
+  color: #fff; font-weight: 600;
+}
+.tk-rec-previa {
+  display: flex; align-items: center; gap: 8px; margin: 0;
+  padding: 9px 12px; border-radius: var(--radius-sm);
+  background: rgba(30, 86, 184, 0.07); color: var(--accent-blue-dark);
+  font-size: 13px; font-weight: 500;
+}
+.tk-rec-previa svg { width: 15px; height: 15px; flex-shrink: 0; }
+
 /* --- filtros --------------------------------------------------------------- */
 .tk-filtros {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;

@@ -35,6 +35,22 @@ export function Modal({ modalidade }: { modalidade: Modalidade }) {
   return <span className="modalidade">{MODALIDADE_LABEL[modalidade]}</span>;
 }
 
+/** Selo de tarefa que se repete. Nada aparece quando ela não repete. */
+export function Repete({ texto }: { texto: string | null }) {
+  if (!texto) return null;
+  return (
+    <span className="tk-repete-selo" title={`Repete: ${texto.toLowerCase()}`}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M17 2l4 4-4 4" />
+        <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+        <path d="M7 22l-4-4 4-4" />
+        <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+      </svg>
+      <span className="sr">{texto}</span>
+    </span>
+  );
+}
+
 /** Iniciais do responsável. Sem responsável, um traço — não um vazio mudo. */
 export function Avatar({ nome }: { nome: string | null }) {
   if (!nome) return <span className="quem vazio" title="Sem responsável">—</span>;

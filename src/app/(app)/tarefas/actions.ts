@@ -13,6 +13,15 @@ import {
   MODALIDADE_LABEL,
   PRIORIDADE_LABEL,
 } from "@/lib/tarefas/modelo";
+import {
+  descrever,
+  proximaOcorrencia,
+  type Regra,
+  TIPOS,
+  type TipoRecorrencia,
+  UNIDADES,
+  type Unidade,
+} from "@/lib/tarefas/recorrencia";
 import { entre, registrar, type Registro } from "@/lib/tarefas/store";
 import { db } from "@/lib/supabase";
 
@@ -80,6 +89,119 @@ export async function criarTarefa(_prev: AcaoState, fd: FormData): Promise<AcaoS
   redirect(`/tarefas/${data.id}`);
 }
 
+/* ---------------------------- Recorrência ---------------------------------- */
+
+/** Hoje em São Paulo — é o fuso de quem conclui a tarefa. */
+function hojeSP(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+interface LinhaRecorrencia {
+  recur_kind: string | null;
+  recur_interval: number | null;
+  recur_unit: string | null;
+  recur_weekdays: number[] | null;
+  recur_monthday: number | null;
+}
+
+/**
+ * Quando a tarefa volta, dado o que está gravado nela.
+ *
+ * Devolve `null` para tarefa que não repete — e é isso que também limpa um
+ * agendamento antigo quando a recorrência é desligada.
+ */
+function agendar(r: LinhaRecorrencia | null, entrandoEmConcluido: boolean): string | null {
+  if (!entrandoEmConcluido || !r?.recur_kind) return null;
+  const regra: Regra = {
+    tipo: r.recur_kind as TipoRecorrencia,
+    intervalo: r.recur_interval ?? 1,
+    unidade: (r.recur_unit ?? "semana") as Unidade,
+    diasSemana: r.recur_weekdays ?? [],
+    diaDoMes: r.recur_monthday,
+  };
+  return proximaOcorrencia(regra, hojeSP());
+}
+
+const CAMPOS_RECORRENCIA =
+  "recur_kind, recur_interval, recur_unit, recur_weekdays, recur_monthday";
+
+export async function salvarRecorrencia(_prev: AcaoState, fd: FormData): Promise<AcaoState> {
+  const user = await currentUser();
+  if (!user) return { erro: "Sessão expirada. Entre de novo." };
+  const sb = db();
+  if (!sb) return { erro: "O banco não está configurado." };
+
+  const id = texto(fd, "id");
+  const tipo = texto(fd, "tipo");
+
+  if (!tipo) {
+    const { error } = await sb
+      .from("tasks")
+      .update({ recur_kind: null, recur_next_at: null, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { erro: "Não foi possível desligar a recorrência." };
+    await registrar(id, user.userId, [{ kind: "recorrencia", to: "desligada" }]);
+    atualiza(id);
+    return { ok: "A tarefa não repete mais." };
+  }
+
+  if (!TIPOS.includes(tipo as TipoRecorrencia)) return { erro: "Recorrência inválida." };
+
+  const intervalo = Math.min(365, Math.max(1, Number(texto(fd, "intervalo")) || 1));
+  const unidadeBruta = texto(fd, "unidade");
+  const unidade = UNIDADES.includes(unidadeBruta as Unidade) ? unidadeBruta : "semana";
+  const dias = fd
+    .getAll("diaSemana")
+    .map((d) => Number(d))
+    .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+  const diaMesBruto = Number(texto(fd, "diaDoMes"));
+  const diaDoMes = diaMesBruto >= 1 && diaMesBruto <= 31 ? diaMesBruto : null;
+
+  if (tipo === "semanal" && !dias.length) {
+    return { erro: "Escolha pelo menos um dia da semana." };
+  }
+  if (tipo === "mensal" && !diaDoMes) {
+    return { erro: "Escolha o dia do mês." };
+  }
+
+  const { error } = await sb
+    .from("tasks")
+    .update({
+      recur_kind: tipo,
+      recur_interval: intervalo,
+      recur_unit: tipo === "personalizada" ? unidade : null,
+      recur_weekdays: dias,
+      recur_monthday: diaDoMes,
+      recur_new_task: fd.get("novaTarefa") !== null,
+      recur_reset_status: comoEtapa(fd.get("reabrirComo")) === "concluido"
+        ? "a_fazer"
+        : comoEtapa(fd.get("reabrirComo")),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[tarefas] recorrencia:", error.message);
+    return { erro: "Não foi possível salvar a recorrência." };
+  }
+
+  const texto_ = descrever({
+    tipo: tipo as TipoRecorrencia,
+    intervalo,
+    unidade: unidade as Unidade,
+    diasSemana: dias,
+    diaDoMes,
+  });
+  await registrar(id, user.userId, [{ kind: "recorrencia", to: texto_ }]);
+  atualiza(id);
+  return { ok: `Repetição salva: ${texto_?.toLowerCase()}.` };
+}
+
 /* ------------------------------- Editar ------------------------------------ */
 
 const CAMPOS = ["title", "description", "locator", "modality", "priority", "status", "assignee"] as const;
@@ -107,7 +229,7 @@ export async function editarTarefa(_prev: AcaoState, fd: FormData): Promise<Acao
 
   const { data: antes } = await sb
     .from("tasks")
-    .select("title, description, locator, modality, priority, status, assignee_id")
+    .select(`title, description, locator, modality, priority, status, assignee_id, ${CAMPOS_RECORRENCIA}`)
     .eq("id", id)
     .maybeSingle();
   if (!antes) return { erro: "Essa tarefa não existe mais." };
@@ -148,6 +270,11 @@ export async function editarTarefa(_prev: AcaoState, fd: FormData): Promise<Acao
       // O carimbo de conclusão acompanha a etapa: voltar atrás precisa limpar,
       // senão a tarefa ficaria "concluída em" enquanto está em andamento.
       completed_at: novo.status === "concluido" ? new Date().toISOString() : null,
+      // Concluir agenda a volta; sair de Concluído cancela o agendamento.
+      recur_next_at: agendar(
+        antes as unknown as LinhaRecorrencia,
+        novo.status === "concluido" && anterior.status !== "concluido",
+      ),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -202,7 +329,11 @@ export async function moverTarefa(
   if (!sb) return { erro: "O banco não está configurado." };
 
   const status = comoEtapa(destino);
-  const { data: antes } = await sb.from("tasks").select("status").eq("id", id).maybeSingle();
+  const { data: antes } = await sb
+    .from("tasks")
+    .select(`status, ${CAMPOS_RECORRENCIA}`)
+    .eq("id", id)
+    .maybeSingle();
   if (!antes) return { erro: "Essa tarefa não existe mais." };
 
   const { error } = await sb
@@ -211,6 +342,10 @@ export async function moverTarefa(
       status,
       position: entre(depoisDe, antesDe),
       completed_at: status === "concluido" ? new Date().toISOString() : null,
+      recur_next_at: agendar(
+        antes as unknown as LinhaRecorrencia,
+        status === "concluido" && antes.status !== "concluido",
+      ),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
