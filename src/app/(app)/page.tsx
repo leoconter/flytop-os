@@ -19,7 +19,7 @@ import {
   teams,
 } from "@/lib/dashboard-data";
 import { PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
-import { fmtMoney, fmtMoneyCompact } from "@/lib/meta/ads";
+import { fmtMoney } from "@/lib/meta/ads";
 import { fmtInt } from "@/lib/meta/instagram";
 import { getAgencyGoal } from "@/lib/monde/goals";
 import { getMonthSeries } from "@/lib/monde/month";
@@ -74,7 +74,7 @@ export default async function GeralPage({
     ? [
         {
           label: "Faturamento atual",
-          value: fmtMoneyCompact(month.revenue),
+          value: fmtMoney(month.revenue),
           hint: `${fmtInt(month.salesCount)} vendas em ${month.lastDay} dias`,
           privateValue: true,
           privateHint: true,
@@ -95,7 +95,7 @@ export default async function GeralPage({
         },
         {
           label: `Projeção fim de ${MES_LONGO[Number(month.month.slice(5, 7)) - 1]}`,
-          value: fmtMoneyCompact(month.projection),
+          value: fmtMoney(month.projection),
           tone: month.projection >= month.goal ? "green" : "red",
           hint:
             (month.projection >= month.goal ? "+" : "") +
@@ -103,7 +103,7 @@ export default async function GeralPage({
               "pt-BR",
               { maximumFractionDigits: 1 },
             ) +
-            `% vs meta de ${fmtMoneyCompact(month.goal)}`,
+            `% vs meta de ${fmtMoney(month.goal)}`,
           hintTone: month.projection >= month.goal ? "positive" : "negative",
           privateValue: true,
           privateHint: true,
@@ -128,7 +128,7 @@ export default async function GeralPage({
                 <b className="private">{fmtInt(month.salesCount)} vendas</b> ·
                 faturamento até {String(month.lastDay).padStart(2, "0")}/
                 {month.month.slice(5, 7)}:{" "}
-                <b className="private">{fmtMoneyCompact(month.revenue)}</b> ·{" "}
+                <b className="private">{fmtMoney(month.revenue)}</b> ·{" "}
                 {monthLabel}
               </>
             ) : (
@@ -171,7 +171,7 @@ export default async function GeralPage({
               </span>
               <span className="legend-item">
                 <span className="legend-line ll-dash-green" />
-                Meta · {fmtMoneyCompact(month?.goal ?? META)}
+                Meta · {fmtMoney(month?.goal ?? META)}
               </span>
             </div>
             <div className="tv-chart">
@@ -187,7 +187,7 @@ export default async function GeralPage({
                   ? sellers.slice(0, 4).map((s) => (
                       <div className="tv-line" key={s.name}>
                         <span className="k">{s.name.split(" ")[0]}</span>
-                        <span className="v private">{fmtMoneyCompact(s.revenue)}</span>
+                        <span className="v private">{fmtMoney(s.revenue)}</span>
                       </div>
                     ))
                   : teams.map((t) => (
