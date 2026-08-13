@@ -683,6 +683,52 @@ a.chip:hover { background: #f6f7f9; color: var(--text-1); }
 .wa-empty { color: var(--text-3); font-size: 13px; text-align: center; padding: 40px 10px; }
 
 /* ============================================================================
+   Controle Interno — receita do período e consolidadoras
+   ============================================================================ */
+/* Gráfico de largura inteira: mais alto que os de meia tela, porque com
+   recorte diário são dezenas de barras. */
+.chart-box.largo { height: 340px; }
+
+/* Tabela e rosca lado a lado. A tabela manda na largura — ela tem quatro
+   colunas de número; a rosca cabe no que sobrar. */
+.consolidadoras {
+  display: grid;
+  /* A rosca leva a legenda à direita: abaixo de ~340px o nome da consolidadora
+     começa a ser cortado, daí o mínimo. */
+  grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.7fr);
+  gap: 14px;
+  align-items: start;
+}
+/* A barra lateral come ~256px: em 1200px de janela sobram menos de 950px para
+   as duas, e a tabela de quatro colunas começa a espremer. Melhor empilhar. */
+@media (max-width: 1200px) {
+  .consolidadoras { grid-template-columns: 1fr; }
+}
+
+/* Botões de agrupamento (diário, semanal, mensal…). */
+.seg {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: rgba(16, 24, 40, 0.05); border-radius: var(--radius-pill);
+}
+.seg button {
+  border: none; background: transparent; cursor: pointer; font-family: inherit;
+  padding: 6px 12px; border-radius: var(--radius-pill);
+  font-size: 12.5px; color: var(--text-2); white-space: nowrap;
+}
+.seg button:hover:not(:disabled):not(.on) { color: var(--text-1); }
+.seg button.on {
+  background: #fff; color: var(--accent-blue-dark); font-weight: 600;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.12);
+}
+/* Recorte que caberia inteiro numa barra só: apagado, como os demais botões
+   sem função na plataforma. */
+.seg button:disabled { opacity: 0.32; cursor: not-allowed; }
+
+@media (max-width: 720px) {
+  .section-head .section-right .seg { flex-wrap: wrap; }
+}
+
+/* ============================================================================
    Aviãozinho de alerta enviado — atravessa a tela puxando a faixa
    ============================================================================ */
 .voo {

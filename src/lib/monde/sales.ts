@@ -105,35 +105,6 @@ export async function getSalesTotals(range: SocialRange): Promise<SalesTotals | 
   };
 }
 
-/** Faturamento dos últimos N meses (para o gráfico de barras). */
-export async function getMonthlyRevenue(
-  months = 6,
-): Promise<{ labels: string[]; values: number[] } | null> {
-  const sb = db();
-  if (!sb) return null;
-
-  const { data, error } = await sb
-    .from("v_sales_daily")
-    .select("sale_date, revenue")
-    .order("sale_date", { ascending: false })
-    .limit(1200);
-
-  if (error || !data?.length) return null;
-
-  const byMonth = new Map<string, number>();
-  for (const r of data) {
-    const key = (r.sale_date as string).slice(0, 7);
-    byMonth.set(key, (byMonth.get(key) ?? 0) + Number(r.revenue ?? 0));
-  }
-
-  const MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-  const keys = [...byMonth.keys()].sort().slice(-months);
-  return {
-    labels: keys.map((k) => MES[Number(k.slice(5, 7)) - 1]),
-    values: keys.map((k) => byMonth.get(k)!),
-  };
-}
-
 /** Consolidadoras do período, ordenadas por receita. */
 export async function getConsolidators(
   range: SocialRange,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ConsolidatorDoughnut } from "@/components/charts/consolidator-doughnut";
 import { RevenueByMonthChart } from "@/components/charts/revenue-by-month";
+import { RevenuePeriodChart } from "@/components/charts/revenue-period";
 import {
   ListCard,
   Metrics,
@@ -15,7 +16,6 @@ import { fmtInt } from "@/lib/meta/instagram";
 import {
   getAirlinesAndRoutes,
   getConsolidators,
-  getMonthlyRevenue,
   getSalesTotals,
   type RankedItem,
 } from "@/lib/monde/sales";
@@ -52,9 +52,8 @@ export default async function InternoPage({
   const range = resolveRange(await searchParams);
   const periodLabel = formatRange(range);
 
-  const [totals, monthly, consolidators, breakdown] = await Promise.all([
+  const [totals, consolidators, breakdown] = await Promise.all([
     getSalesTotals(range),
-    getMonthlyRevenue(6),
     getConsolidators(range),
     getAirlinesAndRoutes(range),
   ]);
@@ -126,72 +125,85 @@ export default async function InternoPage({
 
       <Metrics metrics={metrics} />
 
-      <div className="grid-2 split">
+      {/* Largura inteira: é a leitura principal da tela, e com recorte diário
+          são muitas barras — espremida em meia tela vira um borrão. */}
+      <div className="section">
         <div className="glass chart-card">
-          <SectionHead title="Receita por mês" sub="últimos 6 meses" />
-          <RevenueByMonthChart
-            labels={monthly?.labels}
-            values={monthly?.values}
-            highlightIndex={monthly ? monthly.labels.length - 1 : undefined}
-          />
-        </div>
-        <div className="glass chart-card">
-          <SectionHead
-            title="Vendas por consolidadora"
-            sub="participação na receita"
-          />
-          <ConsolidatorDoughnut
-            slices={consolidators?.slice(0, 6).map((c, i) => ({
-              label: c.name,
-              value: Number(c.share.toFixed(1)),
-              color: SLICE_COLORS[i % SLICE_COLORS.length],
-            }))}
-          />
+          {totals ? (
+            <RevenuePeriodChart
+              daily={totals.daily}
+              since={range.since}
+              until={range.until}
+            />
+          ) : (
+            <>
+              <SectionHead title="Receita por mês" sub="dados ilustrativos" />
+              <RevenueByMonthChart />
+            </>
+          )}
         </div>
       </div>
 
+      {/* A rosca ao lado da tabela: a mesma informação em duas leituras — a
+          proporção de relance, o número exato na linha. */}
       <div className="section">
-        <div className="glass card">
-          <SectionHead
-            title="Receita por consolidadora"
-            sub={live ? periodLabel : "maio 2026"}
-            flush
-          />
-          <div className="table-wrap" style={{ marginTop: 8 }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Consolidadora</th>
-                  <th className="r">Vendas</th>
-                  <th className="r">Receita</th>
-                  <th className="r">Participação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {consolidators
-                  ? consolidators.map((row) => (
-                      <tr key={row.name}>
-                        <td>{row.name}</td>
-                        <td className="r">{fmtInt(row.salesCount)}</td>
-                        <td className="r private">{fmtMoney(row.revenue)}</td>
-                        <td className="r">
-                          {row.share.toLocaleString("pt-BR", {
-                            maximumFractionDigits: 1,
-                          })}
-                          %
-                        </td>
-                      </tr>
-                    ))
-                  : consolidatorRows.map((row) => (
-                      <tr key={row.name}>
-                        <td>{row.name}</td>
-                        <td className="r">{row.sales}</td>
-                        <td className="r private">{row.revenue}</td>
-                        <td className="r">{row.share}</td>
-                      </tr>
-                    ))}
-              </tbody>
-            </table>
+        <div className="consolidadoras">
+          <div className="glass card">
+            <SectionHead
+              title="Receita por consolidadora"
+              sub={live ? periodLabel : "maio 2026"}
+              flush
+            />
+            <div className="table-wrap" style={{ marginTop: 8 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Consolidadora</th>
+                    <th className="r">Vendas</th>
+                    <th className="r">Receita</th>
+                    <th className="r">Participação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {consolidators
+                    ? consolidators.map((row) => (
+                        <tr key={row.name}>
+                          <td>{row.name}</td>
+                          <td className="r">{fmtInt(row.salesCount)}</td>
+                          <td className="r private">{fmtMoney(row.revenue)}</td>
+                          <td className="r">
+                            {row.share.toLocaleString("pt-BR", {
+                              maximumFractionDigits: 1,
+                            })}
+                            %
+                          </td>
+                        </tr>
+                      ))
+                    : consolidatorRows.map((row) => (
+                        <tr key={row.name}>
+                          <td>{row.name}</td>
+                          <td className="r">{row.sales}</td>
+                          <td className="r private">{row.revenue}</td>
+                          <td className="r">{row.share}</td>
+                        </tr>
+                      ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="glass chart-card">
+            <SectionHead
+              title="Vendas por consolidadora"
+              sub="participação na receita"
+            />
+            <ConsolidatorDoughnut
+              slices={consolidators?.slice(0, 6).map((c, i) => ({
+                label: c.name,
+                value: Number(c.share.toFixed(1)),
+                color: SLICE_COLORS[i % SLICE_COLORS.length],
+              }))}
+            />
           </div>
         </div>
       </div>
