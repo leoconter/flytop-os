@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Orbs } from "@/components/orbs";
+import { AvisoVoo } from "@/components/alertas/aviso-voo";
 import { Sidebar } from "@/components/app-shell/sidebar";
 import { Topbar } from "@/components/app-shell/topbar";
 import { currentUser } from "@/lib/auth/session";
@@ -29,6 +30,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <Orbs />
+      {/* No layout, não numa tela: o alerta pode sair enquanto a pessoa está
+          em qualquer parte da plataforma. */}
+      <AvisoVoo />
       <div className="app">
         <Sidebar user={user} />
         <div className="main">

@@ -663,6 +663,96 @@ a.chip:hover { background: #f6f7f9; color: var(--text-1); }
 .wa-empty { color: var(--text-3); font-size: 13px; text-align: center; padding: 40px 10px; }
 
 /* ============================================================================
+   Aviãozinho de alerta enviado — atravessa a tela puxando a faixa
+   ============================================================================ */
+.voo {
+  /* Igual ao TRAVESSIA_MS do componente: se um mudar, o outro muda junto. */
+  --voo-dur: 6.5s;
+  position: fixed;
+  top: 13vh;
+  left: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  /* Passa por cima de tudo, mas não rouba o clique de nada — só o botão de
+     som volta a ser clicável. */
+  pointer-events: none;
+  will-change: transform;
+  animation: voo-atravessa var(--voo-dur) linear forwards;
+}
+/* Sobe de leve ao longo da travessia e some nas pontas: em linha reta e com
+   opacidade cheia nas bordas, parecia um elemento colado sobre o texto em vez
+   de algo passando. */
+@keyframes voo-atravessa {
+  from { transform: translate(-100%, 26px); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  to { transform: translate(100vw, -30px); opacity: 0; }
+}
+
+.voo-aviao {
+  display: flex;
+  color: var(--accent-blue);
+  filter: drop-shadow(0 4px 10px rgba(16, 24, 40, 0.28));
+  animation: voo-balanca 2.1s ease-in-out infinite;
+}
+.voo-aviao svg { width: 46px; height: 46px; }
+/* Uma oscilação de leve, para não parecer um adesivo escorregando. */
+@keyframes voo-balanca {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-3deg); }
+}
+
+/* O cabo que liga o avião à faixa rebocada. */
+.voo-cabo {
+  width: 26px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg, rgba(30, 86, 184, 0.55) 0 5px, transparent 5px 9px
+  );
+}
+
+.voo-faixa {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  padding: 9px 8px 9px 15px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  border: 1px solid rgba(30, 86, 184, 0.22);
+  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.16);
+  font-size: 13.5px;
+  color: var(--text-1);
+}
+.voo-faixa b { font-weight: 600; color: var(--accent-blue-dark); }
+.voo-destino { font-weight: 600; }
+.voo-detalhe { color: var(--text-3); font-size: 12.5px; }
+
+.voo-som {
+  pointer-events: auto;
+  width: 26px; height: 26px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(16, 24, 40, 0.05); color: var(--text-3);
+}
+.voo-som:hover { background: rgba(16, 24, 40, 0.1); color: var(--text-1); }
+.voo-som svg { width: 14px; height: 14px; }
+
+/* Quem pediu menos movimento recebe o mesmo aviso, parado no alto da tela. */
+.voo.parado {
+  left: 50%;
+  animation: voo-surge 0.35s ease-out forwards;
+}
+.voo.parado .voo-aviao { animation: none; }
+@keyframes voo-surge {
+  from { transform: translate(-50%, -14px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* ============================================================================
    Emojis nos campos do alerta
    ============================================================================ */
 /* O botão fica dentro do campo; o texto recua para não passar por baixo dele. */

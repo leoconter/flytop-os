@@ -95,6 +95,46 @@ export async function listarAlertas(): Promise<Listagem> {
   return { alertas: (data as unknown as Linha[]).map(paraAlerta) };
 }
 
+/** O necessário para o aviso na tela — não vale carregar a mensagem inteira. */
+export interface Envio {
+  id: string;
+  titulo: string;
+  destino: string;
+  companhia: string | null;
+  cabine: string | null;
+  enviadoEm: string;
+}
+
+/**
+ * O envio mais recente.
+ *
+ * É o que as telas abertas consultam de tempos em tempos para saber que saiu
+ * alerta novo. Uma linha, um índice (`alerts_sent_at_idx`) — a consulta é
+ * barata o bastante para repetir a cada poucos segundos.
+ */
+export async function ultimoEnvio(): Promise<Envio | null> {
+  const sb = db();
+  if (!sb) return null;
+
+  const { data, error } = await sb
+    .from("alerts")
+    .select("id, titulo, destino, companhia, cabine, sent_at")
+    .not("sent_at", "is", null)
+    .order("sent_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return {
+    id: data.id as string,
+    titulo: data.titulo as string,
+    destino: data.destino as string,
+    companhia: data.companhia as string | null,
+    cabine: data.cabine as string | null,
+    enviadoEm: data.sent_at as string,
+  };
+}
+
 export async function buscarAlerta(id: string): Promise<Alerta | null> {
   const sb = db();
   if (!sb) return null;
