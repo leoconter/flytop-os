@@ -13,12 +13,10 @@
  * Segredo esperado: MONDE_API_TOKEN (o Basic token da API v3 do Monde).
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { DEFAULT_WINDOW_DAYS, runDaily } from "./daily.ts";
-import { fetchSalesPage } from "./monde.ts";
-import { type Counters, emptyCounters, persistPage } from "./persist.ts";
+import { DEFAULT_WINDOW_DAYS, runDaily, runFull } from "./daily.ts";
+import { type Counters, emptyCounters } from "./persist.ts";
 
 /** Páginas por chamada no backfill, para não estourar o tempo da função. */
-const BACKFILL_PAGES_PER_CALL = 5;
 
 Deno.serve(async (req) => {
   const started = Date.now();
@@ -46,29 +44,17 @@ Deno.serve(async (req) => {
   let nextPage: number | null = null;
 
   try {
+    /* Desde 14/08/2026 a listagem só devolve resumo, e o detalhe é uma
+       requisição por venda. `runDaily` e `runFull` cuidam dos dois passos —
+       daí os modos aqui terem virado chamadas a elas em vez de laços próprios
+       sobre páginas, que era o que existia quando a listagem trazia tudo. */
     if (mode === "canceled") {
-      let page = 1;
-      let totalPages = 1;
-      do {
-        const res = await fetchSalesPage(token, page, "canceled");
-        totalPages = res.totalPages;
-        await persistPage(db, res.sales, counters);
-        page++;
-      } while (page <= totalPages);
+      const c = await runDaily(db, token, 0);
+      Object.assign(counters, c);
     } else if (mode === "backfill" || mode === "full") {
-      const first: number = body.page ?? 1;
-      const limit: number = mode === "full" ? Infinity : (body.pages ?? BACKFILL_PAGES_PER_CALL);
-      let page = first;
-      let totalPages = 1;
-
-      while (page - first < limit) {
-        const res = await fetchSalesPage(token, page);
-        totalPages = res.totalPages;
-        await persistPage(db, res.sales, counters);
-        page++;
-        if (page > totalPages) break;
-      }
-      nextPage = page <= totalPages ? page : null;
+      const c = await runFull(db, token);
+      Object.assign(counters, c);
+      nextPage = null;
     } else {
       // Mesma implementação que a rota agendada da Vercel usa.
       const c = await runDaily(db, token, windowDays);

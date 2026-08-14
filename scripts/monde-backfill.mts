@@ -15,7 +15,7 @@
  */
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
-import { fetchSalesPage } from "../supabase/functions/monde-sync/monde.ts";
+import { fetchSaleDetails, fetchSalesPage, saleId } from "../supabase/functions/monde-sync/monde.ts";
 import { emptyCounters, persistPage } from "../supabase/functions/monde-sync/persist.ts";
 
 function env(name: string): string | null {
@@ -69,31 +69,42 @@ async function finish(status: "success" | "error", error?: string) {
 let page = Number(process.argv[2]) || 1;
 console.log(`Carga histórica do Monde — começando na página ${page}\n`);
 
+/**
+ * Desde 14/08/2026 a listagem devolve só um resumo: o detalhe de cada venda
+ * vem numa requisição por venda, em lotes paralelos. A listagem também deixou
+ * de informar o total de páginas — agora só diz se existe a próxima.
+ */
+async function levarPagina(resumos: { id?: string; sale_id?: string }[]) {
+  const ids = resumos
+    .map((r) => saleId(r as Parameters<typeof saleId>[0]))
+    .filter((id): id is string => Boolean(id));
+  if (!ids.length) return 0;
+  const detalhes = await fetchSaleDetails(token, ids);
+  await persistPage(db, detalhes, counters);
+  return detalhes.length;
+}
+
 try {
-  let totalPages = 1;
-  do {
+  while (true) {
     const res = await fetchSalesPage(token, page);
-    totalPages = res.totalPages;
-    await persistPage(db, res.sales, counters);
-    const pct = ((page / totalPages) * 100).toFixed(0);
+    const n = await levarPagina(res.sales);
     console.log(
-      `  página ${String(page).padStart(2)}/${totalPages} (${pct.padStart(3)}%) — ` +
-        `${res.sales.length} vendas · acumulado ${counters.seen}`,
+      `  página ${String(page).padStart(2)} — ${n} vendas · acumulado ${counters.seen}`,
     );
+    if (!res.hasNext) break;
     page++;
-  } while (page <= totalPages);
+  }
 
   // Canceladas não aparecem na listagem padrão — precisam de um passe próprio.
   console.log("\nBuscando vendas canceladas...");
   let cPage = 1;
-  let cTotal = 1;
-  do {
+  while (true) {
     const res = await fetchSalesPage(token, cPage, "canceled");
-    cTotal = res.totalPages;
-    await persistPage(db, res.sales, counters);
-    console.log(`  página ${cPage}/${cTotal} — ${res.sales.length} canceladas`);
+    const n = await levarPagina(res.sales);
+    console.log(`  página ${cPage} — ${n} canceladas`);
+    if (!res.hasNext) break;
     cPage++;
-  } while (cPage <= cTotal);
+  }
 
   await finish("success");
   const secs = ((Date.now() - started) / 1000).toFixed(1);

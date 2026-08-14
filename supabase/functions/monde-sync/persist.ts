@@ -9,11 +9,14 @@
  * `jsr:@supabase/supabase-js`, no Node de `node_modules`.
  */
 import {
+  referencias,
+  saleId,
   type CustomerRow,
   type MondeSale,
   toCustomer,
   toPassengerRow,
   toPaymentRows,
+  toSaleHeaderRow,
   toSaleRow,
   toSegmentRows,
   toTicketRow,
@@ -28,10 +31,73 @@ export interface Counters {
   seen: number;
   inserted: number;
   updated: number;
+  /** Vendas que a API devolveu sem identificador — não dá para gravar. */
+  skipped: number;
+  /** Vendas que tiveram o detalhe buscado (bilhetes, trechos, passageiros). */
+  detailed: number;
 }
 
 export function emptyCounters(): Counters {
-  return { pages: 0, seen: 0, inserted: 0, updated: 0 };
+  return { pages: 0, seen: 0, inserted: 0, updated: 0, skipped: 0, detailed: 0 };
+}
+
+/**
+ * Nome de cada id citado pelas vendas do lote.
+ *
+ * Duas consultas para o lote inteiro. Quem não estiver no catálogo fica de
+ * fora do mapa, e o campo correspondente grava nulo — melhor um vazio honesto
+ * que um id cru aparecendo como se fosse nome na tela.
+ */
+async function resolverNomes(db: Db, ids: string[]): Promise<Map<string, string>> {
+  const mapa = new Map<string, string>();
+  const unicos = [...new Set(ids.filter(Boolean))];
+  if (!unicos.length) return mapa;
+
+  // Lotes: uma lista gigante no `in.()` estoura o tamanho da URL.
+  for (let i = 0; i < unicos.length; i += 200) {
+    const fatia = unicos.slice(i, i + 200);
+    const [vend, pess] = await Promise.all([
+      db.from("monde_sellers").select("seller_id, name").in("seller_id", fatia),
+      db.from("monde_people").select("person_id, name").in("person_id", fatia),
+    ]);
+    for (const r of vend.data ?? []) if (r.name) mapa.set(r.seller_id, r.name);
+    for (const r of pess.data ?? []) if (r.name && !mapa.has(r.person_id)) mapa.set(r.person_id, r.name);
+  }
+  return mapa;
+}
+
+/**
+ * Grava só o cabeçalho e os valores, a partir do resumo da listagem.
+ *
+ * Não toca nos filhos de propósito: bilhetes, trechos e passageiros vêm do
+ * detalhe, e apagá-los aqui deixaria a venda oca até a próxima carga completa.
+ */
+export async function persistSummaries(
+  db: Db,
+  resumos: MondeSale[],
+  counters: Counters,
+): Promise<void> {
+  if (!resumos.length) return;
+
+  const ids = resumos.map((s) => saleId(s)!);
+  const conhecidas = new Set<string>();
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data } = await db
+      .from("monde_sales")
+      .select("sale_id")
+      .in("sale_id", ids.slice(i, i + 200));
+    for (const r of data ?? []) conhecidas.add(r.sale_id);
+  }
+
+  const { error } = await db
+    .from("monde_sales")
+    .upsert(resumos.map(toSaleHeaderRow), { onConflict: "sale_id" });
+  if (error) throw new Error(`cabecalhos: ${error.message}`);
+
+  counters.pages += 1;
+  counters.seen += resumos.length;
+  counters.inserted += ids.filter((id) => !conhecidas.has(id)).length;
+  counters.updated += ids.filter((id) => conhecidas.has(id)).length;
 }
 
 /** Grava a página inteira de uma vez: ~8 consultas, em vez de uma por venda. */
@@ -41,6 +107,20 @@ export async function persistPage(
   counters: Counters,
 ): Promise<void> {
   if (!sales.length) return;
+
+  /* Venda sem identificador nunca chega ao banco.
+     Era daqui que saía o `invalid input syntax for type uuid: "undefined"`:
+     o id virava a string "undefined" dentro do filtro, e o erro do Postgres
+     não dizia nada sobre a causa. Descartar e contar é mais honesto — e o
+     aviso no log diz qual venda ficou de fora. */
+  const comId = sales.filter((s) => {
+    if (saleId(s)) return true;
+    console.warn("[monde] venda sem identificador, descartada:", s.sale_number ?? "(sem numero)");
+    counters.skipped += 1;
+    return false;
+  });
+  if (!comId.length) return;
+  sales = comId;
 
   // 1. Clientes (pagante + passageiros), deduplicados dentro do lote — o
   //    Postgres recusa um upsert que afete a mesma linha duas vezes.
@@ -52,14 +132,14 @@ export async function persistPage(
     const payer = await toCustomer(sale.payer);
     if (payer) {
       customerByHash.set(payer.identity_hash, payer);
-      payerHash.set(sale.sale_id, payer.identity_hash);
+      payerHash.set(saleId(sale)!, payer.identity_hash);
     }
     for (const [ti, ticket] of (sale.airline_tickets ?? []).entries()) {
       for (const [pi, p] of (ticket.passengers ?? []).entries()) {
         const person = await toCustomer(p.person);
         if (person) {
           customerByHash.set(person.identity_hash, person);
-          passengerHash.set(`${sale.sale_id}|${ti}|${pi}`, person.identity_hash);
+          passengerHash.set(`${saleId(sale)}|${ti}|${pi}`, person.identity_hash);
         }
       }
     }
@@ -80,7 +160,7 @@ export async function persistPage(
   }
 
   // 2. Vendas. Consulta antes o que já existe, só para separar novo de atualizado.
-  const saleIds = sales.map((s) => s.sale_id);
+  const saleIds = sales.map((s) => saleId(s)!);
   const { data: known, error: knownErr } = await db
     .from("monde_sales")
     .select("sale_id")
@@ -88,17 +168,22 @@ export async function persistPage(
   if (knownErr) throw new Error(`vendas existentes: ${knownErr.message}`);
   const existing = new Set((known ?? []).map((r: { sale_id: string }) => r.sale_id));
 
+  /* Vendedor, companhia e consolidadora deixaram de vir embutidos na venda em
+     14/08/2026 — agora vêm como `{id}`. Resolvemos os nomes de uma vez contra
+     o catálogo que já sincronizamos, em vez de uma requisição por referência. */
+  const nomes = await resolverNomes(db, sales.flatMap(referencias));
+
   const saleRows = sales.map((s) =>
-    toSaleRow(s, idByHash.get(payerHash.get(s.sale_id) ?? "") ?? null),
+    toSaleRow(s, idByHash.get(payerHash.get(saleId(s)!) ?? "") ?? null, nomes),
   );
   const { error: saleErr } = await db
     .from("monde_sales")
     .upsert(saleRows, { onConflict: "sale_id" });
   if (saleErr) throw new Error(`vendas: ${saleErr.message}`);
 
-  counters.seen += sales.length;
-  counters.inserted += sales.filter((s) => !existing.has(s.sale_id)).length;
-  counters.updated += sales.filter((s) => existing.has(s.sale_id)).length;
+  /* `persistSummaries` já contou estas vendas: contar de novo dobraria os
+     números do painel. Aqui só interessa quantas ganharam detalhe. */
+  counters.detailed += sales.length;
 
   // 3. Filhos: apaga e regrava. É o jeito simples de deixar a venda editada no
   //    ERP idêntica aqui — trechos e passageiros pertencem inteiramente à venda.
@@ -117,7 +202,7 @@ export async function persistPage(
 
   // 4. Bilhetes — precisamos dos ids gerados para pendurar trechos e passageiros.
   const ticketRows = sales.flatMap((s) =>
-    (s.airline_tickets ?? []).map((t, i) => toTicketRow(s.sale_id, t, i)),
+    (s.airline_tickets ?? []).map((t, i) => toTicketRow(saleId(s)!, t, i, nomes)),
   );
   if (ticketRows.length) {
     const { data: inserted, error } = await db
@@ -136,11 +221,11 @@ export async function persistPage(
 
     for (const sale of sales) {
       for (const [ti, ticket] of (sale.airline_tickets ?? []).entries()) {
-        const id = ticketId.get(`${sale.sale_id}|${ti}`);
+        const id = ticketId.get(`${saleId(sale)}|${ti}`);
         if (!id) continue;
         segments.push(...toSegmentRows(id, ticket));
         for (const [pi, p] of (ticket.passengers ?? []).entries()) {
-          const hash = passengerHash.get(`${sale.sale_id}|${ti}|${pi}`);
+          const hash = passengerHash.get(`${saleId(sale)}|${ti}|${pi}`);
           passengers.push(toPassengerRow(id, p, pi, hash ? idByHash.get(hash) ?? null : null));
         }
       }
@@ -157,7 +242,7 @@ export async function persistPage(
   }
 
   // 5. Pagamentos.
-  const paymentRows = sales.flatMap((s) => toPaymentRows(s.sale_id, s));
+  const paymentRows = sales.flatMap((s) => toPaymentRows(saleId(s)!, s));
   if (paymentRows.length) {
     const { error } = await db.from("monde_sale_payments").insert(paymentRows);
     if (error) throw new Error(`pagamentos: ${error.message}`);
@@ -166,12 +251,12 @@ export async function persistPage(
   // 6. Terrestres (hotel, carro, seguro, pacote, outros).
   await persistLandItems(
     db,
-    sales.map((s) => ({ sale_id: s.sale_id, payload: s as unknown as Record<string, unknown> })),
+    sales.map((s) => ({ sale_id: saleId(s)!, payload: s as unknown as Record<string, unknown> })),
   );
 
   // 7. Espelho bruto.
   const rawRows = sales.map((s) => ({
-    sale_id: s.sale_id,
+    sale_id: saleId(s)!,
     payload: s,
     fetched_at: new Date().toISOString(),
   }));
