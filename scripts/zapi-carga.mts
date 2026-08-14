@@ -18,6 +18,7 @@
  */
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { inferir } from "../src/lib/whatsapp/rotulo.ts";
 import { listarGrupos, metadados } from "../src/lib/whatsapp/zapi.ts";
 
 function env(name: string): string | null {
@@ -127,6 +128,20 @@ for (const [i, g] of grupos.entries()) {
     console.log(`${prefixo}: erro ao gravar o grupo — ${erroGrupo.message}`);
     falhas.push(g.groupId);
     continue;
+  }
+
+  /* Palpite de identificação a partir do nome, só onde ninguém conferiu ainda.
+     `confirmado_em` preenchido significa que uma pessoa decidiu na tela de
+     Comunidades — e a carga não desfaz decisão de gente. */
+  const sugestao = inferir(m.name ?? g.name);
+  if (sugestao.numero != null) {
+    await comRetentativa("identificação", () =>
+      db
+        .from("whatsapp_groups")
+        .update({ numero: sugestao.numero, praca: sugestao.praca })
+        .eq("group_id", g.groupId)
+        .is("confirmado_em", null),
+    );
   }
 
   // Quem já estava no banco antes desta leitura — para descobrir quem saiu.

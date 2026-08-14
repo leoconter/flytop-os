@@ -12,6 +12,7 @@ const ABAS = [
   { href: "/configuracoes/classes", label: "Classes tarifárias", soAdmin: true },
   { href: "/configuracoes/usuarios", label: "Usuários", soAdmin: true },
   { href: "/configuracoes/equipes", label: "Equipes", soAdmin: true },
+  { href: "/configuracoes/comunidades", label: "Comunidades", soAdmin: true },
 ];
 
 export function ConfigTabs({ admin }: { admin: boolean }) {
