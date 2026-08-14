@@ -9,7 +9,13 @@ import { NextResponse, type NextRequest } from "next/server";
  * papel. Isto aqui existe para a pessoa não-logada cair no login em vez de ver
  * um esqueleto de tela antes do redirecionamento.
  */
-const PUBLICAS = ["/login"];
+/**
+ * `/api/webhooks` fica fora do porteiro por necessidade: quem chama é a Z-API,
+ * que não tem cookie de sessão e receberia um redirecionamento para o login em
+ * vez de entregar o evento. Quem protege lá é o segredo no caminho, conferido
+ * dentro da própria rota.
+ */
+const PUBLICAS = ["/login", "/api/webhooks"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
