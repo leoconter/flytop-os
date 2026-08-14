@@ -279,6 +279,42 @@ export async function fetchSaleDetails(
 }
 
 /**
+ * Busca pessoas por id, uma a uma.
+ *
+ * Só para os poucos que ainda não estão no catálogo — cliente novo aparecendo
+ * na primeira venda dele. Mesmo lote de 4 e mesmo recuo em 429 das vendas.
+ */
+export async function fetchPeople(
+  token: string,
+  ids: string[],
+  lote = 4,
+): Promise<Map<string, Record<string, unknown>>> {
+  const out = new Map<string, Record<string, unknown>>();
+
+  for (let i = 0; i < ids.length; i += lote) {
+    const fatia = ids.slice(i, i + lote);
+    const vindos = await Promise.all(
+      fatia.map(async (id) => {
+        for (let tentativa = 0; ; tentativa++) {
+          const res = await fetch(`${BASE}/people/${id}`, { headers: headers(token) });
+          if (res.status === 404) return null;
+          if (res.status === 429 && tentativa < 4) {
+            await new Promise((r) => setTimeout(r, 2000 * 2 ** tentativa));
+            continue;
+          }
+          if (!res.ok) return null;
+          const body = await res.json();
+          return { id, pessoa: (body.data ?? body) as Record<string, unknown> };
+        }
+      }),
+    );
+    for (const v of vindos) if (v) out.set(v.id, v.pessoa);
+  }
+
+  return out;
+}
+
+/**
  * Percorre todas as páginas de um recurso simples (pessoas, vendedores,
  * contas) e devolve a lista inteira. Só para recursos de volume conhecido —
  * as vendas usam `fetchSalesPage`, que precisa parar no meio.

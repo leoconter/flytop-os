@@ -80,7 +80,7 @@ async function levarPagina(resumos: { id?: string; sale_id?: string }[]) {
     .filter((id): id is string => Boolean(id));
   if (!ids.length) return 0;
   const detalhes = await fetchSaleDetails(token, ids);
-  await persistPage(db, detalhes, counters);
+  await persistPage(db, detalhes, counters, token);
   return detalhes.length;
 }
 

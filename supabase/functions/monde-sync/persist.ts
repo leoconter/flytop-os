@@ -9,6 +9,7 @@
  * `jsr:@supabase/supabase-js`, no Node de `node_modules`.
  */
 import {
+  fetchPeople,
   referencias,
   saleId,
   type CustomerRow,
@@ -39,6 +40,83 @@ export interface Counters {
 
 export function emptyCounters(): Counters {
   return { pages: 0, seen: 0, inserted: 0, updated: 0, skipped: 0, detailed: 0 };
+}
+
+/**
+ * Dados das pessoas citadas por id nas vendas do lote.
+ *
+ * Vem de `monde_people`, que guarda o mesmo `identity_hash` de
+ * `monde_customers` — é o que permite ligar a venda ao cliente sem que a API
+ * mande os dados junto. Quem não estiver no catálogo é buscado uma vez em
+ * `/people/{id}` e gravado: cliente novo aparece na primeira venda dele, e
+ * ressincronizar o catálogo inteiro (33s) a cada carga sairia caro.
+ */
+async function pessoasPorId(
+  db: Db,
+  token: string,
+  sales: MondeSale[],
+): Promise<Map<string, CustomerRow>> {
+  const ids = new Set<string>();
+  for (const s of sales) {
+    const pid = (s.payer as { id?: string } | null)?.id;
+    if (pid) ids.add(pid);
+    for (const t of s.airline_tickets ?? []) {
+      for (const p of t.passengers ?? []) {
+        const id = (p.person as { id?: string } | null)?.id;
+        if (id) ids.add(id);
+      }
+    }
+  }
+
+  const mapa = new Map<string, CustomerRow>();
+  if (!ids.size) return mapa;
+
+  const COLUNAS =
+    "person_id, identity_hash, name, person_kind, email, mobile_number, phone_number, birthdate, city_name, state_code";
+  const lista = [...ids];
+  const achados = new Set<string>();
+
+  for (let i = 0; i < lista.length; i += 200) {
+    const { data } = await db
+      .from("monde_people")
+      .select(COLUNAS)
+      .in("person_id", lista.slice(i, i + 200));
+    for (const r of data ?? []) {
+      achados.add(r.person_id);
+      mapa.set(r.person_id, {
+        identity_hash: r.identity_hash,
+        name: r.name,
+        person_kind: r.person_kind,
+        email: r.email,
+        mobile_number: r.mobile_number,
+        phone_number: r.phone_number,
+        birthdate: r.birthdate,
+        city_name: r.city_name,
+        state_code: r.state_code,
+      });
+    }
+  }
+
+  const faltando = lista.filter((id) => !achados.has(id));
+  if (faltando.length) {
+    console.warn(`[monde] ${faltando.length} pessoa(s) fora do catálogo; buscando individualmente.`);
+    const vindas = await fetchPeople(token, faltando);
+    const novas: Record<string, unknown>[] = [];
+    for (const [id, pessoa] of vindas) {
+      const linha = await toCustomer(pessoa);
+      if (!linha) continue;
+      mapa.set(id, linha);
+      novas.push({ person_id: id, ...linha, synced_at: new Date().toISOString() });
+    }
+    if (novas.length) {
+      const { error } = await db
+        .from("monde_people")
+        .upsert(novas, { onConflict: "person_id" });
+      if (error) console.error("[monde] catálogo de pessoas:", error.message);
+    }
+  }
+
+  return mapa;
 }
 
 /**
@@ -105,6 +183,7 @@ export async function persistPage(
   db: Db,
   sales: MondeSale[],
   counters: Counters,
+  token = "",
 ): Promise<void> {
   if (!sales.length) return;
 
@@ -128,15 +207,28 @@ export async function persistPage(
   const payerHash = new Map<string, string>();
   const passengerHash = new Map<string, string>();
 
+  /* Desde 14/08/2026 o pagante e os passageiros vêm só como `{id}` — os dados
+     da pessoa não estão mais na venda. Quem os tem é `monde_people`, que já
+     sincronizamos; a ponte é o `identity_hash`, gravado nas duas tabelas. */
+  const pessoas = await pessoasPorId(db, token, sales);
+
+  /** Do que vier na venda (formato antigo) ou do catálogo (formato novo). */
+  const resolver = async (ref: unknown): Promise<CustomerRow | null> => {
+    const embutido = await toCustomer(ref as Parameters<typeof toCustomer>[0]);
+    if (embutido) return embutido;
+    const id = (ref as { id?: string } | null)?.id;
+    return id ? (pessoas.get(id) ?? null) : null;
+  };
+
   for (const sale of sales) {
-    const payer = await toCustomer(sale.payer);
+    const payer = await resolver(sale.payer);
     if (payer) {
       customerByHash.set(payer.identity_hash, payer);
       payerHash.set(saleId(sale)!, payer.identity_hash);
     }
     for (const [ti, ticket] of (sale.airline_tickets ?? []).entries()) {
       for (const [pi, p] of (ticket.passengers ?? []).entries()) {
-        const person = await toCustomer(p.person);
+        const person = await resolver(p.person);
         if (person) {
           customerByHash.set(person.identity_hash, person);
           passengerHash.set(`${saleId(sale)}|${ti}|${pi}`, person.identity_hash);

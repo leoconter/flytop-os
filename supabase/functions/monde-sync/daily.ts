@@ -131,7 +131,7 @@ async function gravar(
   if (!fatia.length) return;
 
   const detalhes = await fetchSaleDetails(token, fatia);
-  await persistPage(db, detalhes, counters);
+  await persistPage(db, detalhes, counters, token);
 }
 
 /**
