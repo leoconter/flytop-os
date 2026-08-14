@@ -72,16 +72,72 @@ export function soDigitos(v: unknown): string {
   return String(v ?? "").replace(/\D/g, "");
 }
 
+/**
+ * Quem é a pessoa do aviso.
+ *
+ * O WhatsApp migrou para o LID: um identificador anônimo, estável por pessoa,
+ * que **não revela o telefone**. Na carga inicial dos grupos, 99,8% dos
+ * participantes vieram só com LID.
+ *
+ * Os dois nunca podem cair na mesma coluna. `193084734365861@lid` vira
+ * `193084734365861` ao tirar os símbolos — quinze dígitos, cara de telefone
+ * com DDI. Guardado como telefone, casaria com o número de algum cliente do
+ * Monde e ligaria uma venda à pessoa errada. Por isso a separação é feita aqui,
+ * na entrada, e não depois.
+ */
+export interface Identidade {
+  phone: string | null;
+  lid: string | null;
+  /** O que identifica a pessoa: telefone quando existe, LID quando não. */
+  key: string;
+}
+
+/**
+ * A partir de quantos dígitos um número deixa de poder ser telefone.
+ *
+ * Os avisos do webhook trazem o LID **sem** o sufixo `@lid` — chegam como
+ * "171171710501073", quinze dígitos secos. O sufixo não serve para separar,
+ * então sobra o tamanho.
+ *
+ * Medido nos 80 mil participantes carregados: todo telefone real tem no máximo
+ * 13 dígitos (Brasil 55+DDD+9, EUA 1+10, Portugal, Irlanda, Alemanha, Paraguai
+ * — todos abaixo disso), e todo LID observado tem 14 ou mais.
+ *
+ * O E.164 admite até 15 dígitos, então a régua não é perfeita. Ela erra para o
+ * lado certo: classificar um telefone como LID apenas deixa a pessoa sem
+ * identificação, enquanto classificar um LID como telefone o ligaria ao número
+ * de um cliente do Monde e atribuiria a venda a quem não comprou.
+ */
+const MAX_DIGITOS_TELEFONE = 13;
+
+export function identidade(v: unknown): Identidade | null {
+  const bruto = String(v ?? "").trim();
+  if (!bruto) return null;
+
+  const digitos = soDigitos(bruto.split("@")[0]);
+  if (!digitos) return null;
+
+  const ehLid = bruto.toLowerCase().includes("@lid") || digitos.length > MAX_DIGITOS_TELEFONE;
+  if (ehLid) return { phone: null, lid: `${digitos}@lid`, key: `${digitos}@lid` };
+
+  return { phone: digitos, lid: null, key: digitos };
+}
+
 export interface EventoGrupo {
   groupId: string;
   groupName: string | null;
-  phone: string;
+  phone: string | null;
+  lid: string | null;
+  memberKey: string;
   actorPhone: string | null;
+  actorLid: string | null;
   kind: Especie;
   notification: string;
   method: string | null;
   occurredAt: string;
   eventKey: string;
+  /** O aviso como a Z-API mandou, para conferência posterior. */
+  bruto: unknown;
 }
 
 interface Payload {
@@ -98,10 +154,30 @@ interface Payload {
   instanceId?: string;
 }
 
-/** É um aviso de grupo, e não uma mensagem comum? */
+/** O `phone` de um grupo não é telefone: é "120363421170082651-group". */
+function pareceGrupo(phone: unknown): boolean {
+  const v = String(phone ?? "");
+  return v.endsWith("-group") || v.includes("@g.us");
+}
+
+/**
+ * É um aviso de grupo, e não uma mensagem comum?
+ *
+ * Não olha `isGroup` de propósito. Os avisos que já recebemos vêm com `true`,
+ * como a documentação promete — mas a mesma Z-API lista esses mesmos grupos com
+ * `isGroup: false` em `/groups`, porque são grupos de anúncio de comunidade.
+ * Um campo que a própria API preenche de dois jeitos para o mesmo grupo não
+ * serve de porteiro: no dia em que o aviso vier no formato da listagem, o
+ * webhook descartaria em silêncio as entradas e saídas que existe para
+ * capturar, e ninguém perceberia — o log simplesmente pararia de crescer.
+ *
+ * O que decide é o par que sempre vem junto: `notification` preenchido e um
+ * `phone` no formato de grupo.
+ */
 export function ehAvisoDeGrupo(p: unknown): p is Payload {
   const x = p as Payload;
-  return Boolean(x && typeof x === "object" && x.isGroup && x.notification);
+  if (!x || typeof x !== "object") return false;
+  return Boolean(x.notification) && pareceGrupo(x.phone);
 }
 
 /**
@@ -124,7 +200,9 @@ export function lerEvento(p: Payload): EventoGrupo[] {
   if (SEM_PARTICIPANTE.has(notification)) return [];
 
   const kind = ESPECIE[notification] ?? "outro";
-  const params = (p.notificationParameters ?? []).map(soDigitos).filter(Boolean);
+  const params = (p.notificationParameters ?? [])
+    .map(identidade)
+    .filter((x): x is Identidade => x !== null);
   if (!params.length) return [];
 
   /* Quando alguém age sobre outra pessoa — adicionar, remover — a Z-API manda
@@ -136,22 +214,26 @@ export function lerEvento(p: Payload): EventoGrupo[] {
       notification === "GROUP_PARTICIPANT_REMOVE" ||
       notification === "MEMBERSHIP_APPROVAL_REQUEST");
 
-  const actorPhone = comAutor ? params[0] : null;
+  const autor = comAutor ? params[0] : null;
   const afetados = comAutor ? params.slice(1) : params;
 
-  // O messageId identifica o aviso; o telefone separa as pessoas dentro dele.
+  // O messageId identifica o aviso; a identidade separa as pessoas dentro dele.
   const base = String(p.messageId ?? `${groupId}-${p.momment ?? ""}`);
 
-  return afetados.map((phone) => ({
+  return afetados.map((quem) => ({
     groupId,
     groupName,
-    phone,
-    actorPhone,
+    phone: quem.phone,
+    lid: quem.lid,
+    memberKey: quem.key,
+    actorPhone: autor?.phone ?? null,
+    actorLid: autor?.lid ?? null,
     kind,
     notification,
     method: p.requestMethod ?? null,
     occurredAt,
-    eventKey: `${base}:${phone}:${notification}`,
+    eventKey: `${base}:${quem.key}:${notification}`,
+    bruto: p,
   }));
 }
 
