@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHead, Pill } from "@/components/dashboard/ui";
 import { getGoalsYear } from "@/lib/monde/goals";
+import { MetasTabs } from "@/components/metas/tabs";
 import { GoalsGrid } from "./goals-grid";
 
 export const metadata = { title: "FlyTop OS · Metas de Venda" };
@@ -38,6 +39,7 @@ export default async function MetasPage({
           sub="Planilha anual de metas por vendedor"
           right={<Pill tone="blue">Aguardando conexão</Pill>}
         />
+        <MetasTabs />
         <div className="note-box blue">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
@@ -68,6 +70,8 @@ export default async function MetasPage({
           </span>
         }
       />
+
+      <MetasTabs />
 
       <div className="section">
         <GoalsGrid data={data} />

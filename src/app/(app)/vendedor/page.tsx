@@ -4,6 +4,7 @@ import { currentUser } from "@/lib/auth/session";
 import type { Metric } from "@/lib/dashboard-data";
 import { PARAM_FROM, PARAM_TO, formatRange, resolveRange } from "@/lib/date-range";
 import { fmtMoney, fmtMoneyCompact } from "@/lib/meta/ads";
+import { getFaixaDoVendedor } from "@/lib/monde/comissoes";
 import { fmtInt } from "@/lib/meta/instagram";
 import { getVendorView, listSellers } from "@/lib/monde/vendor";
 import { SellerSwitch } from "./seller-switch";
@@ -93,6 +94,11 @@ export default async function VendedorPage({
   const mesLabel = `${MES[Number(range.until.slice(5, 7)) - 1]} de ${range.until.slice(0, 4)}`;
   const souEu = view.sellerId === user.sellerId;
 
+  /* A faixa é sempre a do MÊS, mesmo quando o período escolhido é outro: a
+     comissão se apura por mês fechado, e mostrar a faixa de um intervalo
+     qualquer daria um percentual que ninguém vai receber. */
+  const faixa = await getFaixaDoVendedor(view.name, range.until.slice(0, 7));
+
   const metrics: Metric[] = [
     {
       label: souEu ? "% da sua meta" : "% da meta",
@@ -126,6 +132,27 @@ export default async function VendedorPage({
       privateValue: true,
     },
   ];
+
+  if (faixa) {
+    metrics.push({
+      label: "Faixa de comissão",
+      value: faixa.faixa
+        ? `${(faixa.faixa.taxa * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`
+        : "sem faixa",
+      small: !faixa.faixa,
+      tone: faixa.faixa && faixa.faixa.taxa > 0 ? "green" : undefined,
+      // O que falta para subir é o que dá o que fazer; só o percentual atual
+      // informa sem sugerir ação nenhuma.
+      hint: faixa.faltaParaProxima
+        ? `faltam ${fmtMoney(faixa.faltaParaProxima)} para ${(faixa.proxima!.taxa * 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`
+        : faixa.faixa
+          ? `${fmtMoney(faixa.comissao)} sobre a margem do mês`
+          : "nenhuma faixa cobre este faturamento",
+      privateValue: true,
+      privateHint: true,
+      info: `A faixa vem do faturamento do mês (${fmtMoney(faixa.faturamento)}); o percentual incide sobre a margem (${fmtMoney(faixa.margem)}). Faixas em Metas · Comissões.`,
+    });
+  }
 
   return (
     <>
