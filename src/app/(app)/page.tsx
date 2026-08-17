@@ -232,6 +232,7 @@ export default async function GeralPage({
             title="Top 3 companhias"
             subtitle="por receita"
             items={breakdown ? toListItems(breakdown.airlines) : suppliers}
+            comLogo
           />
           <div className="glass card">
             <SectionHead title="Classes mais vendidas" sub="por receita" flush />

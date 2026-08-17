@@ -7,6 +7,7 @@ import { fmtMoney, fmtMoneyCompact } from "@/lib/meta/ads";
 import { fmtInt } from "@/lib/meta/instagram";
 import { getVendorView, listSellers } from "@/lib/monde/vendor";
 import { SellerSwitch } from "./seller-switch";
+import { CompanhiaNome } from "@/components/companhia-logo";
 
 export const metadata = { title: "FlyTop OS · Tela do Vendedor" };
 export const dynamic = "force-dynamic";
@@ -210,7 +211,9 @@ export default async function VendedorPage({
                       </td>
                       <td>{s.customer ?? <span className="muted">—</span>}</td>
                       <td className="mono-cell">{s.route ?? s.destination ?? "—"}</td>
-                      <td>{s.airline ?? <span className="muted">—</span>}</td>
+                      <td>
+                        <CompanhiaNome nome={s.airline} />
+                      </td>
                       <td>{s.cabin ?? <span className="muted">—</span>}</td>
                       <td className="r private">{fmtMoney(s.value)}</td>
                     </tr>

@@ -7,6 +7,7 @@ import {
   type VooCRM,
   waLink,
 } from "@/lib/crm-data";
+import { CompanhiaNome } from "@/components/companhia-logo";
 
 export const metadata = {
   title: "FlyTop OS · Embarques e retornos 48h",
@@ -46,7 +47,9 @@ function VooTable({
                 </td>
                 <td>{v.cliente}</td>
                 <td className="mono-cell">{v.trecho}</td>
-                <td>{v.companhia}</td>
+                <td>
+                  <CompanhiaNome nome={v.companhia} />
+                </td>
                 <td className="mono-cell muted">{v.localizador}</td>
                 <td className="r">
                   <div className="row-actions">

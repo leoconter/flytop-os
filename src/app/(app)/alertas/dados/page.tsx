@@ -10,6 +10,7 @@ import {
 import type { Metric } from "@/lib/dashboard-data";
 import { formatRange, PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
 import { fmtInt } from "@/lib/meta/instagram";
+import { CompanhiaNome } from "@/components/companhia-logo";
 
 export const metadata = {
   title: "FlyTop OS · Dados de alertas",
@@ -29,10 +30,12 @@ function CountList({
   title,
   sub,
   items,
+  comLogo = false,
 }: {
   title: string;
   sub: string;
   items: Contagem[];
+  comLogo?: boolean;
 }) {
   return (
     <div className="glass card">
@@ -47,7 +50,9 @@ function CountList({
             <div className="list-row" key={item.name}>
               <span className="rank">{i + 1}</span>
               <div className="list-main">
-                <div className="list-name">{item.name}</div>
+                <div className="list-name">
+                  {comLogo ? <CompanhiaNome nome={item.name} /> : item.name}
+                </div>
               </div>
               <div className="list-value">
                 {fmtInt(item.count)} {item.count === 1 ? "alerta" : "alertas"}
@@ -120,7 +125,7 @@ export default async function DadosAlertasPage({
       <Metrics metrics={metrics} />
 
       <div className="grid-2">
-        <CountList title="Por companhia" sub="alertas enviados" items={porCompanhia} />
+        <CountList title="Por companhia" sub="alertas enviados" items={porCompanhia} comLogo />
         <CountList title="Por destino" sub="alertas enviados" items={porDestino} />
         {/* Antes havia um corte por continente; o cadastro não pergunta o
             continente, então ele seria um palpite a partir do nome do destino. */}
@@ -155,7 +160,9 @@ export default async function DadosAlertasPage({
                       <td>
                         {a.fields.origem} → {a.fields.destino}
                       </td>
-                      <td>{a.fields.companhia || <span className="muted">—</span>}</td>
+                      <td>
+                        <CompanhiaNome nome={a.fields.companhia} />
+                      </td>
                       <td>{a.fields.cabine || <span className="muted">—</span>}</td>
                       <td className="r private">{money(a.fields.por)}</td>
                       <td className="r">{percentOff(a.fields.de, a.fields.por)}</td>

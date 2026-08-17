@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CompanhiaNome } from "@/components/companhia-logo";
 import type { ListItem, Metric } from "@/lib/dashboard-data";
 import { MetricCard } from "./metric-card";
 
@@ -91,11 +92,14 @@ export function ListCard({
   subtitle,
   items,
   privateValue = true,
+  comLogo = false,
 }: {
   title: string;
   subtitle: string;
   items: ListItem[];
   privateValue?: boolean;
+  /** Quando os itens são companhias aéreas, mostra a logo ao lado do nome. */
+  comLogo?: boolean;
 }) {
   return (
     <div className="glass card">
@@ -106,7 +110,7 @@ export function ListCard({
             <span className="rank">{i + 1}</span>
             <div className="list-main">
               <div className={cx("list-name", item.mono && "mono")}>
-                {item.name}
+                {comLogo ? <CompanhiaNome nome={item.name} /> : item.name}
               </div>
               <div className="list-meta">{item.meta}</div>
             </div>

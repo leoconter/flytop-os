@@ -218,6 +218,7 @@ export default async function InternoPage({
             breakdown ? toListItems(breakdown.airlines, "vendas") : salesByCompany
           }
           privateValue={false}
+          comLogo
         />
         <ListCard
           title="Vendas por destino"
