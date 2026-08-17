@@ -120,8 +120,14 @@ export async function getVendorView(
       porDia.set(d, cur);
     }
 
+    /* Só equipe cadastrada entra no ranking. Venda de quem ainda não foi
+       distribuído em Configurações · Equipes fica fora — juntar todo mundo num
+       "Sem equipe" criava uma linha que costumava liderar o ranking sem ser
+       uma equipe, e que ninguém podia melhorar nem cobrar. */
     const tid = equipeDoVendedor.get(quem) ?? null;
-    const chave = tid ? (nomeDaEquipe.get(tid) ?? "Sem equipe") : "Sem equipe";
+    const chave = tid ? nomeDaEquipe.get(tid) : null;
+    if (!chave) continue;
+
     const e = porEquipe.get(chave) ?? { revenue: 0, count: 0 };
     e.revenue += receita;
     e.count += qtd;

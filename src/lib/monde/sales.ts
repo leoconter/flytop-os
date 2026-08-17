@@ -222,27 +222,54 @@ export async function getAirlinesAndRoutes(
   };
 }
 
-/** Desempenho por vendedor no período. */
-export async function getSellers(range: SocialRange): Promise<RankedItem[] | null> {
+/**
+ * Faturamento por equipe no período.
+ *
+ * O Monde não conhece equipes — o vínculo vive em `monde_sellers.team_id`, que
+ * é preenchido em Configurações · Equipes. Por isso a soma é feita aqui, e não
+ * numa view.
+ *
+ * Venda de quem não está em equipe nenhuma fica **de fora** do total, e não
+ * agrupada num "Sem equipe": é ranking de equipes, e uma linha que não é equipe
+ * disputaria as primeiras posições sem significar nada. O efeito colateral é
+ * que os percentuais somam 100% entre as equipes, não sobre o faturamento da
+ * agência — o que é o certo para comparar equipe com equipe.
+ */
+export async function getTeamSales(range: SocialRange): Promise<RankedItem[] | null> {
   const sb = db();
   if (!sb) return null;
 
-  const { data, error } = await sb
-    .from("v_sales_by_seller")
-    .select("travel_agent_name, sales_count, revenue")
-    .gte("sale_date", range.since)
-    .lte("sale_date", range.until);
+  const [vendas, vendedores, equipes] = await Promise.all([
+    sb
+      .from("v_sales_by_seller")
+      .select("travel_agent_name, sales_count, revenue")
+      .gte("sale_date", range.since)
+      .lte("sale_date", range.until),
+    sb.from("monde_sellers").select("name, team_id"),
+    sb.from("teams").select("id, name"),
+  ]);
 
-  if (error || !data?.length) return null;
+  if (vendas.error || !vendas.data?.length) return null;
+
+  const nomeDaEquipe = new Map((equipes.data ?? []).map((t) => [t.id as string, t.name as string]));
+  const equipeDoVendedor = new Map(
+    (vendedores.data ?? []).map((s) => [s.name as string, (s.team_id as string) ?? null]),
+  );
 
   const agg = new Map<string, { revenue: number; count: number }>();
-  for (const r of data) {
-    const key = (r.travel_agent_name as string) ?? "";
-    const cur = agg.get(key) ?? { revenue: 0, count: 0 };
+  for (const r of vendas.data) {
+    const teamId = equipeDoVendedor.get((r.travel_agent_name as string) ?? "");
+    if (!teamId) continue;
+    const nome = nomeDaEquipe.get(teamId);
+    if (!nome) continue;
+
+    const cur = agg.get(nome) ?? { revenue: 0, count: 0 };
     cur.revenue += Number(r.revenue ?? 0);
     cur.count += Number(r.sales_count ?? 0);
-    agg.set(key, cur);
+    agg.set(nome, cur);
   }
+
+  if (!agg.size) return null;
   return rank([...agg.entries()].map(([name, v]) => ({ name, ...v })), 20);
 }
 

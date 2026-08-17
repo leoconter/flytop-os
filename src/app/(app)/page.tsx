@@ -23,7 +23,7 @@ import { fmtMoney } from "@/lib/meta/ads";
 import { fmtInt } from "@/lib/meta/instagram";
 import { getAgencyGoal } from "@/lib/monde/goals";
 import { getMonthSeries } from "@/lib/monde/month";
-import { getAirlinesAndRoutes, getSellers } from "@/lib/monde/sales";
+import { getAirlinesAndRoutes, getTeamSales } from "@/lib/monde/sales";
 
 export const metadata = { title: "FlyTop OS · Dashboard Geral" };
 
@@ -59,10 +59,10 @@ export default async function GeralPage({
   const goal = (await getAgencyGoal(range.until)) ?? META;
 
   // O Geral é uma visão de mês: usa o mês do fim do período selecionado.
-  const [month, breakdown, sellers] = await Promise.all([
+  const [month, breakdown, equipes] = await Promise.all([
     getMonthSeries(range.until, goal),
     getAirlinesAndRoutes(range, 3),
-    getSellers(range),
+    getTeamSales(range),
   ]);
 
   const live = Boolean(month);
@@ -181,13 +181,13 @@ export default async function GeralPage({
 
           <div className="tv-stats">
             <div className="glass tv-stat">
-              <p className="tl">Venda por vendedor</p>
+              <p className="tl">Vendas por equipe</p>
               <div className="tv-rows">
-                {sellers
-                  ? sellers.slice(0, 4).map((s) => (
-                      <div className="tv-line" key={s.name}>
-                        <span className="k">{s.name.split(" ")[0]}</span>
-                        <span className="v private">{fmtMoney(s.revenue)}</span>
+                {equipes
+                  ? equipes.slice(0, 4).map((e) => (
+                      <div className="tv-line" key={e.name}>
+                        <span className="k">{e.name.replace("Equipe ", "")}</span>
+                        <span className="v private">{fmtMoney(e.revenue)}</span>
                       </div>
                     ))
                   : teams.map((t) => (
