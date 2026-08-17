@@ -1,33 +1,24 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { registrarInteresse, removerInteresse } from "@/app/(app)/crm/actions";
 import { Badge, SectionHead } from "@/components/dashboard/ui";
-import {
-  type Lead,
-  leadsSeed,
-  matchAlerta,
-  mesLabel,
-  waLink,
-} from "@/lib/crm-data";
+import { BotaoAcao, FormAcao } from "@/components/form-acao";
+import { matchAlerta, mesLabel, waLink } from "@/lib/crm-data";
+import type { Lead } from "@/lib/crm/store";
 import { MonthField } from "./month-field";
 
-export function CrmManager() {
-  const [leads, setLeads] = useState<Lead[]>(leadsSeed);
-  const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [origem, setOrigem] = useState("");
-  const [destino, setDestino] = useState("");
+/**
+ * O registro de interesse grava no banco, e não mais na memória da aba.
+ *
+ * Os leads chegam prontos do servidor; os filtros continuam no cliente porque
+ * são só uma lente sobre a lista já carregada — mandá-los ao servidor faria
+ * cada troca de filtro esperar uma ida e volta.
+ */
+export function CrmManager({ leads }: { leads: Lead[] }) {
   const [meses, setMeses] = useState<string[]>([]);
   const [filtroDestino, setFiltroDestino] = useState("");
   const [filtroMes, setFiltroMes] = useState("");
-  const idRef = useRef(0);
-
-  const podeRegistrar =
-    nome.trim() &&
-    telefone.trim() &&
-    origem.trim() &&
-    destino.trim() &&
-    meses.length > 0;
 
   /** Leads com um alerta correspondente já enviado — prontos para chamar. */
   const prontos = useMemo(
@@ -57,33 +48,6 @@ export function CrmManager() {
     [leads, filtroDestino, filtroMes],
   );
 
-  function registrar() {
-    if (!podeRegistrar) return;
-    idRef.current += 1;
-    const mesesOrdenados = [...meses].sort();
-    setLeads((ls) => [
-      {
-        id: `ld-new-${idRef.current}`,
-        nome: nome.trim(),
-        telefone: telefone.trim(),
-        origem: origem.trim(),
-        destino: destino.trim(),
-        meses: mesesOrdenados,
-        criadoEm: "agora",
-      },
-      ...ls,
-    ]);
-    setNome("");
-    setTelefone("");
-    setOrigem("");
-    setDestino("");
-    setMeses([]);
-  }
-
-  function excluir(id: string) {
-    setLeads((ls) => ls.filter((l) => l.id !== id));
-  }
-
   return (
     <>
       <div className="grid-2 split">
@@ -94,26 +58,30 @@ export function CrmManager() {
             sub="cadastro do lead + destino de interesse"
             flush
           />
-          <div className="form-grid" style={{ marginTop: 14 }}>
+          <FormAcao
+            action={registrarInteresse}
+            className="form-grid"
+            style={{ marginTop: 14 }}
+            limparAoConcluir
+            aoConcluir={() => setMeses([])}
+          >
             <div className="field">
               <label htmlFor="crm-nome">Nome do lead</label>
               <input
                 id="crm-nome"
+                name="nome"
                 className="input"
                 placeholder="Ex.: Ana Souza"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
               />
             </div>
             <div className="field">
               <label htmlFor="crm-tel">Telefone</label>
               <input
                 id="crm-tel"
+                name="telefone"
                 className="input"
                 inputMode="tel"
                 placeholder="+55 11 90000-0000"
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
               />
             </div>
 
@@ -121,42 +89,37 @@ export function CrmManager() {
               <label htmlFor="crm-origem">Origem</label>
               <input
                 id="crm-origem"
+                name="origem"
                 className="input"
                 placeholder="Ex.: São Paulo"
-                value={origem}
-                onChange={(e) => setOrigem(e.target.value)}
               />
             </div>
             <div className="field">
               <label htmlFor="crm-destino">Destino de interesse</label>
               <input
                 id="crm-destino"
+                name="destino"
                 className="input"
                 placeholder="Ex.: Orlando"
-                value={destino}
-                onChange={(e) => setDestino(e.target.value)}
               />
             </div>
 
             <div className="field full">
               <label>Meses de interesse <span className="muted">(selecione um ou mais)</span></label>
               <MonthField value={meses} onChange={setMeses} fallbackYear={2026} />
+              {/* O calendário é um componente próprio, sem input nativo: estes
+                  campos ocultos são o que leva os meses escolhidos ao envio. */}
+              {meses.map((m) => (
+                <input key={m} type="hidden" name="meses" value={m} />
+              ))}
             </div>
 
             <div className="field full">
-              <button
-                type="button"
-                className="btn btn-primary btn-block"
-                onClick={registrar}
-                disabled={!podeRegistrar}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
+              <BotaoAcao className="btn btn-primary btn-block" enviando="Registrando…">
                 Registrar interesse
-              </button>
+              </BotaoAcao>
             </div>
-          </div>
+          </FormAcao>
 
           <div className="note-box blue" style={{ marginTop: 16 }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -324,16 +287,18 @@ export function CrmManager() {
                             >
                               WhatsApp
                             </a>
-                            <button
-                              type="button"
-                              className="icon-btn"
-                              aria-label="Excluir interesse"
-                              onClick={() => excluir(lead.id)}
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                              </svg>
-                            </button>
+                            <FormAcao action={removerInteresse} silencioso>
+                              <input type="hidden" name="id" value={lead.id} />
+                              <BotaoAcao
+                                className="icon-btn"
+                                aria-label={`Excluir interesse de ${lead.nome}`}
+                                enviando="…"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                </svg>
+                              </BotaoAcao>
+                            </FormAcao>
                           </div>
                         </td>
                       </tr>

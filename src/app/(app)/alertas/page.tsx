@@ -4,6 +4,7 @@ import { Metrics, PageHead, SectionHead } from "@/components/dashboard/ui";
 import { estatisticas, listarAlertas } from "@/lib/alertas/store";
 import type { Metric } from "@/lib/dashboard-data";
 import { fmtInt } from "@/lib/meta/instagram";
+import { destinosMaisPedidos } from "@/lib/crm/store";
 
 export const metadata = {
   title: "FlyTop OS · Alertas",
@@ -17,7 +18,11 @@ export default async function AlertasPage() {
   const alertas = "alertas" in listagem ? listagem.alertas : null;
   const st = alertas ? estatisticas(alertas) : null;
 
-  const topCompanhia = st?.porCompanhia[0];
+  /* O que a operação quer saber aqui não é o que ela mesma mandou, e sim o que
+     o cliente está pedindo: o destino mais registrado no CRM aponta o próximo
+     alerta a caçar. A contagem de companhia continua em Dados de alertas. */
+  const destinos = await destinosMaisPedidos(1);
+  const topDestino = destinos?.[0];
   const metrics: Metric[] = [
     {
       label: "Enviados hoje",
@@ -36,12 +41,14 @@ export default async function AlertasPage() {
       hint: "prontos para copiar",
     },
     {
-      label: "Companhia mais alertada",
-      value: topCompanhia?.name ?? "—",
+      label: "Destino mais pedido",
+      value: topDestino?.destino ?? "—",
       small: true,
-      hint: topCompanhia
-        ? `${fmtInt(topCompanhia.count)} ${topCompanhia.count === 1 ? "alerta" : "alertas"}`
-        : "nenhum envio registrado",
+      tone: topDestino ? "blue" : undefined,
+      hint: topDestino
+        ? `${fmtInt(topDestino.pedidos)} ${topDestino.pedidos === 1 ? "interesse" : "interesses"} no CRM`
+        : "nenhum interesse registrado ainda",
+      info: "Destino que mais aparece nos interesses registrados no CRM. Diz qual oferta vale a pena caçar em seguida.",
     },
   ];
 

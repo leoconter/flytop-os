@@ -2,12 +2,18 @@ import Link from "next/link";
 import { CrmManager } from "@/components/crm/crm-manager";
 import { Metrics, PageHead, Pill } from "@/components/dashboard/ui";
 import { crmMetrics } from "@/lib/crm-data";
+import { listarLeads } from "@/lib/crm/store";
 
 export const metadata = {
   title: "FlyTop OS · CRM",
 };
 
-export default function CrmPage() {
+export const dynamic = "force-dynamic";
+
+export default async function CrmPage() {
+  const r = await listarLeads();
+  const leads = "leads" in r ? r.leads : [];
+
   return (
     <>
       <PageHead
@@ -29,7 +35,7 @@ export default function CrmPage() {
 
       <Metrics metrics={crmMetrics} />
 
-      <CrmManager />
+      <CrmManager leads={leads} />
 
       <div className="foot-note">
         <span>FlyTop OS · Prévia da Fase 1 · dados ilustrativos</span>
