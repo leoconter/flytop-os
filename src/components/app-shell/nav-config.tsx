@@ -208,6 +208,9 @@ export const navGroups = ["Controle", "Operação", "Marketing", "Administraçã
 const SUBTELAS: Record<string, string> = {
   "/interno/jornada": "Jornada de Compra",
   "/tarefas/nova": "Nova tarefa",
+  "/crm/embarques": "Embarques",
+  "/crm/retornos": "Retornos",
+  "/crm/retornaram": "Já retornaram",
 };
 
 export function titleForPath(pathname: string): string {

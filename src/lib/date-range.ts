@@ -55,7 +55,15 @@ export function telaDeCadastro(pathname: string): boolean {
  * exata, não por prefixo — `/alertas/dados` é justamente a tela que usa o
  * período.
  */
-const SEM_PERIODO = ["/alertas", "/alertas/novo"];
+/* As telas de voos têm janela própria e fixa de 48h: o seletor mudaria de mês
+   sem mudar nada na lista, o que faz o número parecer errado. */
+const SEM_PERIODO = [
+  "/alertas",
+  "/alertas/novo",
+  "/crm/embarques",
+  "/crm/retornos",
+  "/crm/retornaram",
+];
 
 /** O seletor de período faz sentido nesta rota? */
 export function mostraPeriodo(pathname: string): boolean {

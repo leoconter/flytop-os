@@ -402,6 +402,14 @@ body.blur-on .chart-box:hover { filter: blur(0); transition: filter 0.2s ease; }
 .metric { padding: 1.3rem 1.4rem 1.45rem; }
 .metric-label { font-size: 13px; color: var(--text-2); margin-bottom: 13px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
 .metric-value { font-size: 29px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.05; }
+/* Contagem dentro da aba: diz quantos há na tela sem precisar abri-la. */
+.tab-contagem {
+  margin-left: 7px; padding: 1px 6px; border-radius: 999px;
+  background: rgba(16, 24, 40, 0.07); color: var(--text-3);
+  font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.tab.on .tab-contagem { background: rgba(37, 99, 235, 0.14); color: var(--accent-blue); }
+
 /* Companhia aérea: logo + nome na mesma linha, sem empurrar a altura da linha. */
 .cia { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
 .cia > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
