@@ -11,7 +11,7 @@ import {
 } from "@/components/dashboard/ui";
 import type { ListItem, Metric } from "@/lib/dashboard-data";
 import { formatRange, PARAM_FROM, PARAM_TO, resolveRange } from "@/lib/date-range";
-import { fmtMoney, fmtMoneyCompact } from "@/lib/meta/ads";
+import { fmtMoney } from "@/lib/meta/ads";
 import { fmtInt } from "@/lib/meta/instagram";
 import {
   getAirlinesAndRoutes,
@@ -64,7 +64,9 @@ export default async function InternoPage({
     ? [
         {
           label: "Receita no período",
-          value: fmtMoneyCompact(totals.revenue),
+          // Valor inteiro, não abreviado: "R$ 2,4M" esconde a diferença entre
+          // 2,44 e 2,35 milhões, que aqui é o que se está olhando.
+          value: fmtMoney(totals.revenue),
           hint: `${fmtInt(totals.salesCount)} vendas emitidas`,
           privateValue: true,
           privateHint: true,
@@ -72,7 +74,7 @@ export default async function InternoPage({
         },
         {
           label: "Margem",
-          value: fmtMoneyCompact(totals.margin),
+          value: fmtMoney(totals.margin),
           tone: "green",
           hint: `${totals.marginPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do faturamento`,
           privateValue: true,

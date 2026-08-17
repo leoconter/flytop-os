@@ -8,6 +8,20 @@ function cx(...parts: (string | false | undefined | null)[]) {
 }
 
 /**
+ * Encolhe a fonte quando o número é comprido demais para a coluna.
+ *
+ * O cartão tem largura fixa e o valor não quebra linha: "R$ 5.358.240" a 29px
+ * mede 184px numa caixa de 180 e vaza pela borda. Como o texto é montado no
+ * servidor, o tamanho é conhecido aqui — não precisa medir no navegador nem
+ * abreviar o valor, que é justamente o que se quer ver por inteiro.
+ */
+function comprido(valor: string): string | null {
+  if (valor.length >= 14) return "xs";
+  if (valor.length >= 12) return "md";
+  return null;
+}
+
+/**
  * Cartão de métrica. Com `metric.info`, o rótulo ganha um "i" que abre a
  * explicação ao clique (fecha ao clicar fora ou apertar Esc).
  *
@@ -63,6 +77,7 @@ export function MetricCard({ metric }: { metric: Metric }) {
           "metric-value",
           metric.tone,
           metric.small && "sm",
+          comprido(metric.value),
           metric.privateValue && "private",
         )}
       >

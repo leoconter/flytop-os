@@ -403,6 +403,9 @@ body.blur-on .chart-box:hover { filter: blur(0); transition: filter 0.2s ease; }
 .metric-label { font-size: 13px; color: var(--text-2); margin-bottom: 13px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
 .metric-value { font-size: 29px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.05; }
 .metric-value.sm { font-size: 22px; }
+/* Números longos (milhões por extenso) encolhem para não vazar do cartão. */
+.metric-value.md { font-size: 25px; }
+.metric-value.xs { font-size: 22px; }
 .metric-value.blue { color: var(--accent-blue); }
 .metric-value.green { color: var(--accent-green-dark); }
 .metric-value.red { color: var(--accent-red-dark); }
