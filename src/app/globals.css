@@ -402,6 +402,19 @@ body.blur-on .chart-box:hover { filter: blur(0); transition: filter 0.2s ease; }
 .metric { padding: 1.3rem 1.4rem 1.45rem; }
 .metric-label { font-size: 13px; color: var(--text-2); margin-bottom: 13px; font-weight: 500; display: flex; align-items: center; gap: 7px; }
 .metric-value { font-size: 29px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.05; }
+/* Check-in do voo: os controles ficam na linha, e o painel de justificativa
+   abre por cima sem empurrar a tabela. */
+.ck { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: relative; }
+.ck-nota { font-size: 11.5px; color: var(--text-3); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+  background: var(--surface, #fff); border: 1px solid rgba(16, 24, 40, 0.12);
+  border-radius: 12px; padding: 12px; box-shadow: 0 12px 32px rgba(16, 24, 40, 0.14);
+  min-width: 330px;
+}
+.ck-pop form { display: flex; flex-direction: column; gap: 8px; }
+.ck-pop .select, .ck-pop .input { width: 100%; }
+
 /* Contagem dentro da aba: diz quantos há na tela sem precisar abri-la. */
 .tab-contagem {
   margin-left: 7px; padding: 1px 6px; border-radius: 999px;

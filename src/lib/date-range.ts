@@ -60,9 +60,9 @@ export function telaDeCadastro(pathname: string): boolean {
 const SEM_PERIODO = [
   "/alertas",
   "/alertas/novo",
-  "/crm/embarques",
-  "/crm/retornos",
-  "/crm/retornaram",
+  "/embarques",
+  "/embarques/retornos",
+  "/embarques/retornaram",
 ];
 
 /** O seletor de período faz sentido nesta rota? */

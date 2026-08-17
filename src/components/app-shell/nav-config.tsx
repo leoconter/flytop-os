@@ -74,6 +74,18 @@ export const navItems: NavItem[] = [
     ),
   },
   {
+    key: "embarques",
+    label: "Embarques",
+    title: "Embarques e retornos",
+    href: "/embarques",
+    group: "Operação",
+    icon: (
+      <svg viewBox="0 0 24 24" {...sw}>
+        <path d="M17.8 19.2 16 11l3.5-3.5a2.12 2.12 0 0 0-3-3L13 8 4.8 6.2a1 1 0 0 0-.9.3l-.9.9 5.5 3.5-2.5 2.5-2-.4-1 1 3 2 2 3 1-1-.4-2 2.5-2.5 3.5 5.5.9-.9a1 1 0 0 0 .3-.9z" />
+      </svg>
+    ),
+  },
+  {
     key: "terrestres",
     label: "Terrestre",
     title: "Produtos Terrestres",
@@ -208,9 +220,8 @@ export const navGroups = ["Controle", "Operação", "Marketing", "Administraçã
 const SUBTELAS: Record<string, string> = {
   "/interno/jornada": "Jornada de Compra",
   "/tarefas/nova": "Nova tarefa",
-  "/crm/embarques": "Embarques",
-  "/crm/retornos": "Retornos",
-  "/crm/retornaram": "Já retornaram",
+  "/embarques/retornos": "Retornos",
+  "/embarques/retornaram": "Já retornaram",
   "/metas/comissoes": "Comissões",
 };
 

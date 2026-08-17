@@ -1,4 +1,4 @@
-import { PaginaVoos } from "@/components/crm/pagina-voos";
+import { PaginaVoos } from "@/components/embarques/pagina-voos";
 
 export const metadata = { title: "FlyTop OS · Embarques 48h" };
 

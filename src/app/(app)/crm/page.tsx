@@ -22,11 +22,11 @@ export default async function CrmPage() {
         sub="Registre o interesse do lead e chame quando o alerta casar"
         right={
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Link href="/crm/embarques" className="chip">
+            <Link href="/embarques" className="chip">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 15, height: 15 }}>
                 <path d="M17.8 19.2 16 11l3.5-3.5a2.12 2.12 0 0 0-3-3L13 8 4.8 6.2a1 1 0 0 0-.9.3l-.9.9 5.5 3.5-2.5 2.5-2-.4-1 1 3 2 2 3 1-1-.4-2 2.5-2.5 3.5 5.5.9-.9a1 1 0 0 0 .3-.9z" />
               </svg>
-              Embarques e retornos 48h
+              Embarques e retornos
             </Link>
             <Pill>Registro de interesse</Pill>
           </div>

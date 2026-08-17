@@ -2,7 +2,9 @@ import Link from "next/link";
 import { CompanhiaNome } from "@/components/companhia-logo";
 import { Badge, SectionHead } from "@/components/dashboard/ui";
 import { waLink } from "@/lib/crm-data";
+import type { Checkin, Motivo } from "@/lib/monde/checkin";
 import type { Contagens, TipoVoo, Voo } from "@/lib/monde/voos";
+import { CheckinCelula } from "./checkin-celula";
 
 /** As três telas, na ordem da viagem: parte, volta, chegou. */
 export const TELAS: {
@@ -18,7 +20,7 @@ export const TELAS: {
 }[] = [
   {
     tipo: "embarques",
-    href: "/crm/embarques",
+    href: "/embarques",
     aba: "Embarques",
     titulo: "Embarques nas próximas 48h",
     sub: "clientes partindo — deseje boa viagem",
@@ -27,7 +29,7 @@ export const TELAS: {
   },
   {
     tipo: "retornos",
-    href: "/crm/retornos",
+    href: "/embarques/retornos",
     aba: "Retornos",
     titulo: "Retornos nas próximas 48h",
     sub: "clientes voltando — ainda em viagem",
@@ -36,7 +38,7 @@ export const TELAS: {
   },
   {
     tipo: "retornaram",
-    href: "/crm/retornaram",
+    href: "/embarques/retornaram",
     aba: "Já retornaram",
     titulo: "Já retornaram · últimas 48h",
     sub: "acabaram de chegar — pergunte como foi e ofereça a próxima",
@@ -83,11 +85,18 @@ export function AbasVoos({
 export function VooTable({
   voos,
   tipo,
+  checkins,
+  motivos,
 }: {
   voos: Voo[];
   tipo: TipoVoo;
+  checkins: Map<string, Checkin>;
+  motivos: Motivo[];
 }) {
   const t = tela(tipo);
+  /* Em "já retornaram" o voo aconteceu: oferecer "check-in realizado" ali
+     seria propor uma ação que não existe mais. */
+  const comCheckin = !t.passado;
 
   return (
     <div className="glass card">
@@ -106,6 +115,7 @@ export function VooTable({
                 <th>Trecho</th>
                 <th>Companhia</th>
                 <th>Localizador</th>
+                {comCheckin && <th style={{ width: 300 }}>Check-in</th>}
                 <th className="r">Contato</th>
               </tr>
             </thead>
@@ -133,6 +143,15 @@ export function VooTable({
                     <CompanhiaNome nome={v.companhia} />
                   </td>
                   <td className="mono-cell muted">{v.localizador ?? "—"}</td>
+                  {comCheckin && (
+                    <td>
+                      <CheckinCelula
+                        segmentId={v.id}
+                        checkin={checkins.get(v.id) ?? null}
+                        motivos={motivos}
+                      />
+                    </td>
+                  )}
                   <td className="r">
                     <div className="row-actions">
                       {v.telefone ? (
