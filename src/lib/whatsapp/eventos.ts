@@ -138,10 +138,19 @@ export interface EventoGrupo {
   eventKey: string;
   /** O aviso como a Z-API mandou, para conferência posterior. */
   bruto: unknown;
+  /**
+   * O LID que veio no corpo do aviso, mesmo quando a pessoa foi identificada
+   * pelo telefone. É o par que liga as duas formas da mesma pessoa.
+   */
+  lidDoCorpo: string | null;
+  /** Nome do perfil, quando o aviso o traz de forma confiável. */
+  nome: string | null;
 }
 
 interface Payload {
   type?: string;
+  participantLid?: string | null;
+  senderName?: string | null;
   isGroup?: boolean;
   notification?: string;
   notificationParameters?: unknown[];
@@ -214,6 +223,19 @@ export function lerEvento(p: Payload): EventoGrupo[] {
       notification === "GROUP_PARTICIPANT_REMOVE" ||
       notification === "MEMBERSHIP_APPROVAL_REQUEST");
 
+  /* O `participantLid` vem preenchido em boa parte das saídas, inclusive nas
+     que identificam a pessoa pelo telefone. Guardar os dois juntos é o que
+     evita a mesma pessoa virar duas linhas. */
+  const lidDoCorpo = identidade(p.participantLid)?.lid ?? null;
+
+  /* `senderName` só é o nome de quem o evento trata quando a pessoa é a autora
+     da ação — ou seja, quando ela mesma saiu. Em ADD o nome é de quem
+     adicionou, e em INVITE vem a palavra "invite". */
+  const nome =
+    notification === "GROUP_PARTICIPANT_LEAVE" && p.senderName && p.senderName !== "invite"
+      ? p.senderName.trim() || null
+      : null;
+
   const autor = comAutor ? params[0] : null;
   const afetados = comAutor ? params.slice(1) : params;
 
@@ -234,6 +256,8 @@ export function lerEvento(p: Payload): EventoGrupo[] {
     occurredAt,
     eventKey: `${base}:${quem.key}:${notification}`,
     bruto: p,
+    lidDoCorpo,
+    nome,
   }));
 }
 

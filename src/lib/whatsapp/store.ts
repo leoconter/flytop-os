@@ -78,11 +78,55 @@ export async function gravarEventos(eventos: EventoGrupo[]): Promise<Resultado> 
   const gravadas = new Set((data ?? []).map((r) => r.event_key as string));
   const novos = eventos.filter((e) => gravadas.has(e.eventKey));
 
+  // O par das duas identidades da mesma pessoa. Vem antes de mexer no estado
+  // porque é ele que permite achar a linha que já existe.
+  await gravarIdentidades(novos);
+
   // Só o que é inédito mexe no estado: reprocessar um aviso repetido não pode
   // somar mais uma entrada para a mesma pessoa.
   for (const e of novos) await aplicarNoMembro(e);
 
   return { gravados: novos.length, repetidos: eventos.length - novos.length };
+}
+
+/**
+ * Guarda o par LID ↔ telefone quando o aviso traz os dois.
+ *
+ * É o que impede a mesma pessoa de virar duas linhas: o convite chega só com o
+ * telefone e a saída costuma vir com o LID, e sem esse par as duas nunca se
+ * encontram — a saída abriria linha nova em vez de fechar a que existe, e o
+ * grupo nunca perderia um membro.
+ */
+async function gravarIdentidades(eventos: EventoGrupo[]): Promise<void> {
+  const pares = eventos
+    .filter((e) => e.phone && (e.lidDoCorpo ?? e.lid))
+    .map((e) => ({
+      lid: (e.lidDoCorpo ?? e.lid) as string,
+      phone: e.phone as string,
+      ...(e.nome ? { nome: e.nome } : {}),
+      last_seen: new Date().toISOString(),
+    }));
+  if (!pares.length) return;
+
+  const sb = db();
+  if (!sb) return;
+
+  const { error } = await sb
+    .from("whatsapp_identities")
+    .upsert(pares, { onConflict: "lid" });
+  if (error) console.error("[zapi] identidade:", error.message);
+}
+
+/** O telefone por trás de um LID, quando já o vimos alguma vez. */
+async function telefoneDoLid(lid: string): Promise<string | null> {
+  const sb = db();
+  if (!sb) return null;
+  const { data } = await sb
+    .from("whatsapp_identities")
+    .select("phone")
+    .eq("lid", lid)
+    .maybeSingle();
+  return (data?.phone as string) ?? null;
 }
 
 async function aplicarNoMembro(e: EventoGrupo): Promise<void> {
@@ -92,14 +136,19 @@ async function aplicarNoMembro(e: EventoGrupo): Promise<void> {
   const sb = db();
   if (!sb) return;
 
-  /* A mesma pessoa pode estar gravada sob outra identidade: a carga inicial lê
-     grupo comum pelo telefone e grupo de comunidade pelo LID, enquanto o aviso
-     do webhook vem sempre pelo LID. Procurar só pela chave criaria uma segunda
-     linha para quem já está lá, e o grupo pareceria ganhar um membro no dia em
-     que perdeu um. Por isso a busca aceita qualquer uma das três formas. */
+  /* A mesma pessoa pode estar gravada sob outra identidade: a carga leu o grupo
+     pelo LID, o convite chega pelo telefone e a saída pelo LID de novo.
+     Procurar só pela chave do aviso criaria uma segunda linha para quem já
+     está lá, e o grupo pareceria ganhar um membro no dia em que perdeu um.
+     Por isso a busca aceita todas as formas conhecidas da pessoa — inclusive a
+     que só o mapa de identidades sabe. */
+  const lidDaPessoa = e.lidDoCorpo ?? e.lid;
+  const telefoneConhecido =
+    e.phone ?? (lidDaPessoa ? await telefoneDoLid(lidDaPessoa) : null);
+
   const formas = [`member_key.eq.${e.memberKey}`];
-  if (e.lid) formas.push(`lid.eq.${e.lid}`);
-  if (e.phone) formas.push(`phone.eq.${e.phone}`);
+  if (lidDaPessoa) formas.push(`lid.eq.${lidDaPessoa}`);
+  if (telefoneConhecido) formas.push(`phone.eq.${telefoneConhecido}`);
 
   const { data: achados } = await sb
     .from("whatsapp_members")
@@ -117,10 +166,10 @@ async function aplicarNoMembro(e: EventoGrupo): Promise<void> {
   const linha: Record<string, unknown> = {
     group_id: e.groupId,
     member_key: memberKey,
-    // Só preenche o que o aviso trouxe: o LID do evento não pode apagar o
-    // telefone que a carga inicial conseguiu descobrir.
-    ...(e.phone ? { phone: e.phone } : {}),
-    ...(e.lid ? { lid: e.lid } : {}),
+    // Só preenche o que se sabe: o LID do aviso não pode apagar o telefone que
+    // a carga descobriu, nem o contrário.
+    ...(telefoneConhecido ? { phone: telefoneConhecido } : {}),
+    ...(lidDaPessoa ? { lid: lidDaPessoa } : {}),
     status,
     entradas: Number(atual?.entradas ?? 0) + (status === "dentro" ? 1 : 0),
     saidas: Number(atual?.saidas ?? 0) + (status === "fora" ? 1 : 0),
