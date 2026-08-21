@@ -223,6 +223,7 @@ const SUBTELAS: Record<string, string> = {
   "/embarques/retornos": "Retornos",
   "/embarques/retornaram": "Já retornaram",
   "/metas/comissoes": "Comissões",
+  "/comunidade/pessoas": "Quem já passou",
 };
 
 export function titleForPath(pathname: string): string {

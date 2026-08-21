@@ -1566,3 +1566,7 @@ th.sheet-now { color: var(--accent-blue-dark); font-weight: 700; }
   font-variant-numeric: tabular-nums; padding-left: 0.42em;
 }
 .login-hint { font-size: 13px; color: var(--text-3); text-align: center; margin: 0 0 4px; line-height: 1.5; }
+
+/* Saldo de movimentação: verde sobe, vermelho desce. */
+.pos { color: var(--accent-green-dark); }
+.neg { color: var(--accent-red-dark); }

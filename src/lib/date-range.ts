@@ -63,6 +63,10 @@ const SEM_PERIODO = [
   "/embarques",
   "/embarques/retornos",
   "/embarques/retornaram",
+  // A comunidade mostra o estado de agora e a movimentação desde que o webhook
+  // está ligado; um intervalo de datas não muda nada aqui.
+  "/comunidade",
+  "/comunidade/pessoas",
 ];
 
 /** O seletor de período faz sentido nesta rota? */
