@@ -1547,3 +1547,22 @@ th.sheet-now { color: var(--accent-blue-dark); font-weight: 700; }
   .db-layout { grid-template-columns: 1fr; }
   .db-lista { max-height: 220px; }
 }
+
+/* ---------------------------------------------------------------- 2FA ---- */
+.login-card-larga { max-width: 420px; }
+.qr-2fa {
+  display: flex; justify-content: center; margin: 18px 0 10px;
+  padding: 12px; background: #fff; border-radius: 14px;
+  border: 1px solid rgba(16, 24, 40, 0.1);
+}
+.segredo-2fa { display: flex; justify-content: center; margin-bottom: 14px; min-height: 30px; }
+.segredo-2fa code {
+  font-size: 13px; letter-spacing: 0.12em; word-break: break-all; text-align: center;
+  background: rgba(16, 24, 40, 0.05); padding: 7px 10px; border-radius: 8px;
+}
+/* Seis dígitos espaçados: erro de digitação some quando o número é legível. */
+.codigo-2fa {
+  font-size: 26px; letter-spacing: 0.42em; text-align: center;
+  font-variant-numeric: tabular-nums; padding-left: 0.42em;
+}
+.login-hint { font-size: 13px; color: var(--text-3); text-align: center; margin: 0 0 4px; line-height: 1.5; }

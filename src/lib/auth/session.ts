@@ -35,12 +35,25 @@ export interface SessionUser {
   alertFlyby: boolean;
 }
 
-function authUrl(path: string): string {
+/* Exportados para `mfa.ts`: o segundo fator fala com os mesmos endpoints e
+   grava a mesma sessão — duplicar isso lá abriria espaço para os dois lados
+   divergirem em cookie, chave ou URL. */
+export function authUrl(path: string): string {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1${path}`;
 }
 
-function serviceKey(): string {
+export function serviceKey(): string {
   return process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+}
+
+/** O token da sessão atual, já renovado se preciso. */
+export async function accessToken(): Promise<string | null> {
+  // Passa por `authIdentity` de propósito: é ela que valida e, se o token
+  // expirou, troca pelo novo antes de devolvermos um valor morto.
+  const auth = await authIdentity();
+  if (!auth) return null;
+  const jar = await cookies();
+  return jar.get(COOKIE_ACCESS)?.value ?? null;
 }
 
 export function authConfigured(): boolean {
@@ -76,7 +89,7 @@ export async function signIn(email: string, password: string): Promise<string | 
   return null;
 }
 
-async function gravarSessao(access: string, refresh: string, expiresIn?: number) {
+export async function gravarSessao(access: string, refresh: string, expiresIn?: number) {
   const jar = await cookies();
   jar.set(COOKIE_ACCESS, access, { ...cookieOptions, maxAge: expiresIn ?? 3600 });
   jar.set(COOKIE_REFRESH, refresh, { ...cookieOptions, maxAge: 60 * 60 * 24 * 30 });

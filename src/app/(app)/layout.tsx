@@ -4,6 +4,7 @@ import { Orbs } from "@/components/orbs";
 import { AvisoVoo } from "@/components/alertas/aviso-voo";
 import { Sidebar } from "@/components/app-shell/sidebar";
 import { Topbar } from "@/components/app-shell/topbar";
+import { statusMfa } from "@/lib/auth/mfa";
 import { currentUser } from "@/lib/auth/session";
 import { getUltimaSync } from "@/lib/monde/sync-status";
 
@@ -24,6 +25,14 @@ export const maxDuration = 300;
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await currentUser();
   if (!user) redirect("/login");
+
+  /* Segundo fator obrigatório. Senha correta deixa a sessão em `aal1`; só o
+     código do autenticador a leva a `aal2`. Quem ainda não cadastrou vai para
+     o cadastro — não há como adiar, que é o ponto de ser obrigatório. */
+  const mfa = await statusMfa();
+  if (mfa && mfa.aal !== "aal2") {
+    redirect(mfa.temFator ? "/login/2fa" : "/login/2fa/configurar");
+  }
 
   const sync = await getUltimaSync();
 

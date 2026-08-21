@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { statusMfa } from "@/lib/auth/mfa";
 import { currentUser, statusConta } from "@/lib/auth/session";
 import { LoginForm } from "./login-form";
 
@@ -11,8 +12,16 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ de?: string }>;
 }) {
-  // Quem já está dentro não vê tela de login.
-  if (await currentUser()) redirect("/");
+  /* Quem já está dentro não vê tela de login. Mas "dentro" agora tem dois
+     degraus: com a senha conferida e sem o código, o lugar certo é o segundo
+     fator, e não a home — que devolveria a pessoa para cá num laço. */
+  if (await currentUser()) {
+    const mfa = await statusMfa();
+    if (mfa && mfa.aal !== "aal2") {
+      redirect(mfa.temFator ? "/login/2fa" : "/login/2fa/configurar");
+    }
+    redirect("/");
+  }
 
   // Credencial válida que mesmo assim não entra: a pessoa é devolvida para cá
   // sem entender por quê. Cada caso tem um recado diferente.

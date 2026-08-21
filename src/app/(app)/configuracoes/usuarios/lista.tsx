@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useState } from "react";
 import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import type { AppUser, SellerOption } from "@/lib/auth/users";
-import { alternarAtivo, editarUsuario, removerUsuario } from "./actions";
+import { alternarAtivo, editarUsuario, removerUsuario, resetarMfa } from "./actions";
 import { SellerSelect } from "./novo-usuario";
 
 const sw = {
@@ -73,11 +73,15 @@ export function ListaUsuarios({
   users,
   sellers,
   meuId,
+  semMfa,
 }: {
   users: AppUser[];
   sellers: SellerOption[];
   meuId?: string;
+  /** Contas sem autenticador confirmado — não conseguem entrar até cadastrar. */
+  semMfa: string[];
 }) {
+  const pendentes = new Set(semMfa);
   const [editando, setEditando] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const fechar = useCallback(() => setEditando(null), []);
@@ -91,6 +95,7 @@ export function ListaUsuarios({
             <th>E-mail</th>
             <th>Papel</th>
             <th>Vendedor no Monde</th>
+            <th style={{ width: 150 }}>2FA</th>
             <th style={{ width: 130 }} />
           </tr>
         </thead>
@@ -112,6 +117,29 @@ export function ListaUsuarios({
                   <td>{u.role === "admin" ? "Administrador" : "Vendedor"}</td>
                   <td>
                     {u.sellerName ?? <span className="muted">não vinculado</span>}
+                  </td>
+                  <td>
+                    {pendentes.has(u.userId) ? (
+                      <span className="badge gray" title="Vai configurar no próximo login">
+                        a configurar
+                      </span>
+                    ) : (
+                      <div className="acoes">
+                        <span className="badge green">ativo</span>
+                        {/* Some com o autenticador para a pessoa cadastrar de
+                            novo — é a única saída de quem perdeu o celular. */}
+                        <FormAcao action={resetarMfa} silencioso>
+                          <input type="hidden" name="userId" value={u.userId} />
+                          <BotaoAcao
+                            className="btn btn-ghost btn-sm danger"
+                            enviando="…"
+                            title="A pessoa terá de configurar o 2FA de novo no próximo login"
+                          >
+                            remover
+                          </BotaoAcao>
+                        </FormAcao>
+                      </div>
+                    )}
                   </td>
                   <td>
                     {confirmando === u.userId ? (
@@ -176,7 +204,7 @@ export function ListaUsuarios({
 
                 {aberto && (
                   <tr className="linha-edicao">
-                    <td colSpan={5}>
+                    <td colSpan={6}>
                       {/* Sem `key` de propósito: o painel some ao concluir e
                           remonta com dados novos na próxima abertura. Com ela,
                           o formulário remontava antes de avisar que terminou e

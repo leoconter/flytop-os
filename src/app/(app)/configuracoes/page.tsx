@@ -4,6 +4,7 @@ import { PageHead, SectionHead } from "@/components/dashboard/ui";
 import { BotaoAcao, FormAcao } from "@/components/form-acao";
 import { currentUser } from "@/lib/auth/session";
 import { salvarPreferencias } from "./preferencias";
+import { statusMfa } from "@/lib/auth/mfa";
 
 export const metadata = { title: "FlyTop OS · Minha conta" };
 
@@ -25,6 +26,7 @@ export default async function MinhaContaPage() {
   if (!user) redirect("/login");
 
   const admin = user.role === "admin";
+  const mfa = await statusMfa();
 
   return (
     <>
@@ -55,7 +57,22 @@ export default async function MinhaContaPage() {
               label="Equipe"
               valor={user.teamName ?? <span className="muted">sem equipe</span>}
             />
+            <Dado
+              label="Verificação em duas etapas"
+              valor={
+                mfa?.temFator ? (
+                  <span className="badge green">autenticador ativo</span>
+                ) : (
+                  <span className="badge gray">a configurar</span>
+                )
+              }
+            />
           </div>
+          <p className="metric-hint" style={{ marginTop: 12 }}>
+            {mfa?.temFator
+              ? "Perdeu o celular? Um administrador remove o autenticador em Configurações · Usuários e você cadastra outro no próximo login."
+              : "A plataforma pede um segundo fator no login. Você vai configurá-lo na próxima entrada."}
+          </p>
           {!admin && (
             <p className="metric-hint" style={{ marginTop: 12 }}>
               Para corrigir nome, e-mail ou trocar a senha, peça a um

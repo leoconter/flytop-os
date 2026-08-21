@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { AcaoState } from "@/components/form-acao";
 import { requireAdmin } from "@/lib/auth/session";
 import { createUser, deleteUser, editUser, updateUser } from "@/lib/auth/users";
+import { removerFatores } from "@/lib/auth/mfa";
 
 /**
  * Todas devolvem estado em vez de lançar: e-mail repetido, senha curta ou
@@ -110,4 +111,27 @@ export async function removerUsuario(
 
   revalidatePath("/configuracoes/usuarios");
   return { ok: "Conta removida." };
+}
+
+/**
+ * Tira o 2FA de uma conta.
+ *
+ * É o caminho de volta de quem perdeu o celular: sem isso, a pessoa fica
+ * trancada do lado de fora para sempre, porque o segundo fator é obrigatório.
+ * No próximo login ela cadastra um autenticador novo.
+ */
+export async function resetarMfa(
+  _prev: AcaoState,
+  formData: FormData,
+): Promise<AcaoState> {
+  await requireAdmin();
+
+  const userId = String(formData.get("userId") ?? "");
+  if (!userId) return { erro: "Conta não informada." };
+
+  const erro = await removerFatores(userId);
+  if (erro) return { erro };
+
+  revalidatePath("/configuracoes/usuarios");
+  return { ok: "2FA removido. A pessoa vai configurar de novo no próximo login." };
 }

@@ -1,4 +1,5 @@
 import { PageHead, SectionHead } from "@/components/dashboard/ui";
+import { contasSemMfa } from "@/lib/auth/mfa";
 import { currentUser, guardAdmin } from "@/lib/auth/session";
 import { listSellerOptions, listUsers } from "@/lib/auth/users";
 import { ListaUsuarios } from "./lista";
@@ -35,6 +36,10 @@ export default async function UsuariosPage() {
     );
   }
 
+  // Uma chamada por conta à Admin API: são poucas contas, e é a única fonte
+  // que sabe de verdade quem tem autenticador confirmado.
+  const semMfa = [...(await contasSemMfa(users.map((u) => u.userId)))];
+
   const semVinculo = users.filter((u) => !u.sellerId && u.role !== "admin").length;
   const semAcesso = users.filter((u) => !u.active).length;
 
@@ -67,7 +72,7 @@ export default async function UsuariosPage() {
             flush
             right={<NovoUsuario sellers={sellers} />}
           />
-          <ListaUsuarios users={users} sellers={sellers} meuId={eu?.userId} />
+          <ListaUsuarios users={users} sellers={sellers} meuId={eu?.userId} semMfa={semMfa} />
         </div>
       </div>
     </>
